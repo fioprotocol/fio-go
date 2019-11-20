@@ -20,7 +20,7 @@ func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (
 		RegAddress{
 			FioAddress:        string(address),
 			OwnerFioPublicKey: ownerPubKey,
-			MaxFee:            ConvertAmount(maxFees["regaddress"]),
+			MaxFee:            ConvertAmount(GetMaxFee("regaddress")),
 			Actor:             actor,
 			Tpid:              "",
 		},
@@ -48,7 +48,7 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publ
 			FioAddress:    string(fioAddress),
 			TokenCode:     token,
 			PublicAddress: publicAddress,
-			MaxFee:        ConvertAmount(maxFees["addaddress"]),
+			MaxFee:        ConvertAmount(GetMaxFee("addaddress")),
 			Tpid:          "",
 			Actor:         actor,
 		},
@@ -70,7 +70,7 @@ func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *eos
 		RegDomain{
 			FioDomain:         domain,
 			OwnerFioPublicKey: ownerPubKey,
-			MaxFee:            ConvertAmount(maxFees["regdomain"]),
+			MaxFee:            ConvertAmount(GetMaxFee("regdomain")),
 			Actor:             actor,
 			Tpid:              "",
 		},
@@ -89,7 +89,7 @@ func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *e
 		"fio.address", "renewdomain", actor,
 		RenewDomain{
 			FioDomain: domain,
-			MaxFee:    ConvertAmount(maxFees["renewdomain"]),
+			MaxFee:    ConvertAmount(GetMaxFee("renewdomain")),
 			Actor:     actor,
 			Tpid:      "",
 		},
@@ -108,7 +108,7 @@ func NewRenewAddress(actor eos.AccountName, address string) *eos.Action {
 		"fio.address", "renewaddress", actor,
 		RenewAddress{
 			FioAddress: address,
-			MaxFee:     ConvertAmount(maxFees["renewaddress"]),
+			MaxFee:     ConvertAmount(GetMaxFee("renewaddress")),
 			Tpid:       "",
 			Actor:      actor,
 		},
@@ -176,7 +176,7 @@ func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *eos.Act
 		SetDomainPub{
 			FioDomain: domain,
 			IsPublic:  uint8(isPublic),
-			MaxFee:    ConvertAmount(maxFees["setdomainpub"]),
+			MaxFee:    ConvertAmount(GetMaxFee("setdomainpub")),
 			Actor:     actor,
 			Tpid:      "",
 		},

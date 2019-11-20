@@ -1,6 +1,41 @@
 package fio
 
-import "github.com/eoscanada/eos-go"
+import (
+	"github.com/eoscanada/eos-go"
+	"sync"
+)
+
+
+// use GetMaxFee() instead of directly accessing this map to ensure concurrent safe access
+var (
+	maxFees = map[string]float64{
+		"regaddress":   5.0,
+		"addaddress":   1.0,
+		"regdomain":    50.0,
+		"renewdomain":  50.0,
+		"renewaddress": 5.0,
+		"burnexpired":  0.3,
+		"setdomainpub": 0.3,
+		"transfer":     0.3,
+		"trnsfiopubky": 0.3,
+		"recordsend":   0.3,
+		"newfundsreq":  0.3,
+		"rejectfndreq": 0.3,
+	}
+	maxFeeMutex = sync.RWMutex{}
+)
+
+func GetMaxFee(name string) (fee float64) {
+	maxFeeMutex.RLock()
+	fee = maxFees[name]
+	maxFeeMutex.RUnlock()
+	return fee
+}
+
+// ConvertAmount is a convenience function for converting from a float for human readability
+func ConvertAmount(tokens float64) uint64 {
+	return uint64(tokens * 1000000000.0)
+}
 
 // TransferTokensPubKey is used to send FIO tokens to a public key
 type TransferTokensPubKey struct {
@@ -19,7 +54,7 @@ func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amou
 		TransferTokensPubKey{
 			PayeePublicKey: recipientPubKey,
 			Amount:         amount,
-			MaxFee:         ConvertAmount(maxFees["trnsfiopubky"]),
+			MaxFee:         ConvertAmount(GetMaxFee("trnsfiopubky")),
 			Actor:          actor,
 			Tpid:           "",
 		},
