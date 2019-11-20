@@ -32,8 +32,8 @@ func GetMaxFee(name string) (fee float64) {
 	return fee
 }
 
-// ConvertAmount is a convenience function for converting from a float for human readability
-func ConvertAmount(tokens float64) uint64 {
+// Tokens is a convenience function for converting from a float for human readability
+func Tokens(tokens float64) uint64 {
 	return uint64(tokens * 1000000000.0)
 }
 
@@ -47,14 +47,14 @@ type TransferTokensPubKey struct {
 }
 
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens, amount is in long form
-// (9 digits, or 1000000000 = 1 FIO, see also: ConvertAmount)
+// (9 digits, or 1000000000 = 1 FIO, see also: Tokens)
 func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amount uint64) *eos.Action {
 	return newAction(
 		eos.AccountName("fio.token"), "trnsfiopubky", actor,
 		TransferTokensPubKey{
 			PayeePublicKey: recipientPubKey,
 			Amount:         amount,
-			MaxFee:         ConvertAmount(GetMaxFee("trnsfiopubky")),
+			MaxFee:         Tokens(GetMaxFee("trnsfiopubky")),
 			Actor:          actor,
 			Tpid:           "",
 		},

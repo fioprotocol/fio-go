@@ -35,3 +35,19 @@ func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 		ActionData:    eos.NewActionData(actionData),
 	}
 }
+
+/*
+TODO: use reflection to allow setting the Tpid in an Action if the field exists:
+// Action is a clone of eos.Action so it can have custom member functions
+type Action eos.Action
+
+func (a *Action) SetTpid(tpid string) error {
+	actionType := reflect.TypeOf(a.ActionData.Data)
+	value, ok := actionType.FieldByName(`Tpid`)
+	if !ok {
+		return errors.New("transaction does not contain a tpid field")
+	}
+	reflect.ValueOf(value).Set("tpid")
+}
+
+ */
