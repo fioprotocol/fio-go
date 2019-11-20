@@ -37,8 +37,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Create the transaction, in this case transfer 1 FIO token
-	action := fio.NewTransferTokensPubKey(sender.Actor, recipient, fio.Tokens(1.0))
+	// Refresh transaction fees from the fio.fee fiofees table:
+	if ok := fio.UpdateMaxFees(api); !ok {
+		fmt.Println("Warning: couldn't update fees!")
+	}
+
+	// Create the transaction, in this case transfer 1/2 FIO token
+	action := fio.NewTransferTokensPubKey(sender.Actor, recipient, fio.Tokens(0.5))
 	tx := eos.NewTransaction([]*eos.Action{action}, options)
 
 	// Pack and sign
