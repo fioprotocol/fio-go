@@ -18,14 +18,15 @@ type Account struct {
 	Addresses []string
 }
 
-// NewAccountFromWif builds an Account given a private key string
+// NewAccountFromWif builds an Account given a private key string.
+// Note: this is an ephemeral, in-memory, account which has no relation to keosd, and is not persistent.
 func NewAccountFromWif(wif string) (*Account, error) {
 	kb := eos.NewKeyBag()
 	err := kb.ImportPrivateKey(wif)
 	if err != nil {
 		return nil, err
 	}
-	pub := PubFromEos(kb.Keys[0].PublicKey().String())
+	pub := pubFromEos(kb.Keys[0].PublicKey().String())
 	actor, err := ActorFromPub(pub)
 	if err != nil {
 		return nil, err
@@ -38,6 +39,7 @@ func NewAccountFromWif(wif string) (*Account, error) {
 	}, nil
 }
 
+// NewRandomAccount creates a new account with a random key.
 func NewRandomAccount() (*Account, error) {
 	key, err := ecc.NewRandomPrivateKey()
 	if err != nil {
@@ -46,10 +48,9 @@ func NewRandomAccount() (*Account, error) {
 	return NewAccountFromWif(key.String())
 }
 
-const actorKey = `.12345abcdefghijklmnopqrstuvwxyz`
-
 // ActorFromPub calculates the FIO Actor (EOS Account) from a public key
 func ActorFromPub(pubKey string) (eos.AccountName, error) {
+	const actorKey = `.12345abcdefghijklmnopqrstuvwxyz`
 	if len(pubKey) != 53 {
 		return "", errors.New("public key should be 53 chars")
 	}
@@ -85,19 +86,18 @@ func ActorFromPub(pubKey string) (eos.AccountName, error) {
 	return eos.AccountName(string(actor[:12])), nil
 }
 
+// Address is a FIO address, which should be formatted as 'name:domain'
 type Address string
 
-// Valid checks for the correct address format
-/*
-  String
-  Min: 3
-  Max: 64
-  Characters allowed: ASCII a-z0-9 - (dash) : (colon)
-  Characters required:
-     only one : (colon) and at least one a-z0-9 on either side of colon.
-     a-z0-9 is required on either side of any dash
-  Case-insensitive
-*/
+// Valid checks for the correct fio.Address formatting
+//  Rules:
+//    Min: 3
+//    Max: 64
+//    Characters allowed: ASCII a-z0-9 - (dash) : (colon)
+//    Characters required:
+//       only one : (colon) and at least one a-z0-9 on either side of colon.
+//       a-z0-9 is required on either side of any dash
+//    Case-insensitive
 func (a Address) Valid() (ok bool) {
 	if len(string(a)) < 3 || len(string(a)) > 64 {
 		return false
@@ -111,7 +111,7 @@ func (a Address) Valid() (ok bool) {
 	return true
 }
 
-// PubFromEos is a convenience function that returns the FIO pub address from an EOS pub address
-func PubFromEos(eosPub string) (fioPub string) {
+// pubFromEos is a convenience function that returns the FIO pub address from an EOS pub address
+func pubFromEos(eosPub string) (fioPub string) {
 	return strings.Replace(eosPub, "EOS", "FIO", 1)
 }

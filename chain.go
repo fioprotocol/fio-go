@@ -26,15 +26,15 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*eos.API, *eos.TxOptions, er
 // newAction creates an eos.Action for FIO contract calls
 func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *eos.Action {
 	return &eos.Action{
-		Account:       contract,
-		Name:          name,
+		Account: contract,
+		Name:    name,
 		Authorization: []eos.PermissionLevel{
 			{
 				Actor:      actor,
 				Permission: "active",
 			},
 		},
-		ActionData:    eos.NewActionData(actionData),
+		ActionData: eos.NewActionData(actionData),
 	}
 }
 
@@ -42,7 +42,7 @@ func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 func GetCurrentBlock(api *eos.API) (blockNum uint32) {
 	info, err := api.GetInfo()
 	if err != nil {
-		blockNum = 1<<32-1
+		blockNum = 1<<32 - 1
 		return
 	}
 	return info.HeadBlockNum
@@ -54,19 +54,18 @@ func GetCurrentBlock(api *eos.API) (blockNum uint32) {
 // number to the upper limit of a uint32
 func WaitForConfirm(firstBlock uint32, txid string, api *eos.API) (block uint32, err error) {
 	if txid == "" {
-		return 1<<32-1, errors.New("invalid txid")
+		return 1<<32 - 1, errors.New("invalid txid")
 	}
-	// allow at least one block to be produced before searching
-	time.Sleep(time.Second)
 	var loopErr error
 	tested := make(map[uint32]bool)
 	for i := 0; i < 30; i++ {
+		// allow at least one block to be produced before searching
+		time.Sleep(time.Second)
 		latest := GetCurrentBlock(api)
 		if firstBlock == 0 || firstBlock > latest {
-			return 1<<32-1, errors.New("invalid starting block provided")
+			return 1<<32 - 1, errors.New("invalid starting block provided")
 		}
-		if latest == uint32(1<<32-1){
-			time.Sleep(time.Second)
+		if latest == uint32(1<<32-1) {
 			continue
 		}
 		// note, this purposely doesn't check the head block until next run since that occasionally
@@ -89,9 +88,9 @@ func WaitForConfirm(firstBlock uint32, txid string, api *eos.API) (block uint32,
 		}
 	}
 	if loopErr != nil {
-		return 1<<32-1, loopErr
+		return 1<<32 - 1, loopErr
 	}
-	return 1<<32-1, errors.New("timeout waiting for confirmation")
+	return 1<<32 - 1, errors.New("timeout waiting for confirmation")
 }
 
 // WaitForPreCommit waits until 180 blocks (minimum pre-commit limit) have passed given a block number.
@@ -105,7 +104,7 @@ func WaitForPreCommit(block uint32, seconds int, api *eos.API) (err error) {
 		if err != nil {
 			return err
 		}
-		if info.HeadBlockNum >= block + 180 {
+		if info.HeadBlockNum >= block+180 {
 			return nil
 		}
 		time.Sleep(time.Second)
@@ -146,4 +145,4 @@ func (a *Action) SetTpid(tpid string) error {
 	reflect.ValueOf(value).Set("tpid")
 }
 
- */
+*/

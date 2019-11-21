@@ -24,22 +24,22 @@ var (
 		"new_funds_request":           0.1,
 		"reject_funds_request":        0.1,
 	}
-	maxFeeMutex = sync.RWMutex{}
+	maxFeeMutex    = sync.RWMutex{}
 	maxFeesUpdated = false
 )
 
 // UpdateMaxFees refreshes the maxFees map from the on-chain table.
 func UpdateMaxFees(api *eos.API) bool {
 	type feeRow struct {
-		EndPoint string `json:"end_point"`
+		EndPoint  string `json:"end_point"`
 		SufAmount uint64 `json:"suf_amount"`
 	}
 	fees, err := api.GetTableRows(eos.GetTableRowsRequest{
-		Code:       "fio.fee",
-		Scope:      "fio.fee",
-		Table:      "fiofees",
-		Limit:      100,
-		JSON:       true,
+		Code:  "fio.fee",
+		Scope: "fio.fee",
+		Table: "fiofees",
+		Limit: 100,
+		JSON:  true,
 	})
 	if err != nil {
 		return false
@@ -114,7 +114,7 @@ type Transfer struct {
 	To       eos.AccountName `json:"to"`
 	Quantity eos.Asset       `json:"quantity"`
 	Memo     string          `json:"memo"`
-	MaxFee   uint64 `json:"max_fee"`
+	MaxFee   uint64          `json:"max_fee"`
 }
 
 func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64) *eos.Action {

@@ -3,9 +3,9 @@ package fio
 import "github.com/eoscanada/eos-go"
 
 type UpdateTpid struct {
-	Tpid string `json:"tpid"`
-	Owner eos.AccountName `json:"owner"`
-	Amount uint64 `json:"amount"`
+	Tpid   string          `json:"tpid"`
+	Owner  eos.AccountName `json:"owner"`
+	Amount uint64          `json:"amount"`
 }
 
 func NewUpdateTpid(actor eos.AccountName, tpid string, amount uint64) *eos.Action {
@@ -27,8 +27,8 @@ func NewRewardsPaid(actor eos.AccountName, tpid string) *eos.Action {
 	return newAction(
 		"fio.tpid", "rewardspaid", actor,
 		UpdateTpid{
-			Tpid:   tpid,
-			Owner:  actor,
+			Tpid:  tpid,
+			Owner: actor,
 		},
 	)
 }

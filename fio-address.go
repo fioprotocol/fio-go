@@ -97,10 +97,10 @@ func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *e
 }
 
 type RenewAddress struct {
-	FioAddress string `json:"fio_address"`
-	MaxFee uint64 `json:"max_fee"`
-	Tpid string `json:"tpid"`
-	Actor   eos.AccountName `json:"actor"`
+	FioAddress string          `json:"fio_address"`
+	MaxFee     uint64          `json:"max_fee"`
+	Tpid       string          `json:"tpid"`
+	Actor      eos.AccountName `json:"actor"`
 }
 
 func NewRenewAddress(actor eos.AccountName, address string) *eos.Action {
@@ -182,4 +182,3 @@ func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *eos.Act
 		},
 	)
 }
-
