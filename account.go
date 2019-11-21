@@ -12,9 +12,10 @@ import (
 // Account holds the information for an account, it differs from a regular EOS account in that the
 // account name (Actor) is derived from the public key, and a FIO public key has a different prefix
 type Account struct {
-	KeyBag *eos.KeyBag
-	PubKey string
-	Actor  eos.AccountName
+	KeyBag    *eos.KeyBag
+	PubKey    string
+	Actor     eos.AccountName
+	Addresses []string
 }
 
 // NewAccountFromWif builds an Account given a private key string
@@ -30,9 +31,10 @@ func NewAccountFromWif(wif string) (*Account, error) {
 		return nil, err
 	}
 	return &Account{
-		KeyBag: kb,
-		PubKey: pub,
-		Actor:  actor,
+		KeyBag:    kb,
+		PubKey:    pub,
+		Actor:     actor,
+		Addresses: make([]string, 0),
 	}, nil
 }
 
