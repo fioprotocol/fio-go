@@ -57,7 +57,7 @@ type RejectFndReq struct {
 }
 
 // EncryptContent implements the encryption format used in the content field of OBT requests. A DH shared secret is
-// created using ECIES which derives a shared secret based on the curves of the public and private keys.
+// created using ECIES which derives a key based on the curves of the public and private keys.
 // This secret is hashed using sha512, and the first 32 bytes of the hash is used to encrypt the message using
 // AES-256 cbc, and the second half is used to create an outer sha256 hmac. A 16 byte IV is prepended to the
 // output, resulting in the message format of: IV + Ciphertext + HMAC
@@ -65,8 +65,8 @@ type RejectFndReq struct {
 func EncryptContent(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
 	var buffer bytes.Buffer
 
-	// Get the DHEC shared-secret
-	secretHash, e := secret(sender, recipentPub)
+	// Get the shared-secret
+	_, secretHash, e := EciesSecret(sender, recipentPub)
 	if e != nil {
 		return nil, e
 	}
@@ -123,29 +123,27 @@ func DecryptContent(recipient *Account, senderPub string, message []byte) (decry
 		ivLen  = 16
 		sigLen = 32
 	)
-	// Get the DHEC shared-secret
-	secretHash, e := secret(recipient, senderPub)
+
+	// Get the shared-secret
+	_, secretHash, e := EciesSecret(recipient, senderPub)
 	if e != nil {
 		return nil, e
 	}
 
-	// split our message into components
-	signed := message[:len(message)-sigLen]
-	encrypted := message[ivLen : len(message)-sigLen]
-	iv := message[:ivLen]
-	sig := message[len(message)-sigLen:]
-
 	// check the signature
 	verifier := hmac.New(sha256.New, secretHash[32:])
-	_, err = verifier.Write(signed)
+	_, err = verifier.Write(message[:len(message)-sigLen])
 	if err != nil {
 		return nil, err
 	}
 	verified := verifier.Sum(nil)
-	if hex.EncodeToString(sig) != hex.EncodeToString(verified) {
+	if hex.EncodeToString(message[len(message)-sigLen:]) != hex.EncodeToString(verified) {
 		return nil,
 			errors.New(
-				fmt.Sprintf("hmac signature %s is invalid, expected %s", hex.EncodeToString(verified), hex.EncodeToString(sig)),
+				fmt.Sprintf("hmac signature %s is invalid, expected %s",
+					hex.EncodeToString(verified),
+					hex.EncodeToString(message[len(message)-sigLen:]),
+				),
 			)
 	}
 
@@ -154,46 +152,50 @@ func DecryptContent(recipient *Account, senderPub string, message []byte) (decry
 	if err != nil {
 		return nil, err
 	}
-	cbc := cipher.NewCBCDecrypter(block, iv)
-	plainText := make([]byte, len(encrypted))
-	cbc.CryptBlocks(plainText, encrypted)
+	cbc := cipher.NewCBCDecrypter(block, message[:ivLen])
+	plainText := make([]byte, len(message[ivLen:len(message)-sigLen]))
+	cbc.CryptBlocks(plainText, message[ivLen:len(message)-sigLen])
+
+	// strip padding and done.
 	padLen := int(plainText[len(plainText)-1])
 	if padLen >= len(plainText) {
 		return nil, errors.New("invalid padding in message")
 	}
-
 	return plainText[:len(plainText)-padLen], nil
 }
 
-// secret derives the ecies pre-shared key from a private and public key.
-func secret(private *Account, public string) ([]byte, error) {
+// EciesSecret derives the ecies pre-shared key from a private and public key.
+// The 'secret' returned is the actual secret, the 'hash' returned is what is actually used
+// in the OBT implementation, allowing the secret to be stretched into two keys, one for
+// encryption and one for message authentication.
+func EciesSecret(private *Account, public string) (secret []byte, hash []byte, err error) {
 	// convert recipient private to ecies private key type
 	wif, err := btcutil.DecodeWIF(private.KeyBag.Keys[0].String())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	priv := ecies.ImportECDSA(wif.PrivKey.ToECDSA())
 
 	// convert sender into an ecies public key struct
 	eosPub, err := ecc.NewPublicKey(`EOS` + public[3:])
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	epk, err := eosPub.Key()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	pub := ecies.ImportECDSAPublic(epk.ToECDSA())
 
 	// derive the shared secret and hash it
 	sharedKey, err := priv.GenerateShared(pub, 32, 0)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	sh := sha512.New()
 	_, err = sh.Write(sharedKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return sh.Sum(nil), nil
+	return sharedKey, sh.Sum(nil), nil
 }
