@@ -9,6 +9,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/eoscanada/eos-go/btcsuite/btcutil"
 	"github.com/eoscanada/eos-go/ecc"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
@@ -87,7 +88,12 @@ func EncryptContent(sender *Account, recipentPub string, plainText []byte) (cont
 	if err != nil {
 		return nil, err
 	}
-	secretHash := sha512.New().Sum(sharedKey)
+	sh := sha512.New()
+	_, err = sh.Write(sharedKey)
+	if err != nil {
+		return nil, err
+	}
+	secretHash := sh.Sum(nil)
 
 	// Generate IV
 	iv := make([]byte, 16)
@@ -125,7 +131,11 @@ func EncryptContent(sender *Account, recipentPub string, plainText []byte) (cont
 
 	// Sign the message using sha256 hmac
 	signer := hmac.New(sha256.New, secretHash[32:])
-	signature := signer.Sum(buffer.Bytes())
+	_, e = signer.Write(buffer.Bytes())
+	if e != nil {
+		return nil, e
+	}
+	signature := signer.Sum(nil)
 	buffer.Write(signature)
 
 	return buffer.Bytes(), nil
@@ -133,6 +143,10 @@ func EncryptContent(sender *Account, recipentPub string, plainText []byte) (cont
 
 // DecryptContent is the inverse of EncryptContent, using the recipient's private key and sender's public instead.
 func DecryptContent(recipient *Account, senderPub string, message []byte) (decrypted []byte, err error) {
+	const (
+		ivLen  = 16
+		sigLen = 32
+	)
 	// convert recipient private to ecies private key type
 	wif, err := btcutil.DecodeWIF(recipient.KeyBag.Keys[0].String())
 	if err != nil {
@@ -156,18 +170,31 @@ func DecryptContent(recipient *Account, senderPub string, message []byte) (decry
 	if err != nil {
 		return nil, err
 	}
-	secretHash := sha512.New().Sum(sharedKey)
+	sh := sha512.New()
+	_, err = sh.Write(sharedKey)
+	if err != nil {
+		return nil, err
+	}
+	secretHash := sh.Sum(nil)
 
 	// split our message into components
-	signed := message[:len(message) - 64]
-	encrypted := message[16:len(message) - 64]
-	iv := message[:16]
-	sig := message[len(message) - 64:]
+	signed := message[:len(message) -sigLen]
+	encrypted := message[ivLen :len(message) -sigLen]
+	iv := message[:ivLen]
+	sig := message[len(message) -sigLen:]
 
 	// check the signature
 	verifier := hmac.New(sha256.New, secretHash[32:])
-	if hex.EncodeToString(sig) != hex.EncodeToString(verifier.Sum(signed)) {
-		return nil, errors.New("hmac signature is invalid")
+	_, err = verifier.Write(signed)
+	if err != nil {
+		return nil, err
+	}
+	verified := verifier.Sum(nil)
+	if hex.EncodeToString(sig) != hex.EncodeToString(verified) {
+		return nil,
+		errors.New(
+			fmt.Sprintf("hmac signature %s is invalid, expected %s", hex.EncodeToString(verified), hex.EncodeToString(sig)),
+		)
 	}
 
 	// decrypt the message
