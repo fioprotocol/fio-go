@@ -10,7 +10,7 @@ import (
 func TestEncryptDecrypt(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	// run through it several times with random data, and length to ensure padding, etc works.
-	for i:= 0; i<10; i++ {
+	for i := 0; i < 10; i++ {
 		size := rand.Intn(128) + 128
 		someData := make([]byte, size)
 		_, e := rand.Read(someData)

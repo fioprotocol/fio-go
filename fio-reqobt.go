@@ -65,35 +65,11 @@ type RejectFndReq struct {
 func EncryptContent(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
 	var buffer bytes.Buffer
 
-	// convert to sender key to ecies private key type
-	wif, err := btcutil.DecodeWIF(sender.KeyBag.Keys[0].String())
-	if err != nil {
-		return nil, err
-	}
-	priv := ecies.ImportECDSA(wif.PrivKey.ToECDSA())
-
-	// convert recipient public key to ecies private key type
-	eosPub, e := ecc.NewPublicKey(`EOS` + recipentPub[3:])
+	// Get the DHEC shared-secret
+	secretHash, e := secret(sender, recipentPub)
 	if e != nil {
 		return nil, e
 	}
-	epk, err := eosPub.Key()
-	if err != nil {
-		return nil, err
-	}
-	pub := ecies.ImportECDSAPublic(epk.ToECDSA())
-
-	// generate the shared key, and hash it
-	sharedKey, err := priv.GenerateShared(pub,32, 0)
-	if err != nil {
-		return nil, err
-	}
-	sh := sha512.New()
-	_, err = sh.Write(sharedKey)
-	if err != nil {
-		return nil, err
-	}
-	secretHash := sh.Sum(nil)
 
 	// Generate IV
 	iv := make([]byte, 16)
@@ -125,7 +101,7 @@ func EncryptContent(sender *Account, recipentPub string, plainText []byte) (cont
 	}()
 
 	// encrypt the plaintext
-	cipherText := make([]byte, len(plainText) + len(pad))
+	cipherText := make([]byte, len(plainText)+len(pad))
 	cbc.CryptBlocks(cipherText, append(plainText, pad...))
 	buffer.Write(cipherText)
 
@@ -147,41 +123,17 @@ func DecryptContent(recipient *Account, senderPub string, message []byte) (decry
 		ivLen  = 16
 		sigLen = 32
 	)
-	// convert recipient private to ecies private key type
-	wif, err := btcutil.DecodeWIF(recipient.KeyBag.Keys[0].String())
-	if err != nil {
-		return nil, err
+	// Get the DHEC shared-secret
+	secretHash, e := secret(recipient, senderPub)
+	if e != nil {
+		return nil, e
 	}
-	priv := ecies.ImportECDSA(wif.PrivKey.ToECDSA())
-
-	// convert sender into an ecies public key struct
-	eosPub, err := ecc.NewPublicKey(`EOS` + senderPub[3:])
-	if err != nil {
-		return nil, err
-	}
-	epk, err := eosPub.Key()
-	if err != nil {
-		return nil, err
-	}
-	pub := ecies.ImportECDSAPublic(epk.ToECDSA())
-
-	// derive the shared secret and hash it
-	sharedKey, err := priv.GenerateShared(pub,32, 0)
-	if err != nil {
-		return nil, err
-	}
-	sh := sha512.New()
-	_, err = sh.Write(sharedKey)
-	if err != nil {
-		return nil, err
-	}
-	secretHash := sh.Sum(nil)
 
 	// split our message into components
-	signed := message[:len(message) -sigLen]
-	encrypted := message[ivLen :len(message) -sigLen]
+	signed := message[:len(message)-sigLen]
+	encrypted := message[ivLen : len(message)-sigLen]
 	iv := message[:ivLen]
-	sig := message[len(message) -sigLen:]
+	sig := message[len(message)-sigLen:]
 
 	// check the signature
 	verifier := hmac.New(sha256.New, secretHash[32:])
@@ -192,9 +144,9 @@ func DecryptContent(recipient *Account, senderPub string, message []byte) (decry
 	verified := verifier.Sum(nil)
 	if hex.EncodeToString(sig) != hex.EncodeToString(verified) {
 		return nil,
-		errors.New(
-			fmt.Sprintf("hmac signature %s is invalid, expected %s", hex.EncodeToString(verified), hex.EncodeToString(sig)),
-		)
+			errors.New(
+				fmt.Sprintf("hmac signature %s is invalid, expected %s", hex.EncodeToString(verified), hex.EncodeToString(sig)),
+			)
 	}
 
 	// decrypt the message
@@ -205,10 +157,43 @@ func DecryptContent(recipient *Account, senderPub string, message []byte) (decry
 	cbc := cipher.NewCBCDecrypter(block, iv)
 	plainText := make([]byte, len(encrypted))
 	cbc.CryptBlocks(plainText, encrypted)
-	padLen := int(plainText[len(plainText) - 1])
+	padLen := int(plainText[len(plainText)-1])
 	if padLen >= len(plainText) {
 		return nil, errors.New("invalid padding in message")
 	}
 
-	return plainText[:len(plainText) - padLen], nil
+	return plainText[:len(plainText)-padLen], nil
+}
+
+// secret derives the ecies pre-shared key from a private and public key.
+func secret(private *Account, public string) ([]byte, error) {
+	// convert recipient private to ecies private key type
+	wif, err := btcutil.DecodeWIF(private.KeyBag.Keys[0].String())
+	if err != nil {
+		return nil, err
+	}
+	priv := ecies.ImportECDSA(wif.PrivKey.ToECDSA())
+
+	// convert sender into an ecies public key struct
+	eosPub, err := ecc.NewPublicKey(`EOS` + public[3:])
+	if err != nil {
+		return nil, err
+	}
+	epk, err := eosPub.Key()
+	if err != nil {
+		return nil, err
+	}
+	pub := ecies.ImportECDSAPublic(epk.ToECDSA())
+
+	// derive the shared secret and hash it
+	sharedKey, err := priv.GenerateShared(pub, 32, 0)
+	if err != nil {
+		return nil, err
+	}
+	sh := sha512.New()
+	_, err = sh.Write(sharedKey)
+	if err != nil {
+		return nil, err
+	}
+	return sh.Sum(nil), nil
 }
