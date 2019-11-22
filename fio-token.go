@@ -103,7 +103,7 @@ func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amou
 			Amount:         amount,
 			MaxFee:         Tokens(GetMaxFee("transfer_tokens_pub_key")),
 			Actor:          actor,
-			Tpid:           "",
+			Tpid:           globalTpid,
 		},
 	)
 }
@@ -133,4 +133,12 @@ func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64
 			MaxFee: Tokens(GetMaxFee("transfer_tokens_fio_address")),
 		},
 	)
+}
+
+func GetFioBalance(account eos.AccountName, api *eos.API) (float64, error) {
+	a, err := api.GetCurrencyBalance(account, "FIO", eos.AccountName("fio.token"))
+	if err != nil {
+		return 0.0, err
+	}
+	return float64(a[0].Amount) / 1000000000.0, nil
 }

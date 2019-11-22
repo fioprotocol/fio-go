@@ -22,7 +22,7 @@ func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (
 			OwnerFioPublicKey: ownerPubKey,
 			MaxFee:            Tokens(GetMaxFee("register_fio_address")),
 			Actor:             actor,
-			Tpid:              "",
+			Tpid:              globalTpid,
 		},
 	), true
 }
@@ -34,8 +34,8 @@ type AddAddress struct {
 	TokenCode     string          `json:"token_code"`
 	PublicAddress string          `json:"public_address"`
 	MaxFee        uint64          `json:"max_fee"`
-	Tpid          Address         `json:"tpid"`
 	Actor         eos.AccountName `json:"actor"`
+	Tpid          string          `json:"tpid"`
 }
 
 func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publicAddress string) (action *eos.Action, ok bool) {
@@ -49,7 +49,7 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publ
 			TokenCode:     token,
 			PublicAddress: publicAddress,
 			MaxFee:        Tokens(GetMaxFee("add_pub_address")),
-			Tpid:          "",
+			Tpid:          globalTpid,
 			Actor:         actor,
 		},
 	), true
@@ -72,7 +72,7 @@ func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *eos
 			OwnerFioPublicKey: ownerPubKey,
 			MaxFee:            Tokens(GetMaxFee("register_fio_domain")),
 			Actor:             actor,
-			Tpid:              "",
+			Tpid:              globalTpid,
 		},
 	)
 }
@@ -91,7 +91,7 @@ func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *e
 			FioDomain: domain,
 			MaxFee:    Tokens(GetMaxFee("renew_fio_domain")),
 			Actor:     actor,
-			Tpid:      "",
+			Tpid:      globalTpid,
 		},
 	)
 }
@@ -109,7 +109,7 @@ func NewRenewAddress(actor eos.AccountName, address string) *eos.Action {
 		RenewAddress{
 			FioAddress: address,
 			MaxFee:     Tokens(GetMaxFee("renew_fio_address")),
-			Tpid:       "",
+			Tpid:       globalTpid,
 			Actor:      actor,
 		},
 	)
@@ -178,7 +178,7 @@ func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *eos.Act
 			IsPublic:  uint8(isPublic),
 			MaxFee:    Tokens(GetMaxFee("setdomainpub")),
 			Actor:     actor,
-			Tpid:      "",
+			Tpid:      globalTpid,
 		},
 	)
 }

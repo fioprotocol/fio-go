@@ -54,18 +54,18 @@ func TestEncryptDecrypt(t *testing.T) {
 			t.Error(e.Error())
 			return
 		}
-		cipherText, e := EncryptContent(sender, recipient.PubKey, someData)
+		cipherText, e := EciesEncrypt(sender, recipient.PubKey, someData)
 		if e != nil {
 			t.Error(e.Error())
 			return
 		}
-		decrypted, e := DecryptContent(recipient, sender.PubKey, cipherText)
+		decrypted, e := EciesDecrypt(recipient, sender.PubKey, cipherText)
 		if e != nil {
 			t.Error(e.Error())
 			return
 		}
 		if !bytes.Equal(someData, decrypted) {
-			t.Error("decrypted content from EncryptContent did not match DecryptContent output")
+			t.Error("decrypted content from EciesEncrypt did not match EciesDecrypt output")
 		}
 	}
 }
