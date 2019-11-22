@@ -169,14 +169,14 @@ func DecryptContent(recipient *Account, senderPub string, message []byte) (decry
 // in the OBT implementation, allowing the secret to be stretched into two keys, one for
 // encryption and one for message authentication.
 func EciesSecret(private *Account, public string) (secret []byte, hash []byte, err error) {
-	// convert recipient private to ecies private key type
+	// convert key to ecies private key type
 	wif, err := btcutil.DecodeWIF(private.KeyBag.Keys[0].String())
 	if err != nil {
 		return nil, nil, err
 	}
 	priv := ecies.ImportECDSA(wif.PrivKey.ToECDSA())
 
-	// convert sender into an ecies public key struct
+	// convert public key string into an ecies public key struct
 	eosPub, err := ecc.NewPublicKey(`EOS` + public[3:])
 	if err != nil {
 		return nil, nil, err
@@ -199,3 +199,4 @@ func EciesSecret(private *Account, public string) (secret []byte, hash []byte, e
 	}
 	return sharedKey, sh.Sum(nil), nil
 }
+
