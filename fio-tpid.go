@@ -16,6 +16,10 @@ func SetTpid(walletAddress string) (ok bool) {
 	return false
 }
 
+func CurrentTpid() string {
+	return globalTpid
+}
+
 type UpdateTpid struct {
 	Tpid   string          `json:"tpid"`
 	Owner  eos.AccountName `json:"owner"`

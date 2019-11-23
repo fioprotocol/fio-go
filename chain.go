@@ -7,9 +7,14 @@ import (
 	"time"
 )
 
-// NewConnection sets up the eos.API interface for interacting with the FIO API
-func NewConnection(keyBag *eos.KeyBag, url string) (*eos.API, *eos.TxOptions, error) {
-	api := eos.New(url)
+// API struct allows extending the eos.API with FIO-specific functions
+type API struct {
+	eos.API
+}
+
+// NewConnection sets up the API interface for interacting with the FIO API
+func NewConnection(keyBag *eos.KeyBag, url string) (*API, *eos.TxOptions, error) {
+	var api = eos.New(url)
 	api.SetSigner(keyBag)
 	api.SetCustomGetRequiredKeys(
 		func(tx *eos.Transaction) (keys []ecc.PublicKey, e error) {
@@ -17,10 +22,11 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*eos.API, *eos.TxOptions, er
 		},
 	)
 	txOpts := &eos.TxOptions{}
-	if err := txOpts.FillFromChain(api); err != nil {
-		return nil, nil, err
+	err := txOpts.FillFromChain(api)
+	if err != nil {
+		return &API{}, nil, err
 	}
-	return api, txOpts, nil
+	return &API{*api}, txOpts, nil
 }
 
 // newAction creates an eos.Action for FIO contract calls
@@ -39,7 +45,7 @@ func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 }
 
 // GetCurrentBlock provides the current head block number
-func GetCurrentBlock(api *eos.API) (blockNum uint32) {
+func GetCurrentBlock(api *API) (blockNum uint32) {
 	info, err := api.GetInfo()
 	if err != nil {
 		blockNum = 1<<32 - 1
@@ -52,7 +58,7 @@ func GetCurrentBlock(api *eos.API) (blockNum uint32) {
 // blocks since the eos.GetTransaction doesn't provide a block hint argument, it will continue
 // to search for roughly 30 seconds and then timeout. If there is an error it sets the returned block
 // number to the upper limit of a uint32
-func WaitForConfirm(firstBlock uint32, txid string, api *eos.API) (block uint32, err error) {
+func WaitForConfirm(firstBlock uint32, txid string, api *API) (block uint32, err error) {
 	if txid == "" {
 		return 1<<32 - 1, errors.New("invalid txid")
 	}
@@ -95,7 +101,7 @@ func WaitForConfirm(firstBlock uint32, txid string, api *eos.API) (block uint32,
 
 // WaitForPreCommit waits until 180 blocks (minimum pre-commit limit) have passed given a block number.
 // It makes sense to set seconds to the same value (180).
-func WaitForPreCommit(block uint32, seconds int, api *eos.API) (err error) {
+func WaitForPreCommit(block uint32, seconds int, api *API) (err error) {
 	if block == 0 || block == 1<<32-1 {
 		return errors.New("invalid block")
 	}
@@ -114,7 +120,7 @@ func WaitForPreCommit(block uint32, seconds int, api *eos.API) (err error) {
 
 // WaitForIrreversible waits until the most recent irreversible block is greater than the specified block.
 // Normally this will be about 360 seconds.
-func WaitForIrreversible(block uint32, seconds int, api *eos.API) (err error) {
+func WaitForIrreversible(block uint32, seconds int, api *API) (err error) {
 	if block == 0 || block == 1<<32-1 {
 		return errors.New("invalid block")
 	}

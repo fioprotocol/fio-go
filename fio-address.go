@@ -1,6 +1,13 @@
 package fio
 
-import "github.com/eoscanada/eos-go"
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"github.com/eoscanada/eos-go"
+	"io/ioutil"
+	"net/http"
+)
 
 // RegAddress Registers a FIO Address on the FIO blockchain
 type RegAddress struct {
@@ -181,4 +188,95 @@ func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *eos.Act
 			Tpid:      globalTpid,
 		},
 	)
+}
+
+type PubAddress struct {
+	PublicAddress string `json:"public_address"`
+	Message       string `json:"message"`
+}
+
+type pubAddressRequest struct {
+	FioAddress string `json:"fio_address"`
+	TokenCode  string `json:"token_code"`
+}
+
+// PubAddressLookup finds a public address for a user, given a currency key
+//  pubAddress, ok, err := api.PubAddressLookup(fio.Address("alice:fio", "BTC")
+func (api API) PubAddressLookup(fioAddress Address, chain string) (address PubAddress, found bool, err error) {
+	if !fioAddress.Valid() {
+		return PubAddress{}, false, errors.New("invalid fio address")
+	}
+	query := pubAddressRequest{
+		FioAddress: string(fioAddress),
+		TokenCode:  chain,
+	}
+	j, _ := json.Marshal(query)
+	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/pub_address_lookup`, bytes.NewBuffer(j))
+	if err != nil {
+		return PubAddress{}, false, err
+	}
+	req.Header.Add("content-type", "application/json")
+	res, err := api.HttpClient.Do(req)
+	if err != nil {
+		return PubAddress{}, false, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return PubAddress{}, false, err
+	}
+	err = json.Unmarshal(body, &address)
+	if err != nil {
+		return PubAddress{}, false, err
+	}
+	if address.PublicAddress != "" {
+		found = true
+	}
+	return
+}
+
+type FioNames struct {
+	FioDomains   []FioName `json:"fio_domains"`
+	FioAddresses []FioName `json:"fio_addresses"`
+	Message      string    `json:"message,omitifempty"`
+}
+
+type FioName struct {
+	FioDomain  string `json:"fio_domain,omitifempty"`
+	FioAddress string `json:"fio_address,omitifempty"`
+	Expiration string `json:"expiration"`
+	IsPublic   int    `json:"is_public,omitifempty"`
+}
+
+type getFioNamesRequest struct {
+	FioPublicKey string `json:"fio_public_key"`
+}
+
+func (api API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
+	query := getFioNamesRequest{
+		FioPublicKey: pubKey,
+	}
+	j, _ := json.Marshal(query)
+	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_fio_names`, bytes.NewBuffer(j))
+	if err != nil {
+		return FioNames{}, false, err
+	}
+	req.Header.Add("content-type", "application/json")
+	res, err := api.HttpClient.Do(req)
+	if err != nil {
+		return FioNames{}, false, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return FioNames{}, false, err
+	}
+	err = json.Unmarshal(body, &names)
+	if err != nil {
+		return FioNames{}, false, err
+	}
+	if len(names.FioAddresses) > 0 || len(names.FioDomains) > 0 {
+		found = true
+	}
+	return
 }

@@ -15,7 +15,8 @@ type Account struct {
 	KeyBag    *eos.KeyBag
 	PubKey    string
 	Actor     eos.AccountName
-	Addresses []string
+	Addresses []FioName
+	Domains   []FioName
 }
 
 // NewAccountFromWif builds an Account given a private key string.
@@ -35,8 +36,22 @@ func NewAccountFromWif(wif string) (*Account, error) {
 		KeyBag:    kb,
 		PubKey:    pub,
 		Actor:     actor,
-		Addresses: make([]string, 0),
+		Addresses: make([]FioName, 0),
+		Domains:   make([]FioName, 0),
 	}, nil
+}
+
+// GetNames retrieves the FIO addresses and names owned by an account, and populates the Account struct
+func (a *Account) GetNames(api *API) (addresses int, domains int, err error) {
+	n, _, err := api.GetFioNames(a.PubKey)
+	if err != nil {
+		return 0, 0, nil
+	}
+	addresses = len(n.FioAddresses)
+	domains = len(n.FioDomains)
+	a.Addresses = n.FioAddresses
+	a.Domains = n.FioDomains
+	return
 }
 
 // NewRandomAccount creates a new account with a random key.

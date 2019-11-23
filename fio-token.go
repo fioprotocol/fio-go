@@ -29,7 +29,7 @@ var (
 )
 
 // UpdateMaxFees refreshes the maxFees map from the on-chain table.
-func UpdateMaxFees(api *eos.API) bool {
+func UpdateMaxFees(api *API) bool {
 	type feeRow struct {
 		EndPoint  string `json:"end_point"`
 		SufAmount uint64 `json:"suf_amount"`
@@ -135,10 +135,15 @@ func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64
 	)
 }
 
-func GetFioBalance(account eos.AccountName, api *eos.API) (float64, error) {
+func GetFioBalance(account eos.AccountName, api *API) (float64, error) {
 	a, err := api.GetCurrencyBalance(account, "FIO", eos.AccountName("fio.token"))
 	if err != nil {
 		return 0.0, err
 	}
-	return float64(a[0].Amount) / 1000000000.0, nil
+	if len(a) > 0 {
+		if a[0].Amount > 0 {
+			return float64(a[0].Amount) / 1000000000.0, nil
+		}
+	}
+	return 0.0, nil
 }

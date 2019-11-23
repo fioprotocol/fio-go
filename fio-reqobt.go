@@ -15,6 +15,7 @@ import (
 	"github.com/eoscanada/eos-go/btcsuite/btcutil"
 	"github.com/eoscanada/eos-go/ecc"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"github.com/mr-tron/base58"
 	"math/rand"
 	"time"
 )
@@ -22,20 +23,24 @@ import (
 // ObtContent holds private transaction details for actions such as requesting funds and recording the result
 // of a transaction. This should be encrypted and supplied as hex-encoded bytes in the transaction.
 type ObtContent struct {
-	PayerPublicAddress string `json:"payer_public_address"`
-	PayeePublicAddress string `json:"payee_public_address"`
-	Amount             string `json:"amount"`
-	TokenCode          string `json:"token_code"`
-	Status             string `json:"status"`
-	ObtId              string `json:"obt_id"`
-	Memo               string `json:"memo"`
-	Hash               string `json:"hash"`
-	OfflineUrl         string `json:"offline_url"`
+	PayerPublicAddress string `json:"payer_public_address,omitempty"`
+	PayeePublicAddress string `json:"payee_public_address,omitempty"`
+	Amount             string `json:"amount,omitempty"`
+	TokenCode          string `json:"token_code,omitempty"`
+	Status             string `json:"status,omitempty"`
+	ObtId              string `json:"obt_id,omitempty"`
+	Memo               string `json:"memo,omitempty"`
+	Hash               string `json:"hash,omitempty"`
+	OfflineUrl         string `json:"offline_url,omitempty"`
 }
 
 // DecryptContent provides a new populated ObtContent struct given an encrypted content payload
-func DecryptContent(to *Account, fromPubKey string, encrypted []byte) (*ObtContent, error) {
-	jsonBytes, err := EciesDecrypt(to, fromPubKey, encrypted)
+func DecryptContent(to *Account, fromPubKey string, encrypted string) (*ObtContent, error) {
+	decoded, err := base58.Decode(encrypted)
+	if err != nil {
+		return nil, err
+	}
+	jsonBytes, err := EciesDecrypt(to, fromPubKey, decoded)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +62,9 @@ func (c *ObtContent) Encrypt(from *Account, toPubKey string) (content string, er
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(encrypted), nil
+	//return hex.EncodeToString(encrypted), nil
+	//return string(encrypted), nil
+	return base58.Encode(encrypted), nil
 }
 
 type RecordSend struct {
