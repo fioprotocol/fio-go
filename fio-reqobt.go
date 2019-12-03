@@ -16,7 +16,9 @@ import (
 	"github.com/eoscanada/eos-go/ecc"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/mr-tron/base58"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"time"
 )
 
@@ -293,4 +295,47 @@ func eciesSecret(private *Account, public string) (secret []byte, hash []byte, e
 		return nil, nil, err
 	}
 	return sharedKey, sh.Sum(nil), nil
+}
+
+type getPendingFioNamesRequest struct {
+	FioPublicKey string `json:"fio_public_key"`
+	Limit        int    `json:"limit"`
+	Offset       int    `json:"offset"`
+}
+
+type PendingFioRequestsResponse struct {
+	Requests []FundsResp `json:"requests"`
+	More     int         `json:"more"`
+}
+
+// GetPendingFioRequests looks for pending requests
+func (api *API) GetPendingFioRequests(pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
+	query := getPendingFioNamesRequest{
+		FioPublicKey: pubKey,
+		Limit:        limit,
+		Offset:       offset,
+	}
+	j, _ := json.Marshal(query)
+	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_pending_fio_requests`, bytes.NewBuffer(j))
+	if err != nil {
+		return PendingFioRequestsResponse{}, false, err
+	}
+	req.Header.Add("content-type", "application/json")
+	res, err := api.HttpClient.Do(req)
+	if err != nil {
+		return PendingFioRequestsResponse{}, false, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return PendingFioRequestsResponse{}, false, err
+	}
+	err = json.Unmarshal(body, &pendingRequests)
+	if err != nil {
+		return PendingFioRequestsResponse{}, false, err
+	}
+	if len(pendingRequests.Requests) > 0 {
+		hasPending = true
+	}
+	return
 }
