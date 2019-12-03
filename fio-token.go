@@ -28,7 +28,8 @@ var (
 	maxFeesUpdated = false
 )
 
-// UpdateMaxFees refreshes the maxFees map from the on-chain table.
+// UpdateMaxFees refreshes the maxFees map from the on-chain table. This is automatically called
+// by NewConnection if fees are not already up-to-date.
 func UpdateMaxFees(api *API) bool {
 	type feeRow struct {
 		EndPoint  string `json:"end_point"`
