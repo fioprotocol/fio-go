@@ -78,7 +78,7 @@ type RecordSend struct {
 }
 
 // NewRecordSend builds the action for providing the result of a off-chain transaction
-func NewRecordSend(actor eos.AccountName, reqId string, payer string, payee string, content string) *eos.Action {
+func NewRecordSend(actor eos.AccountName, reqId string, payer string, payee string, content string) *Action {
 	return newAction(
 		"fio.reqobt", "recordsend", actor,
 		RecordSend{
@@ -103,8 +103,20 @@ type FundsReq struct {
 	Tpid            string `json:"tpid"`
 }
 
+// FundsResp is a request sent from one user to another requesting funds, it includes the fio_request_id, so
+// should be used when querying
+type FundsResp struct {
+	PayerFioAddress string `json:"payer_fio_address"`
+	PayeeFioAddress string `json:"payee_fio_address"`
+	Content         string `json:"content"`
+	MaxFee          uint64 `json:"max_fee"`
+	Actor           string `json:"actor"`
+	Tpid            string `json:"tpid"`
+	FioRequestId    uint64 `json:"fio_request_id,omitempty"`
+}
+
 // NewFundsReq builds the action for providing the result of a off-chain transaction
-func NewFundsReq(actor eos.AccountName, payer string, payee string, content string) *eos.Action {
+func NewFundsReq(actor eos.AccountName, payer string, payee string, content string) *Action {
 	return newAction(
 		"fio.reqobt", "newfundsreq", actor,
 		FundsReq{
