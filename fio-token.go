@@ -95,7 +95,7 @@ type TransferTokensPubKey struct {
 }
 
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
-func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amount uint64) *eos.Action {
+func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amount uint64) *Action {
 	return newAction(
 		eos.AccountName("fio.token"), "trnsfiopubky", actor,
 		TransferTokensPubKey{
@@ -117,7 +117,7 @@ type Transfer struct {
 	MaxFee   uint64          `json:"max_fee"`
 }
 
-func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64) *eos.Action {
+func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64) *Action {
 	return newAction(
 		eos.AccountName("fio.token"), "transfer", actor,
 		Transfer{

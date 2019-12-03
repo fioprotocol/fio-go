@@ -18,7 +18,7 @@ type RegAddress struct {
 	Tpid              string          `json:"tpid"`
 }
 
-func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (action *eos.Action, ok bool) {
+func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (action *Action, ok bool) {
 	if ok := address.Valid(); !ok {
 		return nil, false
 	}
@@ -45,7 +45,7 @@ type AddAddress struct {
 	Tpid          string          `json:"tpid"`
 }
 
-func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publicAddress string) (action *eos.Action, ok bool) {
+func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publicAddress string) (action *Action, ok bool) {
 	if ok := fioAddress.Valid(); !ok {
 		return nil, false
 	}
@@ -71,7 +71,7 @@ type RegDomain struct {
 	Tpid              string          `json:"tpid"`
 }
 
-func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *eos.Action {
+func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Action {
 	return newAction(
 		"fio.address", "regdomain", actor,
 		RegDomain{
@@ -91,7 +91,7 @@ type RenewDomain struct {
 	Actor     eos.AccountName `json:"actor"`
 }
 
-func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *eos.Action {
+func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *Action {
 	return newAction(
 		"fio.address", "renewdomain", actor,
 		RenewDomain{
@@ -110,7 +110,7 @@ type RenewAddress struct {
 	Actor      eos.AccountName `json:"actor"`
 }
 
-func NewRenewAddress(actor eos.AccountName, address string) *eos.Action {
+func NewRenewAddress(actor eos.AccountName, address string) *Action {
 	return newAction(
 		"fio.address", "renewaddress", actor,
 		RenewAddress{
@@ -127,7 +127,7 @@ type ExpDomain struct {
 	Domain string          `json:"domain"`
 }
 
-func NewExpDomain(actor eos.AccountName, domain string) *eos.Action {
+func NewExpDomain(actor eos.AccountName, domain string) *Action {
 	return newAction(
 		"fio.address", "expdomain", actor,
 		ExpDomain{
@@ -144,7 +144,7 @@ type ExpAddresses struct {
 	NumberAddressesToAdd uint64          `json:"number_addresses_to_add"`
 }
 
-func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string, toAdd uint64) *eos.Action {
+func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string, toAdd uint64) *Action {
 	return newAction(
 		"fio.address", "expaddresses", actor,
 		ExpAddresses{
@@ -158,7 +158,7 @@ func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string,
 
 type BurnExpired struct{}
 
-func NewBurnExpired(actor eos.AccountName) *eos.Action {
+func NewBurnExpired(actor eos.AccountName) *Action {
 	return newAction(
 		"fio.address", "burnexpired", actor,
 		BurnExpired{},
@@ -173,7 +173,7 @@ type SetDomainPub struct {
 	Tpid      string          `json:"tpid"`
 }
 
-func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *eos.Action {
+func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *Action {
 	isPublic := 0
 	if public {
 		isPublic = 1
@@ -202,7 +202,7 @@ type pubAddressRequest struct {
 
 // PubAddressLookup finds a public address for a user, given a currency key
 //  pubAddress, ok, err := api.PubAddressLookup(fio.Address("alice:fio", "BTC")
-func (api API) PubAddressLookup(fioAddress Address, chain string) (address PubAddress, found bool, err error) {
+func (api *API) PubAddressLookup(fioAddress Address, chain string) (address PubAddress, found bool, err error) {
 	if !fioAddress.Valid() {
 		return PubAddress{}, false, errors.New("invalid fio address")
 	}
@@ -252,7 +252,7 @@ type getFioNamesRequest struct {
 	FioPublicKey string `json:"fio_public_key"`
 }
 
-func (api API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
+func (api *API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
 	query := getFioNamesRequest{
 		FioPublicKey: pubKey,
 	}

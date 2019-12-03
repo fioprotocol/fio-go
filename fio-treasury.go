@@ -6,7 +6,7 @@ type PayTpidRewards struct {
 	Actor eos.AccountName `json:"actor"`
 }
 
-func NewPayTpidRewards(actor eos.AccountName) *eos.Action {
+func NewPayTpidRewards(actor eos.AccountName) *Action {
 	return newAction(
 		eos.AccountName("fio.treasury"), "tpidclaim", actor,
 		PayTpidRewards{Actor: actor},
@@ -18,7 +18,7 @@ type BpClaim struct {
 	Actor      eos.AccountName `json:"actor"`
 }
 
-func NewBpClaim(fioAddress string, actor eos.AccountName) *eos.Action {
+func NewBpClaim(fioAddress string, actor eos.AccountName) *Action {
 	return newAction(
 		eos.AccountName("fio.treasury"), "bpclaim", actor,
 		BpClaim{

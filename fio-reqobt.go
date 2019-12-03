@@ -127,7 +127,7 @@ type RejectFndReq struct {
 }
 
 // NewRejectFndReq builds the action to reject a request
-func NewRejectFndReq(actor eos.AccountName, requestId string) *eos.Action {
+func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 	return newAction(
 		"fio.reqobt", "rejectfndreq", actor,
 		RejectFndReq{

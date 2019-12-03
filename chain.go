@@ -12,6 +12,31 @@ type API struct {
 	eos.API
 }
 
+// Action struct duplicates eos.Action
+type Action struct {
+	Account       eos.AccountName       `json:"account"`
+	Name          eos.ActionName        `json:"name"`
+	Authorization []eos.PermissionLevel `json:"authorization,omitempty"`
+	eos.ActionData
+}
+
+// NewTransaction wraps eos.NewTransaction
+func NewTransaction(actions []*Action, txOpts *eos.TxOptions) *eos.Transaction {
+	eosActions := make([]*eos.Action, 0)
+	for _, a := range actions {
+		eosActions = append(
+			eosActions,
+			&eos.Action{
+				Account:       a.Account,
+				Name:          a.Name,
+				Authorization: a.Authorization,
+				ActionData:    a.ActionData,
+			},
+		)
+	}
+	return eos.NewTransaction(eosActions, txOpts)
+}
+
 // NewConnection sets up the API interface for interacting with the FIO API
 func NewConnection(keyBag *eos.KeyBag, url string) (*API, *eos.TxOptions, error) {
 	var api = eos.New(url)
@@ -26,12 +51,16 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *eos.TxOptions, error)
 	if err != nil {
 		return &API{}, nil, err
 	}
-	return &API{*api}, txOpts, nil
+	a := &API{*api}
+	if !maxFeesUpdated {
+		_ = UpdateMaxFees(a)
+	}
+	return a, txOpts, nil
 }
 
-// newAction creates an eos.Action for FIO contract calls
-func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *eos.Action {
-	return &eos.Action{
+// newAction creates an Action for FIO contract calls
+func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
+	return &Action{
 		Account: contract,
 		Name:    name,
 		Authorization: []eos.PermissionLevel{
@@ -45,10 +74,9 @@ func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 }
 
 // GetCurrentBlock provides the current head block number
-func GetCurrentBlock(api *API) (blockNum uint32) {
+func (api *API) GetCurrentBlock() (blockNum uint32) {
 	info, err := api.GetInfo()
 	if err != nil {
-		blockNum = 1<<32 - 1
 		return
 	}
 	return info.HeadBlockNum
@@ -58,7 +86,7 @@ func GetCurrentBlock(api *API) (blockNum uint32) {
 // blocks since the eos.GetTransaction doesn't provide a block hint argument, it will continue
 // to search for roughly 30 seconds and then timeout. If there is an error it sets the returned block
 // number to the upper limit of a uint32
-func WaitForConfirm(firstBlock uint32, txid string, api *API) (block uint32, err error) {
+func (api *API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, err error) {
 	if txid == "" {
 		return 1<<32 - 1, errors.New("invalid txid")
 	}
@@ -67,7 +95,7 @@ func WaitForConfirm(firstBlock uint32, txid string, api *API) (block uint32, err
 	for i := 0; i < 30; i++ {
 		// allow at least one block to be produced before searching
 		time.Sleep(time.Second)
-		latest := GetCurrentBlock(api)
+		latest := api.GetCurrentBlock()
 		if firstBlock == 0 || firstBlock > latest {
 			return 1<<32 - 1, errors.New("invalid starting block provided")
 		}
@@ -101,7 +129,7 @@ func WaitForConfirm(firstBlock uint32, txid string, api *API) (block uint32, err
 
 // WaitForPreCommit waits until 180 blocks (minimum pre-commit limit) have passed given a block number.
 // It makes sense to set seconds to the same value (180).
-func WaitForPreCommit(block uint32, seconds int, api *API) (err error) {
+func (api *API) WaitForPreCommit(block uint32, seconds int) (err error) {
 	if block == 0 || block == 1<<32-1 {
 		return errors.New("invalid block")
 	}
@@ -120,7 +148,7 @@ func WaitForPreCommit(block uint32, seconds int, api *API) (err error) {
 
 // WaitForIrreversible waits until the most recent irreversible block is greater than the specified block.
 // Normally this will be about 360 seconds.
-func WaitForIrreversible(block uint32, seconds int, api *API) (err error) {
+func (api *API) WaitForIrreversible(block uint32, seconds int) (err error) {
 	if block == 0 || block == 1<<32-1 {
 		return errors.New("invalid block")
 	}

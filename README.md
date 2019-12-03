@@ -44,7 +44,7 @@ func main() {
 
 	// Create the transaction, in this case transfer 1/2 FIO token
 	action := fio.NewTransferTokensPubKey(sender.Actor, recipient, fio.Tokens(0.5))
-	tx := eos.NewTransaction([]*eos.Action{action}, options)
+	tx := fio.NewTransaction([]*fio.Action{action}, options)
 
 	// Pack and sign
 	_, packedTx, err := api.SignTransaction(tx, options.ChainID, eos.CompressionNone)
