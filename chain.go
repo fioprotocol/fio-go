@@ -1,9 +1,12 @@
 package fio
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/ecc"
+	"io/ioutil"
+	"net/http"
 	"time"
 )
 
@@ -163,6 +166,46 @@ func (api *API) WaitForIrreversible(block uint32, seconds int) (err error) {
 		time.Sleep(time.Second)
 	}
 	return errors.New("timeout waiting for irreversible block")
+}
+
+type Producers struct {
+	Producers               []Producer `json:"producers"`
+	TotalProducerVoteWeight string     `json:"total_producer_vote_weight"`
+	More                    string     `json:"more"`
+}
+
+type Producer struct {
+	Owner         eos.AccountName `json:"owner"`
+	FioAddress    Address         `json:"fio_address"`
+	TotalVotes    string          `json:"total_votes"`
+	IsActive      uint8           `json:"is_active"`
+	Url           string          `json:"url"`
+	UnpaidBlocks  uint64          `json:"unpaid_blocks"`
+	LastClaimTime string          `json:"last_claim_time"`
+	Location      uint8           `json:"location"`
+}
+
+// The producers table is a litte different on FIO, use this instead of the GetProducers call from eos-go:
+func (api *API) GetFioProducers() (fioProducers *Producers, err error) {
+	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_producers`, nil)
+	if err != nil {
+		return &Producers{}, err
+	}
+	req.Header.Add("content-type", "application/json")
+	res, err := api.HttpClient.Do(req)
+	if err != nil {
+		return &Producers{}, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return &Producers{}, err
+	}
+	err = json.Unmarshal(body, &fioProducers)
+	if err != nil {
+		return &Producers{}, err
+	}
+	return
 }
 
 /*
