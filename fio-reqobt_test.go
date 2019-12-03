@@ -14,11 +14,11 @@ func TestEciesSecret(t *testing.T) {
 	bob, _ := NewAccountFromWif(`5JoQtsKQuH8hC9MyvfJAqo6qmKLm8ePYNucs7tPu2YxG12trzBt`)
 	alice, _ := NewAccountFromWif(`5J9bWm2ThenDm3tjvmUgHtWCVMUdjRR1pxnRtnJjvKA4b2ut5WK`)
 
-	_, a, e := EciesSecret(bob, alice.PubKey)
+	_, a, e := eciesSecret(bob, alice.PubKey)
 	if e != nil {
 		t.Error(e.Error())
 	}
-	_, b, e := EciesSecret(alice, bob.PubKey)
+	_, b, e := eciesSecret(alice, bob.PubKey)
 	if e != nil {
 		t.Error(e.Error())
 	}
@@ -54,7 +54,7 @@ func TestEncryptDecrypt(t *testing.T) {
 			t.Error(e.Error())
 			return
 		}
-		cipherText, e := EciesEncrypt(sender, recipient.PubKey, someData)
+		cipherText, e := eciesEncrypt(sender, recipient.PubKey, someData)
 		if e != nil {
 			t.Error(e.Error())
 			return
@@ -65,7 +65,7 @@ func TestEncryptDecrypt(t *testing.T) {
 			return
 		}
 		if !bytes.Equal(someData, decrypted) {
-			t.Error("decrypted content from EciesEncrypt did not match EciesDecrypt output")
+			t.Error("decrypted content from eciesEncrypt did not match EciesDecrypt output")
 		}
 	}
 }

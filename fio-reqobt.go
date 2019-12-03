@@ -58,7 +58,7 @@ func (c *ObtContent) Encrypt(from *Account, toPubKey string) (content string, er
 	if err != nil {
 		return "", err
 	}
-	encrypted, err := EciesEncrypt(from, toPubKey, j)
+	encrypted, err := eciesEncrypt(from, toPubKey, j)
 	if err != nil {
 		return "", err
 	}
@@ -139,17 +139,17 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 	)
 }
 
-// EciesEncrypt implements the encryption format used in the content field of OBT requests. A DH shared secret is
+// eciesEncrypt implements the encryption format used in the content field of OBT requests. A DH shared secret is
 // created using ECIES which derives a key based on the curves of the public and private keys.
 // This secret is hashed using sha512, and the first 32 bytes of the hash is used to encrypt the message using
 // AES-256 cbc, and the second half is used to create an outer sha256 hmac. A 16 byte IV is prepended to the
 // output, resulting in the message format of: IV + Ciphertext + HMAC
 // See https://github.com/fioprotocol/fiojs/blob/master/docs/message_encryption.md for more information.
-func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
+func eciesEncrypt(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
 	var buffer bytes.Buffer
 
 	// Get the shared-secret
-	_, secretHash, e := EciesSecret(sender, recipentPub)
+	_, secretHash, e := eciesSecret(sender, recipentPub)
 	if e != nil {
 		return nil, e
 	}
@@ -200,7 +200,7 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	return buffer.Bytes(), nil
 }
 
-// EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
+// EciesDecrypt is the inverse of eciesEncrypt, using the recipient's private key and sender's public instead.
 func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypted []byte, err error) {
 	const (
 		ivLen  = 16
@@ -208,7 +208,7 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 	)
 
 	// Get the shared-secret
-	_, secretHash, e := EciesSecret(recipient, senderPub)
+	_, secretHash, e := eciesSecret(recipient, senderPub)
 	if e != nil {
 		return nil, e
 	}
@@ -247,11 +247,11 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 	return plainText[:len(plainText)-padLen], nil
 }
 
-// EciesSecret derives the ecies pre-shared key from a private and public key.
+// eciesSecret derives the ecies pre-shared key from a private and public key.
 // The 'secret' returned is the actual secret, the 'hash' returned is what is actually used
 // in the OBT implementation, allowing the secret to be stretched into two keys, one for
 // encryption and one for message authentication.
-func EciesSecret(private *Account, public string) (secret []byte, hash []byte, err error) {
+func eciesSecret(private *Account, public string) (secret []byte, hash []byte, err error) {
 	// convert key to ecies private key type
 	wif, err := btcutil.DecodeWIF(private.KeyBag.Keys[0].String())
 	if err != nil {
