@@ -21,7 +21,7 @@ func main() {
 
 	const (
 		url       = `https://testnet.fioprotocol.io`
-		recipient = `FIO5NMm9Vf3NjYFnhoc7yxTCrLW963KPUCzeMGv3SJ6zR3GMez4ub`
+		recipient = `bp:dapixbp`
 		senderWif = `5KSQbcNjunVU38b2RdADLqZvz893ZgjdTAoSrV51mne4T97i1qC`
 	)
 
@@ -37,14 +37,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Get the FIO public key for the Address
+	pubKey, found, err := api.PubAddressLookup(recipient, "FIO")
+	if err != nil {
+		log.Fatal(err)
+	} else if !found {
+		log.Fatal("Couldn't find an account for " + recipient)
+	}
+
 	// Build the action, embed it in a TX, pack, and sign
 	_, packedTx, err := api.SignTransaction(
 		fio.NewTransaction(
 			[]*fio.Action{
 				fio.NewTransferTokensPubKey(
 					sender.Actor,
-					recipient,
-					fio.Tokens(0.5),
+					pubKey.PublicAddress,
+					fio.Tokens(0.5), // send 1/2 FIO
 				),
 			},
 			options,
