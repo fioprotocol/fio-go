@@ -37,17 +37,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Refresh transaction fees from the fio.fee fiofees table:
-	if ok := fio.UpdateMaxFees(api); !ok {
-		fmt.Println("Warning: couldn't update fees!")
-	}
-
-	// Create the transaction, in this case transfer 1/2 FIO token
-	action := fio.NewTransferTokensPubKey(sender.Actor, recipient, fio.Tokens(0.5))
-	tx := fio.NewTransaction([]*fio.Action{action}, options)
-
-	// Pack and sign
-	_, packedTx, err := api.SignTransaction(tx, options.ChainID, eos.CompressionNone)
+	// Build the action, embed it in a TX, pack, and sign
+	_, packedTx, err := api.SignTransaction(
+		fio.NewTransaction(
+			[]*fio.Action{
+				fio.NewTransferTokensPubKey(
+					sender.Actor,
+					recipient,
+					fio.Tokens(0.5),
+				),
+			},
+			options,
+		),
+		options.ChainID,
+		eos.CompressionNone,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
