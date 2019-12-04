@@ -77,7 +77,7 @@ func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 }
 
 // GetCurrentBlock provides the current head block number
-func (api *API) GetCurrentBlock() (blockNum uint32) {
+func (api API) GetCurrentBlock() (blockNum uint32) {
 	info, err := api.GetInfo()
 	if err != nil {
 		return
@@ -89,7 +89,7 @@ func (api *API) GetCurrentBlock() (blockNum uint32) {
 // blocks since the eos.GetTransaction doesn't provide a block hint argument, it will continue
 // to search for roughly 30 seconds and then timeout. If there is an error it sets the returned block
 // number to the upper limit of a uint32
-func (api *API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, err error) {
+func (api API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, err error) {
 	if txid == "" {
 		return 1<<32 - 1, errors.New("invalid txid")
 	}
@@ -132,7 +132,7 @@ func (api *API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, er
 
 // WaitForPreCommit waits until 180 blocks (minimum pre-commit limit) have passed given a block number.
 // It makes sense to set seconds to the same value (180).
-func (api *API) WaitForPreCommit(block uint32, seconds int) (err error) {
+func (api API) WaitForPreCommit(block uint32, seconds int) (err error) {
 	if block == 0 || block == 1<<32-1 {
 		return errors.New("invalid block")
 	}
@@ -151,7 +151,7 @@ func (api *API) WaitForPreCommit(block uint32, seconds int) (err error) {
 
 // WaitForIrreversible waits until the most recent irreversible block is greater than the specified block.
 // Normally this will be about 360 seconds.
-func (api *API) WaitForIrreversible(block uint32, seconds int) (err error) {
+func (api API) WaitForIrreversible(block uint32, seconds int) (err error) {
 	if block == 0 || block == 1<<32-1 {
 		return errors.New("invalid block")
 	}
@@ -186,7 +186,7 @@ type Producer struct {
 }
 
 // The producers table is a litte different on FIO, use this instead of the GetProducers call from eos-go:
-func (api *API) GetFioProducers() (fioProducers *Producers, err error) {
+func (api API) GetFioProducers() (fioProducers *Producers, err error) {
 	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_producers`, nil)
 	if err != nil {
 		return &Producers{}, err

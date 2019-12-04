@@ -202,7 +202,7 @@ type pubAddressRequest struct {
 
 // PubAddressLookup finds a public address for a user, given a currency key
 //  pubAddress, ok, err := api.PubAddressLookup(fio.Address("alice:fio", "BTC")
-func (api *API) PubAddressLookup(fioAddress Address, chain string) (address PubAddress, found bool, err error) {
+func (api API) PubAddressLookup(fioAddress Address, chain string) (address PubAddress, found bool, err error) {
 	if !fioAddress.Valid() {
 		return PubAddress{}, false, errors.New("invalid fio address")
 	}
@@ -252,7 +252,7 @@ type getFioNamesRequest struct {
 	FioPublicKey string `json:"fio_public_key"`
 }
 
-func (api *API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
+func (api API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
 	query := getFioNamesRequest{
 		FioPublicKey: pubKey,
 	}

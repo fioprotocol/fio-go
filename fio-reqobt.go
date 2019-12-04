@@ -309,7 +309,7 @@ type PendingFioRequestsResponse struct {
 }
 
 // GetPendingFioRequests looks for pending requests
-func (api *API) GetPendingFioRequests(pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
+func (api API) GetPendingFioRequests(pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
 	query := getPendingFioNamesRequest{
 		FioPublicKey: pubKey,
 		Limit:        limit,
