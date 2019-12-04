@@ -1,7 +1,6 @@
 package fio
 
 import (
-	"github.com/eoscanada/eos-go"
 	"log"
 )
 
@@ -47,7 +46,7 @@ func ExampleNewFundsReq() {
 		[]*Action{NewFundsReq(payee.Actor, payer, payee.Addresses[0].FioAddress, content)},
 		txOpts,
 	)
-	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
+	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, CompressionNone)
 	if err != nil {
 		log.Fatal("sign: " + err.Error())
 	}

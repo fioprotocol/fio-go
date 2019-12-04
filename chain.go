@@ -23,6 +23,12 @@ type Action struct {
 	eos.ActionData
 }
 
+// copy over CompressionTypes to reduce need for eos-go imports
+const (
+	CompressionNone = eos.CompressionType(iota)
+	CompressionZlib
+)
+
 // NewTransaction wraps eos.NewTransaction
 func NewTransaction(actions []*Action, txOpts *eos.TxOptions) *eos.Transaction {
 	eosActions := make([]*eos.Action, 0)

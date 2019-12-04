@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dapixio/fio-go"
-	"github.com/eoscanada/eos-go"
 	"log"
 )
 
@@ -58,7 +57,7 @@ func main() {
 			options,
 		),
 		options.ChainID,
-		eos.CompressionNone,
+		fio.CompressionNone,
 	)
 	if err != nil {
 		log.Fatal(err)

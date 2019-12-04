@@ -2,7 +2,6 @@ package fio
 
 import (
 	"fmt"
-	"github.com/eoscanada/eos-go"
 	"log"
 )
 
@@ -67,7 +66,7 @@ func ExampleNewRegDomain() {
 	tx := NewTransaction([]*Action{action}, txOpts)
 
 	// - Pack and sign the tx:
-	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
+	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, CompressionNone)
 
 	// - Broadcast the tx to the network:
 	result, err := api.PushTransaction(packedTx)
@@ -150,7 +149,7 @@ func ExampleNewRegAddress() {
 	_, packedTx, err := api.SignTransaction(
 		NewTransaction([]*Action{action}, txOpts),
 		txOpts.ChainID,
-		eos.CompressionNone,
+		CompressionNone,
 	)
 	result, err := api.PushTransaction(packedTx)
 	if err != nil {
