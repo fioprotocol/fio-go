@@ -23,6 +23,21 @@ type Action struct {
 	eos.ActionData
 }
 
+type TxOptions struct {
+	eos.TxOptions
+}
+
+func (txo TxOptions) toEos() *eos.TxOptions {
+	return &eos.TxOptions{
+		ChainID:          txo.ChainID,
+		HeadBlockID:      txo.HeadBlockID,
+		MaxNetUsageWords: txo.MaxNetUsageWords,
+		DelaySecs:        txo.DelaySecs,
+		MaxCPUUsageMS:    txo.MaxCPUUsageMS,
+		Compress:         txo.Compress,
+	}
+}
+
 // copy over CompressionTypes to reduce need for eos-go imports
 const (
 	CompressionNone = eos.CompressionType(iota)
@@ -30,7 +45,7 @@ const (
 )
 
 // NewTransaction wraps eos.NewTransaction
-func NewTransaction(actions []*Action, txOpts *eos.TxOptions) *eos.Transaction {
+func NewTransaction(actions []*Action, txOpts *TxOptions) *eos.Transaction {
 	eosActions := make([]*eos.Action, 0)
 	for _, a := range actions {
 		eosActions = append(
@@ -43,11 +58,11 @@ func NewTransaction(actions []*Action, txOpts *eos.TxOptions) *eos.Transaction {
 			},
 		)
 	}
-	return eos.NewTransaction(eosActions, txOpts)
+	return eos.NewTransaction(eosActions, txOpts.toEos())
 }
 
 // NewConnection sets up the API interface for interacting with the FIO API
-func NewConnection(keyBag *eos.KeyBag, url string) (*API, *eos.TxOptions, error) {
+func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	var api = eos.New(url)
 	api.SetSigner(keyBag)
 	api.SetCustomGetRequiredKeys(
@@ -55,7 +70,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *eos.TxOptions, error)
 			return keyBag.AvailableKeys()
 		},
 	)
-	txOpts := &eos.TxOptions{}
+	txOpts := &TxOptions{}
 	err := txOpts.FillFromChain(api)
 	if err != nil {
 		return &API{}, nil, err
