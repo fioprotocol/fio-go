@@ -7,7 +7,7 @@ the db_size_api_plugin is enabled), list of producers, and an event stream.
 Default is to connect to `http://localhost:8888` to specify a different
 nodeos server, run with the `-u` option.
 
-![Screenshot of fiotop running](fiotop.png)
+![Screenshot of fiotop running](fiotop.gif)
 
 ```
 Keys:

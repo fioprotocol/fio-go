@@ -63,9 +63,9 @@ func main() {
 				ui.NewCol(1.0/2, g0),
 			),
 			ui.NewRow(
-				0.85,
-				ui.NewCol(0.28, prods),
-				ui.NewCol(0.72,
+				0.9,
+				ui.NewCol(0.3, prods),
+				ui.NewCol(0.7,
 					ui.NewRow(0.3,
 						ui.NewCol(1.0, slg),
 					),
