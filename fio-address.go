@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/eoscanada/eos-go"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -34,15 +35,40 @@ func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (
 	), true
 }
 
+// RegAddress simplifies the process of registering by making it a single step that waits for confirm
+func (api *API) RegAddress(txOpts *TxOptions, actor *Account, ownerPub string, address string) (txId string, ok bool, err error) {
+	action, ok := NewRegAddress(actor.Actor, Address(address), ownerPub)
+	if !ok {
+		return "", false, errors.New("invalid address")
+	}
+	tx := NewTransaction([]*Action{action}, txOpts)
+	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, CompressionNone)
+	result, err := api.PushTransaction(packedTx)
+	if err != nil {
+		log.Println("push new address: " + err.Error())
+		return "", false, err
+	}
+	_, err = api.WaitForConfirm(api.GetCurrentBlock()-2, result.TransactionID)
+	if err != nil {
+		log.Println("waiting for confirm: " + err.Error())
+		return "", false, err
+	}
+	return result.TransactionID, true, nil
+}
+
 // AddAddress allows a public address of the specific blockchain type to be added to the FIO Address,
 // so that it can be returned using /pub_address_lookup
 type AddAddress struct {
-	FioAddress    string          `json:"fio_address"`
-	TokenCode     string          `json:"token_code"`
-	PublicAddress string          `json:"public_address"`
-	MaxFee        uint64          `json:"max_fee"`
-	Actor         eos.AccountName `json:"actor"`
-	Tpid          string          `json:"tpid"`
+	FioAddress      string          `json:"fio_address"`
+	PublicAddresses []TokenPubAddr  `json:"public_addresses"`
+	MaxFee          uint64          `json:"max_fee"`
+	Actor           eos.AccountName `json:"actor"`
+	Tpid            string          `json:"tpid"`
+}
+
+type TokenPubAddr struct {
+	TokenCode     string `json:"token_code"`
+	PublicAddress string `json:"public_address"`
 }
 
 func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publicAddress string) (action *Action, ok bool) {
@@ -53,8 +79,7 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publ
 		"fio.address", "addaddress", actor,
 		AddAddress{
 			FioAddress:    string(fioAddress),
-			TokenCode:     token,
-			PublicAddress: publicAddress,
+			PublicAddresses: []TokenPubAddr{{token, publicAddress}},
 			MaxFee:        Tokens(GetMaxFee("add_pub_address")),
 			Tpid:          globalTpid,
 			Actor:         actor,
@@ -82,6 +107,24 @@ func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Act
 			Tpid:              globalTpid,
 		},
 	)
+}
+
+// RegDomain simplifies the process of registering by making it a single step that waits for confirm
+func (api *API) RegDomain(txOpts *TxOptions, actor *Account, ownerPub string, domain string) (txId string, ok bool, err error) {
+	action := NewRegDomain(actor.Actor, domain, ownerPub)
+	tx := NewTransaction([]*Action{action}, txOpts)
+	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, CompressionNone)
+	result, err := api.PushTransaction(packedTx)
+	if err != nil {
+		log.Println("push new domain: " + err.Error())
+		return "", false, err
+	}
+	_, err = api.WaitForConfirm(api.GetCurrentBlock()-2, result.TransactionID)
+	if err != nil {
+		log.Println("waiting for domain: " + err.Error())
+		return "", false, err
+	}
+	return result.TransactionID, true, nil
 }
 
 type RenewDomain struct {
@@ -211,7 +254,7 @@ func (api API) PubAddressLookup(fioAddress Address, chain string) (address PubAd
 		TokenCode:  chain,
 	}
 	j, _ := json.Marshal(query)
-	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/pub_address_lookup`, bytes.NewBuffer(j))
+	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_pub_address`, bytes.NewBuffer(j))
 	if err != nil {
 		return PubAddress{}, false, err
 	}

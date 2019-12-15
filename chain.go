@@ -23,6 +23,21 @@ type Action struct {
 	eos.ActionData
 }
 
+type TxOptions struct {
+	eos.TxOptions
+}
+
+func (txo TxOptions) toEos() *eos.TxOptions {
+	return &eos.TxOptions{
+		ChainID:          txo.ChainID,
+		HeadBlockID:      txo.HeadBlockID,
+		MaxNetUsageWords: txo.MaxNetUsageWords,
+		DelaySecs:        txo.DelaySecs,
+		MaxCPUUsageMS:    txo.MaxCPUUsageMS,
+		Compress:         txo.Compress,
+	}
+}
+
 // copy over CompressionTypes to reduce need for eos-go imports
 const (
 	CompressionNone = eos.CompressionType(iota)
@@ -30,7 +45,7 @@ const (
 )
 
 // NewTransaction wraps eos.NewTransaction
-func NewTransaction(actions []*Action, txOpts *eos.TxOptions) *eos.Transaction {
+func NewTransaction(actions []*Action, txOpts *TxOptions) *eos.Transaction {
 	eosActions := make([]*eos.Action, 0)
 	for _, a := range actions {
 		eosActions = append(
@@ -43,11 +58,11 @@ func NewTransaction(actions []*Action, txOpts *eos.TxOptions) *eos.Transaction {
 			},
 		)
 	}
-	return eos.NewTransaction(eosActions, txOpts)
+	return eos.NewTransaction(eosActions, txOpts.toEos())
 }
 
 // NewConnection sets up the API interface for interacting with the FIO API
-func NewConnection(keyBag *eos.KeyBag, url string) (*API, *eos.TxOptions, error) {
+func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	var api = eos.New(url)
 	api.SetSigner(keyBag)
 	api.SetCustomGetRequiredKeys(
@@ -55,7 +70,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *eos.TxOptions, error)
 			return keyBag.AvailableKeys()
 		},
 	)
-	txOpts := &eos.TxOptions{}
+	txOpts := &TxOptions{}
 	err := txOpts.FillFromChain(api)
 	if err != nil {
 		return &API{}, nil, err
@@ -214,18 +229,35 @@ func (api API) GetFioProducers() (fioProducers *Producers, err error) {
 	return
 }
 
-/*
-TODO: use reflection to allow setting the Tpid in an Action if the field exists:
-// Action is a clone of eos.Action so it can have custom member functions
-type Action eos.Action
 
-func (a *Action) SetTpid(tpid string) error {
-	actionType := reflect.TypeOf(a.ActionData.Data)
-	value, ok := actionType.FieldByName(`Tpid`)
-	if !ok {
-		return errors.New("transaction does not contain a tpid field")
+// AllABIs returns a map of every ABI available. This is only possible in FIO because there are a small number
+// of contracts that exist.
+func (api API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
+	type contracts struct {
+		Owner string `json:"owner"`
 	}
-	reflect.ValueOf(value).Set("tpid")
+	table, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:  "eosio",
+		Scope: "eosio",
+		Table: "abihash",
+		JSON:  true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]contracts, 0)
+	_ = json.Unmarshal(table.Rows, &result)
+	abiList := make(map[eos.AccountName]*eos.ABI)
+	for _, name := range result {
+		bi, err := api.GetABI(eos.AccountName(name.Owner))
+		if err != nil {
+			continue
+		}
+		abiList[bi.AccountName] = &bi.ABI
+	}
+	if len(abiList) == 0 {
+		return nil, errors.New("could not get abis from eosio tables")
+	}
+	return abiList, nil
 }
 
-*/

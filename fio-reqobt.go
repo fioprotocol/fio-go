@@ -55,7 +55,7 @@ func DecryptContent(to *Account, fromPubKey string, encrypted string) (*ObtConte
 }
 
 // Encrypt serializes and encrypts the 'content' field for OBT requests
-func (c *ObtContent) Encrypt(from *Account, toPubKey string) (content string, err error) {
+func (c ObtContent) Encrypt(from *Account, toPubKey string) (content string, err error) {
 	j, err := json.Marshal(c)
 	if err != nil {
 		return "", err
@@ -118,12 +118,12 @@ type FundsResp struct {
 }
 
 // NewFundsReq builds the action for providing the result of a off-chain transaction
-func NewFundsReq(actor eos.AccountName, payer string, payee string, content string) *Action {
+func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, content string) *Action {
 	return newAction(
 		"fio.reqobt", "newfundsreq", actor,
 		FundsReq{
-			PayerFioAddress: payer,
-			PayeeFioAddress: payee,
+			PayerFioAddress: payerFio,
+			PayeeFioAddress: payeeFio,
 			Content:         content,
 			MaxFee:          Tokens(GetMaxFee("new_funds_request")),
 			Actor:           string(actor),
