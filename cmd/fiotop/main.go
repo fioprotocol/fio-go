@@ -27,6 +27,7 @@ func main() {
 	var highestBlock uint32
 	var connectedPeers string
 	logChan := make(chan *eos.Action)
+
 	api, _, err := fio.NewConnection(nil, Url)
 	if err != nil {
 		log.Fatal(err)
@@ -46,29 +47,36 @@ func main() {
 	slg := widgets.NewSparklineGroup(sl)
 	logs := widgets.NewList()
 
+	var helpModal bool
+	help := widgets.NewParagraph()
+	help.TextStyle = ui.NewStyle(ui.ColorClear)
+
 	// layout panes
 	grid := ui.NewGrid()
 	termWidth, termHeight := ui.TerminalDimensions()
 	grid.SetRect(0, 0, termWidth, termHeight)
 
-	grid.Set(
-		ui.NewRow(1.0/8,
-			ui.NewCol(1.0/2, p),
-			ui.NewCol(1.0/2, g0),
-		),
-		ui.NewRow(
-			0.85,
-			ui.NewCol(0.28, prods),
-			ui.NewCol(0.72,
-				ui.NewRow(0.3,
-					ui.NewCol(1.0, slg),
-				),
-				ui.NewRow(0.7,
-					ui.NewCol(1.0, logs),
+	gridNormal := func() {
+		grid.Set(
+			ui.NewRow(1.0/8,
+				ui.NewCol(1.0/2, p),
+				ui.NewCol(1.0/2, g0),
+			),
+			ui.NewRow(
+				0.85,
+				ui.NewCol(0.28, prods),
+				ui.NewCol(0.72,
+					ui.NewRow(0.3,
+						ui.NewCol(1.0, slg),
+					),
+					ui.NewRow(0.7,
+						ui.NewCol(1.0, logs),
+					),
 				),
 			),
-		),
-	)
+		)
+	}
+	gridNormal()
 	ui.Render(grid)
 
 	// Chain info
@@ -76,13 +84,14 @@ func main() {
 		p.TextStyle.Fg = ui.ColorClear
 		p.BorderStyle.Fg = ui.ColorClear
 		for {
-			//p.SetRect(0, 0, halfWidth - 4, quarterHeight - 3)
 			info, e := api.GetInfo()
 			if e != nil {
 				p.TextStyle.Fg = ui.ColorRed
 				p.Title = "Error"
 				p.Text = e.Error()
-				ui.Render(p)
+				if !helpModal {
+					ui.Render(p)
+				}
 				time.Sleep(5 * time.Second)
 			} else {
 				currentProducer = info.HeadBlockProducer
@@ -101,8 +110,9 @@ func main() {
 						info.HeadBlockNum, info.LastIrreversibleBlockNum, lag, connectedPeers,
 					)
 				}
-
-				ui.Render(p)
+				if !helpModal {
+					ui.Render(p)
+				}
 			}
 			time.Sleep(500 * time.Millisecond)
 		}
@@ -113,14 +123,15 @@ func main() {
 		g0.BorderStyle.Fg = ui.ColorClear
 		g0.TitleStyle.Fg = ui.ColorClear
 		for {
-			//g0.SetRect(halfWidth + 6, 0, halfWidth - 11, quarterHeight - 3)
 			size, e := api.GetDBSize()
 			if e != nil {
 				g0.Title = " get db size failed, is db_size_api_plugin enabled? "
 				g0.TitleStyle.Fg = ui.ColorYellow
 				g0.BarColor = ui.ColorRed
 				g0.Percent = 0
-				ui.Render(g0)
+				if !helpModal {
+					ui.Render(g0)
+				}
 				time.Sleep(10 * time.Second)
 			} else {
 				g0.TitleStyle.Fg = ui.ColorClear
@@ -138,16 +149,18 @@ func main() {
 					g0.BarColor = ui.ColorRed
 				}
 			}
-			ui.Render(g0)
+			if !helpModal {
+				ui.Render(g0)
+			}
 			time.Sleep(3 * time.Second)
 		}
 	}()
 
 	// Producer info
+	lastProduced := make(map[eos.AccountName]time.Time)
 	go func() {
 		prods.Title = "Current Producers"
 		prods.TextStyle = ui.StyleClear
-		lastProduced := make(map[eos.AccountName]time.Time)
 		for {
 			bps := make([][]string, 0)
 			styles := make(map[int]ui.Style)
@@ -156,7 +169,9 @@ func main() {
 				prods.Title = "Cannot get list."
 				prods.TextStyle = ui.NewStyle(ui.ColorRed)
 				prods.BorderStyle = ui.NewStyle(ui.ColorClear)
-				ui.Render(prods)
+				if !helpModal {
+					ui.Render(prods)
+				}
 				time.Sleep(5 * time.Second)
 			} else {
 				bps = append(bps,
@@ -204,23 +219,27 @@ func main() {
 				prods.TextAlignment = ui.AlignRight
 				prods.RowSeparator = false
 				prods.FillRow = false
-				ui.Render(prods)
+				if !helpModal {
+					ui.Render(prods)
+				}
 			}
 			time.Sleep(time.Second)
 		}
 	}()
 
 	// Tx sparkline
+	ticks := slg.Size()
+	txCount := make([]float64, ticks.X-2)
+	for i := range txCount {
+		txCount[i] = 0.0
+	}
 	go func() {
 		sl.Title = "TX / Block"
 		sl.LineColor = ui.ColorBlue
-		ticks := slg.Size()
-		txCount := make([]float64, ticks.X-2)
-		for i := range txCount {
-			txCount[i] = 0.0
-		}
 		sl.Data = txCount
-		ui.Render(slg)
+		if !helpModal {
+			ui.Render(slg)
+		}
 		pushPop := func(last float64) {
 			txCount = append(txCount[1:], last)
 		}
@@ -262,7 +281,9 @@ func main() {
 				sl.Title = pr.Sprintf("TX / Block (avg %.2f/block)", avg)
 			}
 			sl.Data = txCount
-			ui.Render(slg)
+			if !helpModal {
+				ui.Render(slg)
+			}
 			time.Sleep(time.Second)
 		}
 	}()
@@ -273,7 +294,6 @@ func main() {
 			n, e := getPeerCounts(api)
 			if e != nil {
 				connectedPeers = "Cannot get peer information, is net_api_plugin enabled?"
-				//connectedPeers = e.Error()
 				time.Sleep(10 * time.Minute)
 				continue
 			}
@@ -296,9 +316,8 @@ func main() {
 	}()
 
 	// action stream
+	logBuffer := make([]string, 80)
 	go func() {
-		//size := logs.Size()
-		logBuffer := make([]string, 80)
 		lpushRPop := func(l string) {
 			logBuffer = append([]string{l}, logBuffer[:len(logBuffer)-1]...)
 		}
@@ -324,21 +343,37 @@ func main() {
 				line := pr.Sprintf("%s %s %s::%s -- %s", time.Now().Format("15:04:05.000"), l.Authorization[0].Actor, l.Account, l.Name, string(actionData))
 				lpushRPop(line)
 				logs.Rows = logBuffer
-				ui.Render(logs)
+				if !helpModal {
+					ui.Render(logs)
+				}
 			}
 		}
 	}()
 
 	// repaint screen
-	go func() {
-		for {
-			time.Sleep(30 * time.Second)
+	repaint := func() {
+		if !helpModal {
 			ui.Clear()
 			termWidth, termHeight = ui.TerminalDimensions()
 			grid.SetRect(0, 0, termWidth, termHeight)
 			ui.Render(grid)
 		}
+	}
+
+	go func() {
+		for {
+			time.Sleep(30 * time.Second)
+			repaint()
+		}
 	}()
+
+	gridHelp := func() {
+		grid.Set(
+			ui.NewRow(1.0/4,
+				ui.NewCol(1.0/2, help),
+			),
+		)
+	}
 
 	uiEvents := ui.PollEvents()
 	for {
@@ -350,7 +385,47 @@ func main() {
 			payload := e.Payload.(ui.Resize)
 			grid.SetRect(0, 0, payload.Width, payload.Height)
 			ui.Clear()
+			if !helpModal {
+				ui.Render(grid)
+			}
+		// allow user to request repaint
+		case "r", "<C-l>":
+			repaint()
+		// wipeout clears data
+		case "d", "<C-u>":
+			connectedPeers = ""
+			logBuffer = make([]string, 80)
+			logs.Rows = logBuffer
+			txCount = make([]float64, ticks.X-2)
+			for i := range txCount {
+				txCount[i] = 0.0
+			}
+			lastProduced = make(map[eos.AccountName]time.Time)
+			g0.Title = ""
+			if !helpModal {
+				ui.Render(g0, logs, slg, prods, p)
+			}
+		// help modal
+		case "?", "<F1>":
+			helpModal = true
+			help.Title = " Help "
+			help.Text = helpText
+			help.Border = true
+			gridHelp()
 			ui.Render(grid)
+			ui.Clear()
+			ui.Render(help)
+		// clear help modal
+		case "<Escape>", "<Enter>":
+			if helpModal {
+				help.Title = ""
+				help.Text = ""
+				help.Border = false
+				helpModal = false
+				ui.Clear()
+				gridNormal()
+				ui.Render(grid)
+			}
 		}
 	}
 
@@ -380,3 +455,12 @@ func getPeerCounts(api *fio.API) ([]peers, error) {
 	return peerList, nil
 }
 
+const helpText = `
+ Keys:
+
+    q or CTRL-C to exit
+    r or CTRL-L to repaint screen
+    d or CTRL-U to clear data
+
+    Press ESC or ENTER to exit help.
+`
