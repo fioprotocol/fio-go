@@ -229,18 +229,35 @@ func (api API) GetFioProducers() (fioProducers *Producers, err error) {
 	return
 }
 
-/*
-TODO: use reflection to allow setting the Tpid in an Action if the field exists:
-// Action is a clone of eos.Action so it can have custom member functions
-type Action eos.Action
 
-func (a *Action) SetTpid(tpid string) error {
-	actionType := reflect.TypeOf(a.ActionData.Data)
-	value, ok := actionType.FieldByName(`Tpid`)
-	if !ok {
-		return errors.New("transaction does not contain a tpid field")
+// AllABIs returns a map of every ABI available. This is only possible in FIO because there are a small number
+// of contracts that exist.
+func (api API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
+	type contracts struct {
+		Owner string `json:"owner"`
 	}
-	reflect.ValueOf(value).Set("tpid")
+	table, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:  "eosio",
+		Scope: "eosio",
+		Table: "abihash",
+		JSON:  true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]contracts, 0)
+	_ = json.Unmarshal(table.Rows, &result)
+	abiList := make(map[eos.AccountName]*eos.ABI)
+	for _, name := range result {
+		bi, err := api.GetABI(eos.AccountName(name.Owner))
+		if err != nil {
+			continue
+		}
+		abiList[bi.AccountName] = &bi.ABI
+	}
+	if len(abiList) == 0 {
+		return nil, errors.New("could not get abis from eosio tables")
+	}
+	return abiList, nil
 }
 
-*/
