@@ -91,7 +91,7 @@ func main() {
 				lag := info.HeadBlockTime.Sub(time.Now().UTC()) / time.Second
 				p.TextStyle.Fg = ui.ColorClear
 				p.Text = pr.Sprintf(
-					"\n    Head: %d  Irr: %d\n    %s",
+					"\n    Head: %d  Irreversible: %d\n    %s",
 					info.HeadBlockNum, info.LastIrreversibleBlockNum, connectedPeers,
 				)
 				if lag > 0 {
@@ -116,12 +116,12 @@ func main() {
 			//g0.SetRect(halfWidth + 6, 0, halfWidth - 11, quarterHeight - 3)
 			size, e := api.GetDBSize()
 			if e != nil {
-				g0.Title = " get db size failed "
+				g0.Title = " get db size failed, is db_size_api_plugin enabled? "
 				g0.TitleStyle.Fg = ui.ColorYellow
 				g0.BarColor = ui.ColorRed
 				g0.Percent = 0
 				ui.Render(g0)
-				time.Sleep(5 * time.Second)
+				time.Sleep(10 * time.Second)
 			} else {
 				g0.TitleStyle.Fg = ui.ColorClear
 				g0.Title = pr.Sprintf("Database (mem) %d / %d MiB", size.UsedBytes/(1024*1024), size.Size/(1024*1024))
@@ -186,7 +186,8 @@ func main() {
 						)
 						switch {
 						case currentProducer == p.Owner:
-							styles[i+2] = ui.NewStyle(ui.ColorGreen)
+							//styles[i+2] = ui.NewStyle(ui.ColorGreen)
+							styles[i+2] = ui.NewStyle(ui.ColorGreen, ui.ColorBlack, ui.ModifierUnderline)
 							lastProduced[p.Owner] = time.Now()
 						case i >= 21:
 							styles[i+2] = ui.NewStyle(ui.ColorBlue)
