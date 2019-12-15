@@ -252,6 +252,15 @@ func main() {
 					}
 				}
 			}()
+			var count int
+			if len(txCount) >= 10 {
+				for _, i := range txCount[len(txCount)-30:] {
+					count = count + int(i)
+				}
+				blocks := 10.0
+				avg := float64(count) / blocks / 2.0
+				sl.Title = pr.Sprintf("TX / Block (avg %.2f/block)", avg)
+			}
 			sl.Data = txCount
 			ui.Render(slg)
 			time.Sleep(time.Second)
