@@ -7,18 +7,19 @@ import (
 )
 
 const (
-	FeeRegisterFioAddress = "register_fio_address"
-	FeeAddPubAddress = "add_pub_address"
-	FeeRegisterFioDomain = "register_fio_domain"
-	FeeRenewFioDomain = "renew_fio_domain"
-	FeeRenewFioAddress = "renew_fio_address"
-	FeeBurnExpired = "burnexpired"
-	FeeSetDomainPub = "setdomainpub"
-	FeeTransferTokensPubKey= "transfer_tokens_pub_key"
-	FeeRecordSend = "record_send"
-	FeeNewFundsRequest = "new_funds_request"
-	FeeRejectFundsRequest = "reject_funds_request"
+	FeeRegisterFioAddress   = "register_fio_address"
+	FeeAddPubAddress        = "add_pub_address"
+	FeeRegisterFioDomain    = "register_fio_domain"
+	FeeRenewFioDomain       = "renew_fio_domain"
+	FeeRenewFioAddress      = "renew_fio_address"
+	FeeBurnExpired          = "burnexpired"
+	FeeSetDomainPub         = "setdomainpub"
+	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
+	FeeRecordSend           = "record_send"
+	FeeNewFundsRequest      = "new_funds_request"
+	FeeRejectFundsRequest   = "reject_funds_request"
 )
+
 var (
 	// maxFees holds the fees for transactions
 	// use fio.GetMaxFee() instead of directly accessing this map to ensure concurrent safe access

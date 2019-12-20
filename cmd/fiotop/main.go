@@ -361,7 +361,7 @@ func main() {
 				case false:
 					line = pr.Sprintf("%s %s %s::%s -- %s", time.Now().Format("15:04:05.000"), l.L.Authorization[0].Actor, l.L.Account, l.L.Name, string(actionData))
 				case true:
-					line = pr.Sprintf("%s (%v) %s:\n             %s %s::%s -- %s",  time.Now().Format("15:04:05.000"), l.B, l.T.String(), l.L.Authorization[0].Actor, l.L.Account, l.L.Name, string(actionData))
+					line = pr.Sprintf("%s (%v) %s:\n             %s %s::%s -- %s", time.Now().Format("15:04:05.000"), l.B, l.T.String(), l.L.Authorization[0].Actor, l.L.Account, l.L.Name, string(actionData))
 				}
 				lpushRPop(line)
 				logs.Rows = logBuffer

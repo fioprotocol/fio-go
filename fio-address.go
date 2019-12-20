@@ -78,11 +78,11 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publ
 	return newAction(
 		"fio.address", "addaddress", actor,
 		AddAddress{
-			FioAddress:    string(fioAddress),
+			FioAddress:      string(fioAddress),
 			PublicAddresses: []TokenPubAddr{{token, publicAddress}},
-			MaxFee:        Tokens(GetMaxFee("add_pub_address")),
-			Tpid:          globalTpid,
-			Actor:         actor,
+			MaxFee:          Tokens(GetMaxFee("add_pub_address")),
+			Tpid:            globalTpid,
+			Actor:           actor,
 		},
 	), true
 }

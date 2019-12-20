@@ -164,4 +164,3 @@ func ExampleNewRegAddress() {
 	fmt.Println("Found transaction in block:", block)
 	// Output: Found transaction in block: 4503053
 }
-

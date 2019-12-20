@@ -67,12 +67,12 @@ func (c ObtContent) Encrypt(from *Account, toPubKey string) (content []byte, err
 	}
 	return encrypted, nil
 	/*
-	b64Buffer := bytes.NewBuffer([]byte{})
-	encoded:= base64.NewEncoder(base64.URLEncoding, b64Buffer)
-	_, err = encoded.Write(encrypted)
-	_ = encoded.Close()
-	return b64Buffer.Bytes(), nil
-	 */
+		b64Buffer := bytes.NewBuffer([]byte{})
+		encoded:= base64.NewEncoder(base64.URLEncoding, b64Buffer)
+		_, err = encoded.Write(encrypted)
+		_ = encoded.Close()
+		return b64Buffer.Bytes(), nil
+	*/
 }
 
 type RecordSend struct {
