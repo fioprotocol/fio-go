@@ -2,6 +2,8 @@ package fio
 
 import (
 	"bytes"
+	"compress/flate"
+	"compress/zlib"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
@@ -15,7 +17,6 @@ import (
 	"github.com/eoscanada/eos-go/btcsuite/btcutil"
 	"github.com/eoscanada/eos-go/ecc"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/mr-tron/base58"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -37,12 +38,12 @@ type ObtContent struct {
 }
 
 // DecryptContent provides a new populated ObtContent struct given an encrypted content payload
-func DecryptContent(to *Account, fromPubKey string, encrypted string) (*ObtContent, error) {
-	decoded, err := base58.Decode(encrypted)
-	if err != nil {
-		return nil, err
-	}
-	jsonBytes, err := EciesDecrypt(to, fromPubKey, decoded)
+func DecryptContent(to *Account, fromPubKey string, encrypted []byte) (*ObtContent, error) {
+	//decoded, err := base58.Decode(encrypted)
+	//if err != nil {
+	//	return nil, err
+	//}
+	jsonBytes, err := EciesDecrypt(to, fromPubKey, encrypted)
 	if err != nil {
 		return nil, err
 	}
@@ -55,18 +56,23 @@ func DecryptContent(to *Account, fromPubKey string, encrypted string) (*ObtConte
 }
 
 // Encrypt serializes and encrypts the 'content' field for OBT requests
-func (c ObtContent) Encrypt(from *Account, toPubKey string) (content string, err error) {
-	j, err := json.Marshal(c)
+func (c ObtContent) Encrypt(from *Account, toPubKey string) (content []byte, err error) {
+	bin, err := eos.MarshalBinary(c)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	encrypted, err := eciesEncrypt(from, toPubKey, j)
+	encrypted, err := EciesEncrypt(from, toPubKey, bin)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	//return hex.EncodeToString(encrypted), nil
-	//return string(encrypted), nil
-	return base58.Encode(encrypted), nil
+	return encrypted, nil
+	/*
+		b64Buffer := bytes.NewBuffer([]byte{})
+		encoded:= base64.NewEncoder(base64.URLEncoding, b64Buffer)
+		_, err = encoded.Write(encrypted)
+		_ = encoded.Close()
+		return b64Buffer.Bytes(), nil
+	*/
 }
 
 type RecordSend struct {
@@ -99,7 +105,7 @@ func NewRecordSend(actor eos.AccountName, reqId string, payer string, payee stri
 type FundsReq struct {
 	PayerFioAddress string `json:"payer_fio_address"`
 	PayeeFioAddress string `json:"payee_fio_address"`
-	Content         string `json:"content"`
+	Content         []byte `json:"content"`
 	MaxFee          uint64 `json:"max_fee"`
 	Actor           string `json:"actor"`
 	Tpid            string `json:"tpid"`
@@ -118,7 +124,7 @@ type FundsResp struct {
 }
 
 // NewFundsReq builds the action for providing the result of a off-chain transaction
-func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, content string) *Action {
+func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, content []byte) *Action {
 	return newAction(
 		"fio.reqobt", "newfundsreq", actor,
 		FundsReq{
@@ -153,34 +159,43 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 	)
 }
 
-// eciesEncrypt implements the encryption format used in the content field of OBT requests. A DH shared secret is
+// EciesEncrypt implements the encryption format used in the content field of OBT requests. A DH shared secret is
 // created using ECIES which derives a key based on the curves of the public and private keys.
 // This secret is hashed using sha512, and the first 32 bytes of the hash is used to encrypt the message using
 // AES-256 cbc, and the second half is used to create an outer sha256 hmac. A 16 byte IV is prepended to the
 // output, resulting in the message format of: IV + Ciphertext + HMAC
 // See https://github.com/fioprotocol/fiojs/blob/master/docs/message_encryption.md for more information.
-func eciesEncrypt(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
+func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
+	var compressed bytes.Buffer
+	writer, _ := zlib.NewWriterLevel(&compressed, flate.BestCompression)
+	_, _ = writer.Write(plainText)
+	err = writer.Close()
+	if err != nil {
+		return nil, fmt.Errorf("tx writer close %s", err)
+	}
+	plainText = compressed.Bytes()
+
 	var buffer bytes.Buffer
 
 	// Get the shared-secret
-	_, secretHash, e := eciesSecret(sender, recipentPub)
-	if e != nil {
-		return nil, e
+	_, secretHash, err := eciesSecret(sender, recipentPub)
+	if err != nil {
+		return nil, err
 	}
 
 	// Generate IV
 	iv := make([]byte, 16)
 	rand.Seed(time.Now().UnixNano())
-	_, e = rand.Read(iv)
-	if e != nil {
-		return nil, e
+	_, err = rand.Read(iv)
+	if err != nil {
+		return nil, err
 	}
 	buffer.Write(iv)
 
 	// setup AES CBC for encryption
-	block, e := aes.NewCipher(secretHash[:32])
-	if e != nil {
-		return nil, e
+	block, err := aes.NewCipher(secretHash[:32])
+	if err != nil {
+		return nil, err
 	}
 	cbc := cipher.NewCBCEncrypter(block, iv)
 
@@ -204,9 +219,9 @@ func eciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 
 	// Sign the message using sha256 hmac
 	signer := hmac.New(sha256.New, secretHash[32:])
-	_, e = signer.Write(buffer.Bytes())
-	if e != nil {
-		return nil, e
+	_, err = signer.Write(buffer.Bytes())
+	if err != nil {
+		return nil, err
 	}
 	signature := signer.Sum(nil)
 	buffer.Write(signature)
@@ -214,7 +229,7 @@ func eciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	return buffer.Bytes(), nil
 }
 
-// EciesDecrypt is the inverse of eciesEncrypt, using the recipient's private key and sender's public instead.
+// EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
 func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypted []byte, err error) {
 	const (
 		ivLen  = 16
@@ -222,9 +237,9 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 	)
 
 	// Get the shared-secret
-	_, secretHash, e := eciesSecret(recipient, senderPub)
-	if e != nil {
-		return nil, e
+	_, secretHash, err := eciesSecret(recipient, senderPub)
+	if err != nil {
+		return nil, err
 	}
 
 	// check the signature
@@ -252,13 +267,31 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 	cbc := cipher.NewCBCDecrypter(block, message[:ivLen])
 	plainText := make([]byte, len(message[ivLen:len(message)-sigLen]))
 	cbc.CryptBlocks(plainText, message[ivLen:len(message)-sigLen])
-
 	// strip padding and done.
+	if len(plainText) == 0 {
+		return nil, errors.New("could not decrypt message")
+	}
 	padLen := int(plainText[len(plainText)-1])
 	if padLen >= len(plainText) {
 		return nil, errors.New("invalid padding in message")
 	}
-	return plainText[:len(plainText)-padLen], nil
+
+	// decompress
+	buf := bytes.NewReader(plainText[:len(plainText)-padLen]) // be sure to strip PKCS7 padding
+	zlDec, err := zlib.NewReader(buf)
+	if err != nil {
+		return nil, err
+	}
+	defer zlDec.Close()
+	uncompressed, err := ioutil.ReadAll(zlDec)
+	if err != nil {
+		return nil, err
+	}
+	if len(uncompressed) == 0 {
+		return nil, errors.New("invalid message, message was empty")
+	}
+
+	return uncompressed, nil
 }
 
 // eciesSecret derives the ecies pre-shared key from a private and public key.

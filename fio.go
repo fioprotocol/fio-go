@@ -30,5 +30,5 @@ Minimal example: equivalent of "cleos get info" (note no error handling for brev
  	fmt.Println(string(j))
  }
 
- */
+*/
 package fio

@@ -229,7 +229,6 @@ func (api API) GetFioProducers() (fioProducers *Producers, err error) {
 	return
 }
 
-
 // AllABIs returns a map of every ABI available. This is only possible in FIO because there are a small number
 // of contracts that exist.
 func (api API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
@@ -260,4 +259,3 @@ func (api API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
 	}
 	return abiList, nil
 }
-

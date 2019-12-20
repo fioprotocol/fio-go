@@ -18,7 +18,6 @@ func ExampleAPI_GetCurrentBlock() {
 	fmt.Printf("Current block number is: %d\n\n", api.GetCurrentBlock())
 }
 
-
 func ExampleAPI_GetFioProducers() {
 	// Setup a connection, with no credentials associated
 	api, _, err := NewConnection(nil, "https://testnet.fioprotocol.io")
