@@ -38,16 +38,12 @@ type ObtContent struct {
 
 // DecryptContent provides a new populated ObtContent struct given an encrypted content payload
 func DecryptContent(to *Account, fromPubKey string, encrypted []byte) (*ObtContent, error) {
-	//decoded, err := base58.Decode(encrypted)
-	//if err != nil {
-	//	return nil, err
-	//}
-	jsonBytes, err := EciesDecrypt(to, fromPubKey, encrypted)
+	bin, err := EciesDecrypt(to, fromPubKey, encrypted)
 	if err != nil {
 		return nil, err
 	}
 	content := &ObtContent{}
-	err = json.Unmarshal(jsonBytes, content)
+	err = eos.UnmarshalBinary(bin, content)
 	if err != nil {
 		return nil, err
 	}
@@ -158,13 +154,22 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 	)
 }
 
-// EciesEncrypt implements the encryption format used in the content field of OBT requests. A DH shared secret is
-// created using ECIES which derives a key based on the curves of the public and private keys.
+// EciesEncrypt implements the encryption format used in the content field of OBT requests.
+//
+// The plaintext is zlib compressed, and PKCS#7 padded before being encrypted.
+//
+// Key derivation, and message format:
+//
+// A DH shared secret is created using ECIES (derives a key based on the curves of the public and private keys.)
 // This secret is hashed using sha512, and the first 32 bytes of the hash is used to encrypt the message using
-// AES-256 cbc, and the second half is used to create an outer sha256 hmac. A 16 byte IV is prepended to the
-// output, resulting in the message format of: IV + Ciphertext + HMAC
+// AES-256 cbc, and the second half is used to create an outer sha256 hmac.
+//
+// The 16 byte IV is prepended to the output, resulting in the message format of:
+//  IV + Ciphertext + HMAC
 // See https://github.com/fioprotocol/fiojs/blob/master/docs/message_encryption.md for more information.
 func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
+	var contentBuffer bytes.Buffer
+
 	var compressed bytes.Buffer
 	writer, _ := zlib.NewWriterLevel(&compressed, flate.BestCompression)
 	_, _ = writer.Write(plainText)
@@ -173,8 +178,6 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 		return nil, fmt.Errorf("tx writer close %s", err)
 	}
 	plainText = compressed.Bytes()
-
-	var buffer bytes.Buffer
 
 	// Get the shared-secret
 	_, secretHash, err := eciesSecret(sender, recipentPub)
@@ -188,7 +191,7 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	if err != nil {
 		return nil, err
 	}
-	buffer.Write(iv)
+	contentBuffer.Write(iv)
 
 	// setup AES CBC for encryption
 	block, err := aes.NewCipher(secretHash[:32])
@@ -213,18 +216,18 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	// encrypt the plaintext
 	cipherText := make([]byte, len(plainText)+len(pad))
 	cbc.CryptBlocks(cipherText, append(plainText, pad...))
-	buffer.Write(cipherText)
+	contentBuffer.Write(cipherText)
 
 	// Sign the message using sha256 hmac
 	signer := hmac.New(sha256.New, secretHash[32:])
-	_, err = signer.Write(buffer.Bytes())
+	_, err = signer.Write(contentBuffer.Bytes())
 	if err != nil {
 		return nil, err
 	}
 	signature := signer.Sum(nil)
-	buffer.Write(signature)
+	contentBuffer.Write(signature)
 
-	return buffer.Bytes(), nil
+	return contentBuffer.Bytes(), nil
 }
 
 // EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
@@ -265,10 +268,10 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 	cbc := cipher.NewCBCDecrypter(block, message[:ivLen])
 	plainText := make([]byte, len(message[ivLen:len(message)-sigLen]))
 	cbc.CryptBlocks(plainText, message[ivLen:len(message)-sigLen])
-	// strip padding and done.
 	if len(plainText) == 0 {
 		return nil, errors.New("could not decrypt message")
 	}
+
 	padLen := int(plainText[len(plainText)-1])
 	if padLen >= len(plainText) {
 		return nil, errors.New("invalid padding in message")
