@@ -54,6 +54,8 @@ func TestEncryptDecrypt(t *testing.T) {
 			t.Error(e.Error())
 			return
 		}
+
+		// test the encrypt/decrypt on raw bytes first
 		cipherText, e := EciesEncrypt(sender, recipient.PubKey, someData)
 		if e != nil {
 			t.Error(e.Error())
@@ -66,6 +68,32 @@ func TestEncryptDecrypt(t *testing.T) {
 		}
 		if !bytes.Equal(someData, decrypted) {
 			t.Error("decrypted content from EciesEncrypt did not match EciesDecrypt output")
+			return
+		}
+
+		// now do it again vs an ObtContent struct.
+		req := ObtContent{PayerPublicAddress: hex.EncodeToString(someData)}
+
+		content, e := req.Encrypt(sender, recipient.PubKey)
+		if e != nil {
+			t.Error(e.Error())
+			return
+		} else if len(content) == 0 {
+			t.Error("got empty result for encrypted data")
+			return
+		}
+		
+		resp, e := DecryptContent(recipient, sender.PubKey, content)
+		if e != nil {
+			t.Error(e.Error())
+			return
+		} else if resp == nil {
+			t.Error("resp is nil")
+			return
+		}
+		if req.PayerPublicAddress != resp.PayerPublicAddress {
+			t.Error("decrypted content does not match")
+			return
 		}
 	}
 }
