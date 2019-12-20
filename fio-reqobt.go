@@ -7,6 +7,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
@@ -18,9 +19,7 @@ import (
 	"github.com/eoscanada/eos-go/ecc"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
-	"time"
 )
 
 // ObtContent holds private transaction details for actions such as requesting funds and recording the result
@@ -185,7 +184,6 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 
 	// Generate IV
 	iv := make([]byte, 16)
-	rand.Seed(time.Now().UnixNano())
 	_, err = rand.Read(iv)
 	if err != nil {
 		return nil, err
