@@ -163,10 +163,12 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 //  IV + Ciphertext + HMAC
 // See https://github.com/fioprotocol/fiojs/blob/master/docs/message_encryption.md for more information.
 func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
+
+	// compress with zlib: plainText should be a binary ABI-encoded structure
 	var compressed bytes.Buffer
-	writer, _ := zlib.NewWriterLevel(&compressed, flate.BestCompression)
-	_, _ = writer.Write(plainText)
-	err = writer.Close()
+	zWriter, _ := zlib.NewWriterLevel(&compressed, flate.BestCompression)
+	_, _ = zWriter.Write(plainText)
+	err = zWriter.Close()
 	if err != nil {
 		return nil, fmt.Errorf("tx writer close %s", err)
 	}
