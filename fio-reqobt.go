@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -38,6 +39,7 @@ type ObtContent struct {
 
 // DecryptContent provides a new populated ObtContent struct given an encrypted content payload
 func DecryptContent(to *Account, fromPubKey string, encrypted []byte) (*ObtContent, error) {
+
 	bin, err := EciesDecrypt(to, fromPubKey, encrypted)
 	if err != nil {
 		return nil, err
@@ -61,13 +63,6 @@ func (c ObtContent) Encrypt(from *Account, toPubKey string) (content []byte, err
 		return nil, err
 	}
 	return encrypted, nil
-	/*
-		b64Buffer := bytes.NewBuffer([]byte{})
-		encoded:= base64.NewEncoder(base64.URLEncoding, b64Buffer)
-		_, err = encoded.Write(encrypted)
-		_ = encoded.Close()
-		return b64Buffer.Bytes(), nil
-	*/
 }
 
 type RecordSend struct {
@@ -168,8 +163,6 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 //  IV + Ciphertext + HMAC
 // See https://github.com/fioprotocol/fiojs/blob/master/docs/message_encryption.md for more information.
 func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
-	var contentBuffer bytes.Buffer
-
 	var compressed bytes.Buffer
 	writer, _ := zlib.NewWriterLevel(&compressed, flate.BestCompression)
 	_, _ = writer.Write(plainText)
@@ -186,6 +179,7 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	}
 
 	// Generate IV
+	var contentBuffer bytes.Buffer
 	iv := make([]byte, 16)
 	_, err = rand.Read(iv)
 	if err != nil {
@@ -193,7 +187,7 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	}
 	contentBuffer.Write(iv)
 
-	// setup AES CBC for encryption
+	// AES CBC for encryption, first half of sha512 hash of secret is used as key
 	block, err := aes.NewCipher(secretHash[:32])
 	if err != nil {
 		return nil, err
@@ -218,7 +212,7 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	cbc.CryptBlocks(cipherText, append(plainText, pad...))
 	contentBuffer.Write(cipherText)
 
-	// Sign the message using sha256 hmac
+	// Sign the message using sha256 hmac, *second* half of sha512 hash used as key
 	signer := hmac.New(sha256.New, secretHash[32:])
 	_, err = signer.Write(contentBuffer.Bytes())
 	if err != nil {
@@ -227,7 +221,12 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	signature := signer.Sum(nil)
 	contentBuffer.Write(signature)
 
-	return contentBuffer.Bytes(), nil
+	// base64 encode the message, and it's ready to be embedded in our FundsReq.Content or RecordSend.Content fields
+	b64Buffer := bytes.NewBuffer([]byte{})
+	encoded:= base64.NewEncoder(base64.URLEncoding, b64Buffer)
+	_, err = encoded.Write(contentBuffer.Bytes())
+	_ = encoded.Close()
+	return b64Buffer.Bytes(), nil
 }
 
 // EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
@@ -236,6 +235,14 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 		ivLen  = 16
 		sigLen = 32
 	)
+
+	// convert base64 string to []byte
+	b64Reader := bytes.NewReader(message)
+	b64Decoder := base64.NewDecoder(base64.URLEncoding, b64Reader)
+	message, err = ioutil.ReadAll(b64Decoder)
+	if err != nil {
+		return nil, err
+	}
 
 	// Get the shared-secret
 	_, secretHash, err := eciesSecret(recipient, senderPub)
