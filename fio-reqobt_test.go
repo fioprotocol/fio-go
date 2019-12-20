@@ -36,7 +36,7 @@ func TestEciesSecret(t *testing.T) {
 func TestEncryptDecrypt(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	// run through it several times with random data, keys, and length to ensure padding, etc works.
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 40; i++ {
 		size := rand.Intn(128) + 128
 		someData := make([]byte, size)
 		_, e := rand.Read(someData)
@@ -54,7 +54,7 @@ func TestEncryptDecrypt(t *testing.T) {
 			t.Error(e.Error())
 			return
 		}
-		cipherText, e := eciesEncrypt(sender, recipient.PubKey, someData)
+		cipherText, e := EciesEncrypt(sender, recipient.PubKey, someData)
 		if e != nil {
 			t.Error(e.Error())
 			return
@@ -65,7 +65,7 @@ func TestEncryptDecrypt(t *testing.T) {
 			return
 		}
 		if !bytes.Equal(someData, decrypted) {
-			t.Error("decrypted content from eciesEncrypt did not match EciesDecrypt output")
+			t.Error("decrypted content from EciesEncrypt did not match EciesDecrypt output")
 		}
 	}
 }

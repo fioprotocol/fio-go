@@ -17,6 +17,12 @@ import (
 
 var Url string
 
+type logChanRecord struct {
+	L *eos.Action
+	T eos.Checksum256
+	B uint32
+}
+
 func main() {
 
 	var url = flag.String("u", "http://127.0.0.1:8888", "url to connect to.")
@@ -26,7 +32,9 @@ func main() {
 	var currentProducer eos.AccountName
 	var highestBlock uint32
 	var connectedPeers string
-	logChan := make(chan *eos.Action)
+	var paused bool
+	var showTx bool
+	logChan := make(chan logChanRecord)
 
 	api, _, err := fio.NewConnection(nil, Url)
 	if err != nil {
@@ -63,9 +71,9 @@ func main() {
 				ui.NewCol(1.0/2, g0),
 			),
 			ui.NewRow(
-				0.85,
-				ui.NewCol(0.28, prods),
-				ui.NewCol(0.72,
+				0.9,
+				ui.NewCol(0.3, prods),
+				ui.NewCol(0.7,
 					ui.NewRow(0.3,
 						ui.NewCol(1.0, slg),
 					),
@@ -123,6 +131,7 @@ func main() {
 		g0.BorderStyle.Fg = ui.ColorClear
 		g0.TitleStyle.Fg = ui.ColorClear
 		for {
+
 			size, e := api.GetDBSize()
 			if e != nil {
 				g0.Title = " get db size failed, is db_size_api_plugin enabled? "
@@ -250,6 +259,9 @@ func main() {
 					current = highestBlock
 					return
 				}
+				for paused {
+					time.Sleep(time.Second)
+				}
 				next := highestBlock
 				if next > current && current > 0 {
 					for i := 1; i <= int(next-current); i++ {
@@ -265,13 +277,14 @@ func main() {
 								continue
 							}
 							for _, a := range s.Actions {
-								logChan <- a
+								logChan <- logChanRecord{L: a, T: tx.Transaction.ID, B: b.BlockNum}
 							}
 						}
 					}
 				}
 			}()
 			var count int
+			// tpb average display for last 10 blocks
 			if len(txCount) >= 10 {
 				for _, i := range txCount[len(txCount)-30:] {
 					count = count + int(i)
@@ -318,6 +331,9 @@ func main() {
 	// action stream
 	logBuffer := make([]string, 80)
 	go func() {
+		for paused {
+			time.Sleep(time.Second)
+		}
 		lpushRPop := func(l string) {
 			logBuffer = append([]string{l}, logBuffer[:len(logBuffer)-1]...)
 		}
@@ -333,14 +349,20 @@ func main() {
 		for {
 			for l := range logChan {
 				actionData := make([]byte, 0)
-				if abis[l.Account] != nil {
+				if abis[l.L.Account] != nil {
 					var e error
-					actionData, e = abis[l.Account].DecodeTableRowTyped(string(l.Name), l.HexData)
+					actionData, e = abis[l.L.Account].DecodeTableRowTyped(string(l.L.Name), l.L.HexData)
 					if e != nil {
-						actionData = []byte(hexutil.Encode(l.HexData))
+						actionData = []byte(hexutil.Encode(l.L.HexData))
 					}
 				}
-				line := pr.Sprintf("%s %s %s::%s -- %s", time.Now().Format("15:04:05.000"), l.Authorization[0].Actor, l.Account, l.Name, string(actionData))
+				var line string
+				switch showTx {
+				case false:
+					line = pr.Sprintf("%s %s %s::%s -- %s", time.Now().Format("15:04:05.000"), l.L.Authorization[0].Actor, l.L.Account, l.L.Name, string(actionData))
+				case true:
+					line = pr.Sprintf("%s (%v) %s:\n             %s %s::%s -- %s", time.Now().Format("15:04:05.000"), l.B, l.T.String(), l.L.Authorization[0].Actor, l.L.Account, l.L.Name, string(actionData))
+				}
 				lpushRPop(line)
 				logs.Rows = logBuffer
 				if !helpModal {
@@ -369,7 +391,7 @@ func main() {
 
 	gridHelp := func() {
 		grid.Set(
-			ui.NewRow(1.0/4,
+			ui.NewRow(1.0/3,
 				ui.NewCol(1.0/2, help),
 			),
 		)
@@ -404,6 +426,20 @@ func main() {
 			g0.Title = ""
 			if !helpModal {
 				ui.Render(g0, logs, slg, prods, p)
+			}
+		case "t":
+			switch showTx {
+			case true:
+				showTx = false
+			case false:
+				showTx = true
+			}
+		case "p":
+			switch paused {
+			case true:
+				paused = false
+			case false:
+				paused = true
 			}
 		// help modal
 		case "?", "<F1>":
@@ -461,6 +497,8 @@ const helpText = `
     q or CTRL-C to exit
     r or CTRL-L to repaint screen
     d or CTRL-U to clear data
+    p to pause event stream
+    t to show txid in event stream
 
     Press ESC or ENTER to exit help.
 `

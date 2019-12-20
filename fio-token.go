@@ -6,6 +6,20 @@ import (
 	"sync"
 )
 
+const (
+	FeeRegisterFioAddress   = "register_fio_address"
+	FeeAddPubAddress        = "add_pub_address"
+	FeeRegisterFioDomain    = "register_fio_domain"
+	FeeRenewFioDomain       = "renew_fio_domain"
+	FeeRenewFioAddress      = "renew_fio_address"
+	FeeBurnExpired          = "burnexpired"
+	FeeSetDomainPub         = "setdomainpub"
+	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
+	FeeRecordSend           = "record_send"
+	FeeNewFundsRequest      = "new_funds_request"
+	FeeRejectFundsRequest   = "reject_funds_request"
+)
+
 var (
 	// maxFees holds the fees for transactions
 	// use fio.GetMaxFee() instead of directly accessing this map to ensure concurrent safe access
@@ -60,11 +74,11 @@ func UpdateMaxFees(api *API) bool {
 }
 
 // GetMaxFee looks up a fee from the map
-func GetMaxFee(name string) (fee float64) {
+func GetMaxFee(name string) (fioTokens float64) {
 	maxFeeMutex.RLock()
-	fee = maxFees[name]
+	fioTokens = maxFees[name]
 	maxFeeMutex.RUnlock()
-	return fee
+	return fioTokens
 }
 
 // MaxFeesUpdated checks if the fee map has been updated, or if using the default (possibly wrong) values
