@@ -16,3 +16,9 @@ Keys:
     r or CTRL-L to repaint screen
     d or CTRL-U to clear data
 ```
+
+Note: some care has been taken to ensure that the display doesn't get strange
+artifacts, but sometimes it happens. One thing that seems to help is using a
+font that handles double-wide characters correctly such as those at
+https://www.nerdfonts.com/. But, if despite this it still happens, just press
+"r" to forcefully repaint the grid.

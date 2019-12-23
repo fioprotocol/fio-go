@@ -12,10 +12,12 @@ import (
 	"golang.org/x/text/message"
 	"io/ioutil"
 	"log"
+	"sync"
 	"time"
 )
 
 var Url string
+var drawMux sync.Mutex
 
 type logChanRecord struct {
 	L *eos.Action
@@ -98,7 +100,9 @@ func main() {
 				p.Title = "Error"
 				p.Text = e.Error()
 				if !helpModal {
+					drawMux.Lock()
 					ui.Render(p)
+					drawMux.Unlock()
 				}
 				time.Sleep(5 * time.Second)
 			} else {
@@ -119,7 +123,9 @@ func main() {
 					)
 				}
 				if !helpModal {
+					drawMux.Lock()
 					ui.Render(p)
+					drawMux.Unlock()
 				}
 			}
 			time.Sleep(500 * time.Millisecond)
@@ -139,7 +145,9 @@ func main() {
 				g0.BarColor = ui.ColorRed
 				g0.Percent = 0
 				if !helpModal {
+					drawMux.Lock()
 					ui.Render(g0)
+					drawMux.Unlock()
 				}
 				time.Sleep(10 * time.Second)
 			} else {
@@ -159,7 +167,9 @@ func main() {
 				}
 			}
 			if !helpModal {
+				drawMux.Lock()
 				ui.Render(g0)
+				drawMux.Unlock()
 			}
 			time.Sleep(3 * time.Second)
 		}
@@ -179,7 +189,9 @@ func main() {
 				prods.TextStyle = ui.NewStyle(ui.ColorRed)
 				prods.BorderStyle = ui.NewStyle(ui.ColorClear)
 				if !helpModal {
+					drawMux.Lock()
 					ui.Render(prods)
+					drawMux.Unlock()
 				}
 				time.Sleep(5 * time.Second)
 			} else {
@@ -229,7 +241,9 @@ func main() {
 				prods.RowSeparator = false
 				prods.FillRow = false
 				if !helpModal {
+					drawMux.Lock()
 					ui.Render(prods)
+					drawMux.Unlock()
 				}
 			}
 			time.Sleep(time.Second)
@@ -247,7 +261,9 @@ func main() {
 		sl.LineColor = ui.ColorBlue
 		sl.Data = txCount
 		if !helpModal {
+			drawMux.Lock()
 			ui.Render(slg)
+			drawMux.Unlock()
 		}
 		pushPop := func(last float64) {
 			txCount = append(txCount[1:], last)
@@ -295,7 +311,9 @@ func main() {
 			}
 			sl.Data = txCount
 			if !helpModal {
+				drawMux.Lock()
 				ui.Render(slg)
+				drawMux.Unlock()
 			}
 			time.Sleep(time.Second)
 		}
@@ -366,7 +384,9 @@ func main() {
 				lpushRPop(line)
 				logs.Rows = logBuffer
 				if !helpModal {
+					drawMux.Lock()
 					ui.Render(logs)
+					drawMux.Unlock()
 				}
 			}
 		}
@@ -378,7 +398,9 @@ func main() {
 			ui.Clear()
 			termWidth, termHeight = ui.TerminalDimensions()
 			grid.SetRect(0, 0, termWidth, termHeight)
+			drawMux.Lock()
 			ui.Render(grid)
+			drawMux.Unlock()
 		}
 	}
 
@@ -408,7 +430,9 @@ func main() {
 			grid.SetRect(0, 0, payload.Width, payload.Height)
 			ui.Clear()
 			if !helpModal {
+				drawMux.Lock()
 				ui.Render(grid)
+				drawMux.Unlock()
 			}
 		// allow user to request repaint
 		case "r", "<C-l>":
@@ -425,7 +449,9 @@ func main() {
 			lastProduced = make(map[eos.AccountName]time.Time)
 			g0.Title = ""
 			if !helpModal {
+				drawMux.Lock()
 				ui.Render(g0, logs, slg, prods, p)
+				drawMux.Unlock()
 			}
 		case "t":
 			switch showTx {
@@ -448,9 +474,11 @@ func main() {
 			help.Text = helpText
 			help.Border = true
 			gridHelp()
+			drawMux.Lock()
 			ui.Render(grid)
 			ui.Clear()
 			ui.Render(help)
+			drawMux.Unlock()
 		// clear help modal
 		case "<Escape>", "<Enter>":
 			if helpModal {
@@ -460,7 +488,9 @@ func main() {
 				helpModal = false
 				ui.Clear()
 				gridNormal()
+				drawMux.Lock()
 				ui.Render(grid)
+				drawMux.Unlock()
 			}
 		}
 	}
