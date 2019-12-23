@@ -96,20 +96,21 @@ func main() {
 		for {
 			info, e := api.GetInfo()
 			if e != nil {
-				p.TextStyle.Fg = ui.ColorRed
-				p.Title = "Error"
-				p.Text = e.Error()
 				if !helpModal {
 					drawMux.Lock()
+					p.TextStyle.Fg = ui.ColorRed
+					p.Title = "Error"
+					p.Text = e.Error()
 					ui.Render(p)
 					drawMux.Unlock()
 				}
 				time.Sleep(5 * time.Second)
-			} else {
+			} else if !helpModal {
 				currentProducer = info.HeadBlockProducer
 				highestBlock = info.HeadBlockNum
-				p.Title = "nodeos: " + info.ServerVersionString
 				lag := info.HeadBlockTime.Sub(time.Now().UTC()) / time.Second
+				drawMux.Lock()
+				p.Title = "nodeos: " + info.ServerVersionString
 				p.TextStyle.Fg = ui.ColorClear
 				p.Text = pr.Sprintf(
 					"\n    Head: %d  Irreversible: %d\n    %s",
@@ -122,13 +123,10 @@ func main() {
 						info.HeadBlockNum, info.LastIrreversibleBlockNum, lag, connectedPeers,
 					)
 				}
-				if !helpModal {
-					drawMux.Lock()
-					ui.Render(p)
-					drawMux.Unlock()
-				}
+				ui.Render(p)
+				drawMux.Unlock()
 			}
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(250 * time.Millisecond)
 		}
 	}()
 
@@ -140,17 +138,18 @@ func main() {
 
 			size, e := api.GetDBSize()
 			if e != nil {
-				g0.Title = " get db size failed, is db_size_api_plugin enabled? "
-				g0.TitleStyle.Fg = ui.ColorYellow
-				g0.BarColor = ui.ColorRed
-				g0.Percent = 0
 				if !helpModal {
+					g0.Title = " get db size failed, is db_size_api_plugin enabled? "
+					g0.TitleStyle.Fg = ui.ColorYellow
+					g0.BarColor = ui.ColorRed
+					g0.Percent = 0
 					drawMux.Lock()
 					ui.Render(g0)
 					drawMux.Unlock()
 				}
 				time.Sleep(10 * time.Second)
-			} else {
+			} else if !helpModal {
+				drawMux.Lock()
 				g0.TitleStyle.Fg = ui.ColorClear
 				g0.Title = pr.Sprintf("Database (mem) %d / %d MiB", size.UsedBytes/(1024*1024), size.Size/(1024*1024))
 				pct := int(100 - 100.0*(float32(size.FreeBytes)/float32(size.Size)))
@@ -165,9 +164,6 @@ func main() {
 					g0.TitleStyle.Fg = ui.ColorRed
 					g0.BarColor = ui.ColorRed
 				}
-			}
-			if !helpModal {
-				drawMux.Lock()
 				ui.Render(g0)
 				drawMux.Unlock()
 			}
@@ -205,7 +201,7 @@ func main() {
 						"",
 					},
 				)
-				styles[0] = ui.NewStyle(ui.ColorCyan)
+				//styles[0] = ui.NewStyle(ui.ColorCyan)
 				styles[0] = ui.NewStyle(ui.ColorClear)
 				for i, p := range gfp.Producers {
 					if p.IsActive > 0 {
@@ -222,8 +218,8 @@ func main() {
 						)
 						switch {
 						case currentProducer == p.Owner:
-							//styles[i+2] = ui.NewStyle(ui.ColorGreen)
-							styles[i+2] = ui.NewStyle(ui.ColorGreen, ui.ColorBlack, ui.ModifierUnderline)
+							styles[i+2] = ui.NewStyle(ui.ColorGreen)
+							//styles[i+2] = ui.NewStyle(ui.ColorGreen, ui.ColorBlack, ui.ModifierUnderline)
 							lastProduced[p.Owner] = time.Now()
 						case i >= 21:
 							styles[i+2] = ui.NewStyle(ui.ColorBlue)
@@ -235,13 +231,13 @@ func main() {
 
 					}
 				}
-				prods.Rows = bps
-				prods.RowStyles = styles
-				prods.TextAlignment = ui.AlignRight
-				prods.RowSeparator = false
-				prods.FillRow = false
 				if !helpModal {
 					drawMux.Lock()
+					prods.Rows = bps
+					prods.RowStyles = styles
+					prods.TextAlignment = ui.AlignRight
+					prods.RowSeparator = false
+					prods.FillRow = false
 					ui.Render(prods)
 					drawMux.Unlock()
 				}
@@ -257,11 +253,11 @@ func main() {
 		txCount[i] = 0.0
 	}
 	go func() {
-		sl.Title = "TX / Block"
-		sl.LineColor = ui.ColorBlue
-		sl.Data = txCount
 		if !helpModal {
 			drawMux.Lock()
+			sl.Title = "TX / Block"
+			sl.LineColor = ui.ColorBlue
+			sl.Data = txCount
 			ui.Render(slg)
 			drawMux.Unlock()
 		}
@@ -300,6 +296,7 @@ func main() {
 				}
 			}()
 			var count int
+			var title string
 			// tpb average display for last 10 blocks
 			if len(txCount) >= 10 {
 				for _, i := range txCount[len(txCount)-30:] {
@@ -307,11 +304,12 @@ func main() {
 				}
 				blocks := 10.0
 				avg := float64(count) / blocks / 2.0
-				sl.Title = pr.Sprintf("TX / Block (avg %.2f/block)", avg)
+				title = pr.Sprintf("TX / Block (avg %.2f/block)", avg)
 			}
-			sl.Data = txCount
 			if !helpModal {
 				drawMux.Lock()
+				sl.Title = title
+				sl.Data = txCount
 				ui.Render(slg)
 				drawMux.Unlock()
 			}
@@ -324,7 +322,9 @@ func main() {
 		for {
 			n, e := getPeerCounts(api)
 			if e != nil {
+				drawMux.Lock()
 				connectedPeers = "Cannot get peer information, is net_api_plugin enabled?"
+				drawMux.Unlock()
 				time.Sleep(10 * time.Minute)
 				continue
 			}
@@ -341,7 +341,9 @@ func main() {
 					inbound = inbound + 1
 				}
 			}
+			drawMux.Lock()
 			connectedPeers = pr.Sprintf("Peers: %d total (%d inbound connections, %d syncing)", total, inbound, syncing)
+			drawMux.Unlock()
 			time.Sleep(10 * time.Second)
 		}
 	}()
@@ -356,6 +358,7 @@ func main() {
 			logBuffer = append([]string{l}, logBuffer[:len(logBuffer)-1]...)
 		}
 		var abis map[eos.AccountName]*eos.ABI
+		// spin until we have the abi's loaded ...
 		for {
 			var e error
 			abis, e = api.AllABIs()
@@ -382,9 +385,9 @@ func main() {
 					line = pr.Sprintf("%s (%v) %s:\n             %s %s::%s -- %s", time.Now().Format("15:04:05.000"), l.B, l.T.String(), l.L.Authorization[0].Actor, l.L.Account, l.L.Name, string(actionData))
 				}
 				lpushRPop(line)
-				logs.Rows = logBuffer
 				if !helpModal {
 					drawMux.Lock()
+					logs.Rows = logBuffer
 					ui.Render(logs)
 					drawMux.Unlock()
 				}
@@ -395,10 +398,10 @@ func main() {
 	// repaint screen
 	repaint := func() {
 		if !helpModal {
+			drawMux.Lock()
 			ui.Clear()
 			termWidth, termHeight = ui.TerminalDimensions()
 			grid.SetRect(0, 0, termWidth, termHeight)
-			drawMux.Lock()
 			ui.Render(grid)
 			drawMux.Unlock()
 		}
@@ -412,11 +415,13 @@ func main() {
 	}()
 
 	gridHelp := func() {
+		drawMux.Lock()
 		grid.Set(
 			ui.NewRow(1.0/3,
 				ui.NewCol(1.0/2, help),
 			),
 		)
+		drawMux.Unlock()
 	}
 
 	uiEvents := ui.PollEvents()
@@ -426,11 +431,11 @@ func main() {
 		case "q", "<C-c>":
 			return
 		case "<Resize>":
-			payload := e.Payload.(ui.Resize)
-			grid.SetRect(0, 0, payload.Width, payload.Height)
-			ui.Clear()
 			if !helpModal {
 				drawMux.Lock()
+				payload := e.Payload.(ui.Resize)
+				ui.Clear()
+				grid.SetRect(0, 0, payload.Width, payload.Height)
 				ui.Render(grid)
 				drawMux.Unlock()
 			}
@@ -439,17 +444,17 @@ func main() {
 			repaint()
 		// wipeout clears data
 		case "d", "<C-u>":
-			connectedPeers = ""
-			logBuffer = make([]string, 80)
-			logs.Rows = logBuffer
-			txCount = make([]float64, ticks.X-2)
-			for i := range txCount {
-				txCount[i] = 0.0
-			}
-			lastProduced = make(map[eos.AccountName]time.Time)
-			g0.Title = ""
 			if !helpModal {
 				drawMux.Lock()
+				connectedPeers = ""
+				logBuffer = make([]string, 80)
+				logs.Rows = logBuffer
+				txCount = make([]float64, ticks.X-2)
+				for i := range txCount {
+					txCount[i] = 0.0
+				}
+				lastProduced = make(map[eos.AccountName]time.Time)
+				g0.Title = ""
 				ui.Render(g0, logs, slg, prods, p)
 				drawMux.Unlock()
 			}
@@ -469,12 +474,12 @@ func main() {
 			}
 		// help modal
 		case "?", "<F1>":
+			drawMux.Lock()
 			helpModal = true
 			help.Title = " Help "
 			help.Text = helpText
 			help.Border = true
 			gridHelp()
-			drawMux.Lock()
 			ui.Render(grid)
 			ui.Clear()
 			ui.Render(help)
@@ -482,13 +487,13 @@ func main() {
 		// clear help modal
 		case "<Escape>", "<Enter>":
 			if helpModal {
+				drawMux.Lock()
 				help.Title = ""
 				help.Text = ""
 				help.Border = false
 				helpModal = false
 				ui.Clear()
 				gridNormal()
-				drawMux.Lock()
 				ui.Render(grid)
 				drawMux.Unlock()
 			}
