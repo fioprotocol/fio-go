@@ -415,13 +415,11 @@ func main() {
 	}()
 
 	gridHelp := func() {
-		drawMux.Lock()
 		grid.Set(
 			ui.NewRow(1.0/3,
 				ui.NewCol(1.0/2, help),
 			),
 		)
-		drawMux.Unlock()
 	}
 
 	uiEvents := ui.PollEvents()
