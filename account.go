@@ -120,7 +120,10 @@ func (a Address) Valid() (ok bool) {
 	if bad, err := regexp.MatchString(`(?:--|::|:.*:|-:|:-|^-|-$)`, string(a)); bad || err != nil {
 		return false
 	}
-	if match, err := regexp.MatchString(`[a-zA-Z0-9-]+:[a-zA-Z0-9-]`, string(a)); err != nil || !match {
+	if bad, err := regexp.MatchString(`(?:--|@@|@.*@|-@|@-|^-|-$)`, string(a)); bad || err != nil {
+		return false
+	}
+	if match, err := regexp.MatchString(`[a-zA-Z0-9-]+(?::|@)[a-zA-Z0-9-]`, string(a)); err != nil || !match {
 		return false
 	}
 	return true
