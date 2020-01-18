@@ -229,7 +229,7 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	case true:
 		// base64 encode the message, and it's ready to be embedded in our FundsReq.Content or RecordSend.Content fields
 		b64Buffer := bytes.NewBuffer([]byte{})
-		encoded:= base64.NewEncoder(base64.URLEncoding, b64Buffer)
+		encoded := base64.NewEncoder(base64.URLEncoding, b64Buffer)
 		_, err = encoded.Write(contentBuffer.Bytes())
 		_ = encoded.Close()
 		return b64Buffer.Bytes(), nil
@@ -257,22 +257,11 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 		}
 	case false:
 		// or the old style hex string
-		message, err = func() ([]byte, error) {
-			b, err := hex.DecodeString(string(message))
-			if err != nil {
-				return b, err
-			}
-			nb := make([]byte, len(b))
-			for i := range b {
-				nb[i] = b[len(b)-i-1]
-			}
-			return nb, nil
-		}()
+		message, err = hex.DecodeString(string(message))
 		if err != nil {
-			return nil, err
+			return b, err
 		}
 	}
-
 
 	// Get the shared-secret
 	_, secretHash, err := eciesSecret(recipient, senderPub)
