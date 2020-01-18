@@ -18,6 +18,7 @@ const (
 	FeeRecordSend           = "record_send"
 	FeeNewFundsRequest      = "new_funds_request"
 	FeeRejectFundsRequest   = "reject_funds_request"
+	FeeVoteProducer         = "vote_producer"
 )
 
 var (
@@ -37,6 +38,7 @@ var (
 		"record_send":                 0.1,
 		"new_funds_request":           0.1,
 		"reject_funds_request":        0.1,
+		"vote_producer":               0.01,
 	}
 	maxFeeMutex    = sync.RWMutex{}
 	maxFeesUpdated = false
