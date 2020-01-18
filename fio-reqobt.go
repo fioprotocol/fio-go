@@ -164,15 +164,17 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 // See https://github.com/fioprotocol/fiojs/blob/master/docs/message_encryption.md for more information.
 func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (content []byte, err error) {
 
-	// compress with zlib: plainText should be a binary ABI-encoded structure
-	var compressed bytes.Buffer
-	zWriter, _ := zlib.NewWriterLevel(&compressed, flate.BestCompression)
-	_, _ = zWriter.Write(plainText)
-	err = zWriter.Close()
-	if err != nil {
-		return nil, fmt.Errorf("tx writer close %s", err)
+	if CompressOBT {
+		// compress with zlib: plainText should be a binary ABI-encoded structure
+		var compressed bytes.Buffer
+		zWriter, _ := zlib.NewWriterLevel(&compressed, flate.BestCompression)
+		_, _ = zWriter.Write(plainText)
+		err = zWriter.Close()
+		if err != nil {
+			return nil, fmt.Errorf("tx writer close %s", err)
+		}
+		plainText = compressed.Bytes()
 	}
-	plainText = compressed.Bytes()
 
 	// Get the shared-secret
 	_, secretHash, err := eciesSecret(sender, recipentPub)
@@ -223,12 +225,18 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte) (conten
 	signature := signer.Sum(nil)
 	contentBuffer.Write(signature)
 
-	// base64 encode the message, and it's ready to be embedded in our FundsReq.Content or RecordSend.Content fields
-	b64Buffer := bytes.NewBuffer([]byte{})
-	encoded:= base64.NewEncoder(base64.URLEncoding, b64Buffer)
-	_, err = encoded.Write(contentBuffer.Bytes())
-	_ = encoded.Close()
-	return b64Buffer.Bytes(), nil
+	switch CompressOBT {
+	case true:
+		// base64 encode the message, and it's ready to be embedded in our FundsReq.Content or RecordSend.Content fields
+		b64Buffer := bytes.NewBuffer([]byte{})
+		encoded:= base64.NewEncoder(base64.URLEncoding, b64Buffer)
+		_, err = encoded.Write(contentBuffer.Bytes())
+		_ = encoded.Close()
+		return b64Buffer.Bytes(), nil
+	case false:
+		return []byte(hex.EncodeToString(contentBuffer.Bytes())), nil
+	}
+	return nil, nil
 }
 
 // EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
@@ -238,13 +246,33 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 		sigLen = 32
 	)
 
-	// convert base64 string to []byte
-	b64Reader := bytes.NewReader(message)
-	b64Decoder := base64.NewDecoder(base64.URLEncoding, b64Reader)
-	message, err = ioutil.ReadAll(b64Decoder)
-	if err != nil {
-		return nil, err
+	switch CompressOBT {
+	case true:
+		// convert base64 string to []byte
+		b64Reader := bytes.NewReader(message)
+		b64Decoder := base64.NewDecoder(base64.URLEncoding, b64Reader)
+		message, err = ioutil.ReadAll(b64Decoder)
+		if err != nil {
+			return nil, err
+		}
+	case false:
+		// or the old style hex string
+		message, err = func() ([]byte, error) {
+			b, err := hex.DecodeString(string(message))
+			if err != nil {
+				return b, err
+			}
+			nb := make([]byte, len(b))
+			for i := range b {
+				nb[i] = b[len(b)-i-1]
+			}
+			return nb, nil
+		}()
+		if err != nil {
+			return nil, err
+		}
 	}
+
 
 	// Get the shared-secret
 	_, secretHash, err := eciesSecret(recipient, senderPub)
@@ -286,22 +314,28 @@ func EciesDecrypt(recipient *Account, senderPub string, message []byte) (decrypt
 		return nil, errors.New("invalid padding in message")
 	}
 
-	// decompress
-	buf := bytes.NewReader(plainText[:len(plainText)-padLen]) // be sure to strip PKCS7 padding
-	zlDec, err := zlib.NewReader(buf)
-	if err != nil {
-		return nil, err
-	}
-	defer zlDec.Close()
-	uncompressed, err := ioutil.ReadAll(zlDec)
-	if err != nil {
-		return nil, err
-	}
-	if len(uncompressed) == 0 {
-		return nil, errors.New("invalid message, message was empty")
-	}
+	switch CompressOBT {
+	case true:
+		// decompress
+		buf := bytes.NewReader(plainText[:len(plainText)-padLen]) // be sure to strip PKCS7 padding
+		zlDec, err := zlib.NewReader(buf)
+		if err != nil {
+			return nil, err
+		}
+		defer zlDec.Close()
+		uncompressed, err := ioutil.ReadAll(zlDec)
+		if err != nil {
+			return nil, err
+		}
+		if len(uncompressed) == 0 {
+			return nil, errors.New("invalid message, message was empty")
+		}
+		return uncompressed, nil
 
-	return uncompressed, nil
+	case false:
+		return plainText[:len(plainText)-padLen], nil
+	}
+	return nil, errors.New("unknown error in EciesDecrypt")
 }
 
 // eciesSecret derives the ecies pre-shared key from a private and public key.
