@@ -47,9 +47,9 @@ type ObtRequestContent struct {
 	PayeePublicAddress string `json:"payee_public_address"`
 	Amount             string `json:"amount"`
 	TokenCode          string `json:"token_code"`
-	Memo               string `json:"memo"`
-	Hash               string `json:"hash"`
-	OfflineUrl         string `json:"offline_url"`
+	Memo               string `json:"memo,omitempty"`
+	Hash               string `json:"hash,omitempty"`
+	OfflineUrl         string `json:"offline_url,omitempty"`
 }
 
 // Encrypt serializes and encrypts the 'content' field for OBT requests
@@ -79,9 +79,9 @@ type ObtRecordContent struct {
 	TokenCode          string `json:"token_code"`
 	Status             string `json:"status"`
 	ObtId              string `json:"obt_id"`
-	Memo               string `json:"memo"`
-	Hash               string `json:"hash"`
-	OfflineUrl         string `json:"offline_url"`
+	Memo               string `json:"memo,omitempty"`
+	Hash               string `json:"hash,omitempty"`
+	OfflineUrl         string `json:"offline_url,omitempty"`
 }
 
 // Encrypt serializes and encrypts the 'content' field for OBT requests
@@ -209,7 +209,7 @@ type FundsReq struct {
 }
 
 // FundsResp is a request sent from one user to another requesting funds, it includes the fio_request_id, so
-// should be used when querying
+// should be used when querying against the API endpoint
 type FundsResp struct {
 	PayerFioAddress string `json:"payer_fio_address"`
 	PayeeFioAddress string `json:"payee_fio_address"`
@@ -266,7 +266,7 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 // Key derivation, and message format:
 //
 // A DH shared secret is created using ECIES (derives a key based on the curves of the public and private keys.)
-// This secret is hashed using sha512, and the first 32 bytes of the hash is used to encrypt the message using
+// This secret is hashed *twice* using sha512, and the first 32 bytes of the hash is used to encrypt the message using
 // AES-256 cbc, and the second half is used to create an outer sha256 hmac.
 //
 // The 16 byte IV is prepended to the output, resulting in the message format of:
@@ -291,10 +291,18 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []by
 	if err != nil {
 		return "", err
 	}
+	hashAgain := sha512.New()
+	_, err = hashAgain.Write(secretHash[:])
+	if err != nil {
+		return "", err
+	}
+	keys := hashAgain.Sum(nil)
+	key := append(keys[:32])    // first half of sha512 hash of secret is used as key
+	macKey := append(keys[32:]) // second half as hmac key
 
 	// Generate IV
 	var contentBuffer bytes.Buffer
-	if len(iv) != 16 || bytes.Equal(iv, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) {
+	if len(iv) != 16 || bytes.Equal(iv, make([]byte, 16)) {
 		iv = make([]byte, 16)
 		_, err = rand.Read(iv)
 		if err != nil {
@@ -303,33 +311,30 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []by
 	}
 	contentBuffer.Write(iv)
 
-	// AES CBC for encryption, first half of sha512 hash of secret is used as key
-	block, err := aes.NewCipher(secretHash[:32])
+	// AES CBC for encryption,
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
 	cbc := cipher.NewCBCEncrypter(block, iv)
 
-	// create pkcs#7 padding
-	pad := func() []byte {
+	//// create pkcs#7 padding
+	plainText = append(plainText, func() []byte {
 		padLen := block.BlockSize() - (len(plainText) % block.BlockSize())
-		if padLen == 0 {
-			padLen = block.BlockSize()
-		}
-		pad := make([]byte, 0)
-		for i := 0; i < padLen; i++ {
-			pad = append(pad, byte(padLen))
+		pad := make([]byte, padLen)
+		for i := range pad {
+			pad[i] = uint8(padLen)
 		}
 		return pad
-	}()
+	}()...)
 
 	// encrypt the plaintext
-	cipherText := make([]byte, len(plainText)+len(pad))
-	cbc.CryptBlocks(cipherText, append(plainText, pad...))
+	cipherText := make([]byte, len(plainText))
+	cbc.CryptBlocks(cipherText, plainText)
 	contentBuffer.Write(cipherText)
 
 	// Sign the message using sha256 hmac, *second* half of sha512 hash used as key
-	signer := hmac.New(sha256.New, secretHash[32:])
+	signer := hmac.New(sha256.New, macKey)
 	_, err = signer.Write(contentBuffer.Bytes())
 	if err != nil {
 		return "", err
@@ -346,7 +351,6 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []by
 		_ = encoded.Close()
 		return string(b64Buffer.Bytes()), nil
 	case false:
-		//return []byte(hex.EncodeToString(contentBuffer.Bytes())), nil
 		return hex.EncodeToString(contentBuffer.Bytes()), nil
 	}
 	return "", nil
@@ -355,7 +359,6 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []by
 // EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
 func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypted []byte, err error) {
 	const (
-		ivLen  = 16
 		sigLen = 32
 	)
 
@@ -376,8 +379,6 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 			return nil, err
 		}
 	}
-	//DELETEME testing!!!!
-	//message = swapEndian(message)
 
 	// Get the shared-secret
 	_, secretHash, err := EciesSecret(recipient, senderPub)
@@ -385,8 +386,16 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 		return nil, err
 	}
 
+	// Other SDK's hash it TWICE, so we will too ...
+	hashTwice := sha512.New()
+	_, err = hashTwice.Write(secretHash[:])
+	if err != nil {
+		return nil, err
+	}
+	secret := hashTwice.Sum(nil)
+
 	// check the signature
-	verifier := hmac.New(sha256.New, secretHash[32:])
+	verifier := hmac.New(sha256.New, secret[32:])
 	_, err = verifier.Write(msg[:len(msg)-sigLen])
 	if err != nil {
 		return nil, err
@@ -403,13 +412,13 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 	}
 
 	// decrypt the message
-	block, err := aes.NewCipher(secretHash[:32])
+	block, err := aes.NewCipher(secret[:32])
 	if err != nil {
 		return nil, err
 	}
-	cbc := cipher.NewCBCDecrypter(block, msg[:ivLen])
-	plainText := make([]byte, len(msg[ivLen:len(msg)-sigLen]))
-	cbc.CryptBlocks(plainText, msg[ivLen:len(msg)-sigLen])
+	cbc := cipher.NewCBCDecrypter(block, msg[:block.BlockSize()])
+	plainText := make([]byte, len(msg[block.BlockSize():len(msg)-sigLen]))
+	cbc.CryptBlocks(plainText, msg[block.BlockSize():len(msg)-sigLen])
 	if len(plainText) == 0 {
 		return nil, errors.New("could not decrypt message")
 	}
@@ -447,7 +456,7 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 // The 'secret' returned is the actual secret, the 'hash' returned is what is actually used
 // in the OBT implementation, allowing the secret to be stretched into two keys, one for
 // encryption and one for message authentication.
-func EciesSecret(private *Account, public string) (secret []byte, hash []byte, err error) {
+func EciesSecret(private *Account, public string) (secret []byte, hash *[64]byte, err error) {
 	// convert key to ecies private key type
 	wif, err := btcutil.DecodeWIF(private.KeyBag.Keys[0].String())
 	if err != nil {
@@ -471,12 +480,9 @@ func EciesSecret(private *Account, public string) (secret []byte, hash []byte, e
 	if err != nil {
 		return nil, nil, err
 	}
-	sh := sha512.New()
-	_, err = sh.Write(sharedKey)
-	if err != nil {
-		return nil, nil, err
-	}
-	return sharedKey, sh.Sum(nil), nil
+
+	ss := sha512.Sum512(sharedKey)
+	return sharedKey, &ss, nil
 }
 
 type getPendingFioNamesRequest struct {

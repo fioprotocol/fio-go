@@ -9,4 +9,3 @@ package fio
 // be included in an upcoming release. It is exported so the behavior can be specified
 // by the client.
 var CompressOBT = false
-
