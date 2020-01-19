@@ -31,7 +31,7 @@ func ExampleNewFundsReq() {
 	// send a request for a bitcoin
 	// TODO: are bitcoin requests in Sat, or as a float?
 	// ObtContent.Encrypt uses an ECIES derived shared-key to AES256 encrypt, then signs with a sha256 HMAC
-	content, err := ObtContent{
+	content, err := ObtRequestContent{
 		PayeePublicAddress: "1HPiiTTYioVBuDU29U7iQqk7tsoEaWoKQs",
 		Amount:             "1000000",
 		TokenCode:          "BTC",
