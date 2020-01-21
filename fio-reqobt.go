@@ -47,9 +47,9 @@ type ObtRequestContent struct {
 	PayeePublicAddress string `json:"payee_public_address"`
 	Amount             string `json:"amount"`
 	TokenCode          string `json:"token_code"`
-	Memo               string `json:"memo,omitempty"`
-	Hash               string `json:"hash,omitempty"`
-	OfflineUrl         string `json:"offline_url,omitempty"`
+	Memo               string `json:"memo"`
+	Hash               string `json:"hash"`
+	OfflineUrl         string `json:"offline_url"`
 }
 
 // Encrypt serializes and encrypts the 'content' field for OBT requests
@@ -79,9 +79,9 @@ type ObtRecordContent struct {
 	TokenCode          string `json:"token_code"`
 	Status             string `json:"status"`
 	ObtId              string `json:"obt_id"`
-	Memo               string `json:"memo,omitempty"`
-	Hash               string `json:"hash,omitempty"`
-	OfflineUrl         string `json:"offline_url,omitempty"`
+	Memo               string `json:"memo"`
+	Hash               string `json:"hash"`
+	OfflineUrl         string `json:"offline_url"`
 }
 
 // Encrypt serializes and encrypts the 'content' field for OBT requests
@@ -148,6 +148,7 @@ func DecryptContent(to *Account, fromPubKey string, encrypted string, obtType Ob
 			return nil, err
 		}
 		err = json.Unmarshal(decode, content)
+		//err := eos.UnmarshalBinary(bin, content)
 		if err != nil {
 			return nil, err
 		}
@@ -163,6 +164,7 @@ func DecryptContent(to *Account, fromPubKey string, encrypted string, obtType Ob
 			return nil, err
 		}
 		err = json.Unmarshal(decode, content)
+		//err := eos.UnmarshalBinary(bin, content)
 		if err != nil {
 			return nil, err
 		}
