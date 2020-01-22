@@ -109,10 +109,10 @@ func (api API) GetCurrentBlock() (blockNum uint32) {
 // WaitForConfirm checks if a tx made it on-chain, it uses brute force to search a range of
 // blocks since the eos.GetTransaction doesn't provide a block hint argument, it will continue
 // to search for roughly 30 seconds and then timeout. If there is an error it sets the returned block
-// number to the upper limit of a uint32
+// number to 1
 func (api API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, err error) {
 	if txid == "" {
-		return 1<<32 - 1, errors.New("invalid txid")
+		return 1, errors.New("invalid txid")
 	}
 	var loopErr error
 	tested := make(map[uint32]bool)
@@ -121,7 +121,7 @@ func (api API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, err
 		time.Sleep(time.Second)
 		latest := api.GetCurrentBlock()
 		if firstBlock == 0 || firstBlock > latest {
-			return 1<<32 - 1, errors.New("invalid starting block provided")
+			return 1, errors.New("invalid starting block provided")
 		}
 		if latest == uint32(1<<32-1) {
 			continue
@@ -146,9 +146,9 @@ func (api API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, err
 		}
 	}
 	if loopErr != nil {
-		return 1<<32 - 1, loopErr
+		return 1, loopErr
 	}
-	return 1<<32 - 1, errors.New("timeout waiting for confirmation")
+	return 1, errors.New("timeout waiting for confirmation")
 }
 
 // WaitForPreCommit waits until 180 blocks (minimum pre-commit limit) have passed given a block number.
