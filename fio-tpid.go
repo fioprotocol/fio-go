@@ -1,14 +1,20 @@
 package fio
 
-import "github.com/eoscanada/eos-go"
+import (
+	"github.com/eoscanada/eos-go"
+	"sync"
+)
 
 // globalTpid is used to store the wallet address for getting rewards (at time of network launch 10% of tx fee).
 // This is a global to the package, and only needs to be set once using SetTpid.
 var globalTpid string
+var tpidMux sync.RWMutex
 
 // SetTpid will set a package variable that will include the provided TPID in all of the calls that support it.
 // This only needs to be called once.
 func SetTpid(walletAddress string) (ok bool) {
+	tpidMux.Lock()
+	defer tpidMux.Unlock()
 	if ok := Address(walletAddress).Valid(); ok {
 		globalTpid = walletAddress
 		return true
@@ -17,7 +23,10 @@ func SetTpid(walletAddress string) (ok bool) {
 }
 
 func CurrentTpid() string {
-	return globalTpid
+	tpidMux.RLock()
+	a := globalTpid
+	tpidMux.RUnlock()
+	return a
 }
 
 type UpdateTpid struct {

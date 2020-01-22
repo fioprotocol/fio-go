@@ -120,7 +120,7 @@ func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amou
 			Amount:         amount,
 			MaxFee:         Tokens(GetMaxFee("transfer_tokens_pub_key")),
 			Actor:          actor,
-			Tpid:           globalTpid,
+			Tpid:           CurrentTpid(),
 		},
 	)
 }

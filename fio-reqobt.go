@@ -195,7 +195,7 @@ func NewRecordSend(actor eos.AccountName, reqId string, payer string, payee stri
 			Content:         content,
 			MaxFee:          Tokens(GetMaxFee("record_send")),
 			Actor:           string(actor),
-			Tpid:            globalTpid,
+			Tpid:            CurrentTpid(),
 		},
 	)
 }
@@ -232,7 +232,7 @@ func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, conten
 			Content:         content,
 			MaxFee:          Tokens(GetMaxFee("new_funds_request")),
 			Actor:           string(actor),
-			Tpid:            globalTpid,
+			Tpid:            CurrentTpid(),
 		},
 	)
 }
@@ -253,7 +253,7 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 			FioRequestId: requestId,
 			MaxFee:       Tokens(GetMaxFee("reject_funds_request")),
 			Actor:        string(actor),
-			Tpid:         globalTpid,
+			Tpid:         CurrentTpid(),
 		},
 	)
 }
@@ -559,9 +559,9 @@ var obtAbiJson = `{
             {"name": "payee_public_address", "type": "string"},
             {"name": "amount", "type": "string"},
             {"name": "token_code", "type": "string"},
-            {"name": "memo", "type": "string?"},
-            {"name": "hash", "type": "string?"},
-            {"name": "offline_url", "type": "string?"}
+            {"name": "memo", "type": "string"},
+            {"name": "hash", "type": "string"},
+            {"name": "offline_url", "type": "string"}
         ]
     }, {
         "name": "record_send_content",
@@ -573,9 +573,9 @@ var obtAbiJson = `{
             {"name": "token_code", "type": "string"},
             {"name": "status", "type": "string"},
             {"name": "obt_id", "type": "string"},
-            {"name": "memo", "type": "string?"},
-            {"name": "hash", "type": "string?"},
-            {"name": "offline_url", "type": "string?"}
+            {"name": "memo", "type": "string"},
+            {"name": "hash", "type": "string"},
+            {"name": "offline_url", "type": "string"}
         ]
     }]
 }

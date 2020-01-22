@@ -30,7 +30,7 @@ func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (
 			OwnerFioPublicKey: ownerPubKey,
 			MaxFee:            Tokens(GetMaxFee("register_fio_address")),
 			Actor:             actor,
-			Tpid:              globalTpid,
+			Tpid:              CurrentTpid(),
 		},
 	), true
 }
@@ -81,7 +81,7 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publ
 			FioAddress:      string(fioAddress),
 			PublicAddresses: []TokenPubAddr{{token, publicAddress}},
 			MaxFee:          Tokens(GetMaxFee("add_pub_address")),
-			Tpid:            globalTpid,
+			Tpid:            CurrentTpid(),
 			Actor:           actor,
 		},
 	), true
@@ -104,7 +104,7 @@ func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Act
 			OwnerFioPublicKey: ownerPubKey,
 			MaxFee:            Tokens(GetMaxFee("register_fio_domain")),
 			Actor:             actor,
-			Tpid:              globalTpid,
+			Tpid:              CurrentTpid(),
 		},
 	)
 }
@@ -141,7 +141,7 @@ func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *A
 			FioDomain: domain,
 			MaxFee:    Tokens(GetMaxFee("renew_fio_domain")),
 			Actor:     actor,
-			Tpid:      globalTpid,
+			Tpid:      CurrentTpid(),
 		},
 	)
 }
@@ -159,7 +159,7 @@ func NewRenewAddress(actor eos.AccountName, address string) *Action {
 		RenewAddress{
 			FioAddress: address,
 			MaxFee:     Tokens(GetMaxFee("renew_fio_address")),
-			Tpid:       globalTpid,
+			Tpid:       CurrentTpid(),
 			Actor:      actor,
 		},
 	)
@@ -228,7 +228,7 @@ func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *Action 
 			IsPublic:  uint8(isPublic),
 			MaxFee:    Tokens(GetMaxFee("setdomainpub")),
 			Actor:     actor,
-			Tpid:      globalTpid,
+			Tpid:      CurrentTpid(),
 		},
 	)
 }
