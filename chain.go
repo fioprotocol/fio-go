@@ -82,8 +82,8 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	return a, txOpts, nil
 }
 
-// newAction creates an Action for FIO contract calls
-func newAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
+// NewAction creates an Action for FIO contract calls
+func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
 		Name:    name,

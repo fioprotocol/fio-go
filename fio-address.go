@@ -23,7 +23,7 @@ func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (
 	if ok := address.Valid(); !ok {
 		return nil, false
 	}
-	return newAction(
+	return NewAction(
 		"fio.address", "regaddress", actor,
 		RegAddress{
 			FioAddress:        string(address),
@@ -75,7 +75,7 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publ
 	if ok := fioAddress.Valid(); !ok {
 		return nil, false
 	}
-	return newAction(
+	return NewAction(
 		"fio.address", "addaddress", actor,
 		AddAddress{
 			FioAddress:      string(fioAddress),
@@ -97,7 +97,7 @@ type RegDomain struct {
 }
 
 func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Action {
-	return newAction(
+	return NewAction(
 		"fio.address", "regdomain", actor,
 		RegDomain{
 			FioDomain:         domain,
@@ -135,7 +135,7 @@ type RenewDomain struct {
 }
 
 func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *Action {
-	return newAction(
+	return NewAction(
 		"fio.address", "renewdomain", actor,
 		RenewDomain{
 			FioDomain: domain,
@@ -154,7 +154,7 @@ type RenewAddress struct {
 }
 
 func NewRenewAddress(actor eos.AccountName, address string) *Action {
-	return newAction(
+	return NewAction(
 		"fio.address", "renewaddress", actor,
 		RenewAddress{
 			FioAddress: address,
@@ -171,7 +171,7 @@ type ExpDomain struct {
 }
 
 func NewExpDomain(actor eos.AccountName, domain string) *Action {
-	return newAction(
+	return NewAction(
 		"fio.address", "expdomain", actor,
 		ExpDomain{
 			Actor:  actor,
@@ -188,7 +188,7 @@ type ExpAddresses struct {
 }
 
 func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string, toAdd uint64) *Action {
-	return newAction(
+	return NewAction(
 		"fio.address", "expaddresses", actor,
 		ExpAddresses{
 			Actor:                actor,
@@ -202,7 +202,7 @@ func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string,
 type BurnExpired struct{}
 
 func NewBurnExpired(actor eos.AccountName) *Action {
-	return newAction(
+	return NewAction(
 		"fio.address", "burnexpired", actor,
 		BurnExpired{},
 	)
@@ -221,7 +221,7 @@ func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *Action 
 	if public {
 		isPublic = 1
 	}
-	return newAction(
+	return NewAction(
 		"fio.address", "setdomainpub", actor,
 		SetDomainPub{
 			FioDomain: domain,

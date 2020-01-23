@@ -186,7 +186,7 @@ type RecordSend struct {
 
 // NewRecordSend builds the action for providing the result of a off-chain transaction
 func NewRecordSend(actor eos.AccountName, reqId string, payer string, payee string, content string) *Action {
-	return newAction(
+	return NewAction(
 		"fio.reqobt", "recordsend", actor,
 		RecordSend{
 			FioRequestId:    reqId,
@@ -224,7 +224,7 @@ type FundsResp struct {
 
 // NewFundsReq builds the action for providing the result of a off-chain transaction
 func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, content string) *Action {
-	return newAction(
+	return NewAction(
 		"fio.reqobt", "newfundsreq", actor,
 		FundsReq{
 			PayerFioAddress: payerFio,
@@ -247,7 +247,7 @@ type RejectFndReq struct {
 
 // NewRejectFndReq builds the action to reject a request
 func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
-	return newAction(
+	return NewAction(
 		"fio.reqobt", "rejectfndreq", actor,
 		RejectFndReq{
 			FioRequestId: requestId,

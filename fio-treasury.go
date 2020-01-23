@@ -7,7 +7,7 @@ type PayTpidRewards struct {
 }
 
 func NewPayTpidRewards(actor eos.AccountName) *Action {
-	return newAction(
+	return NewAction(
 		eos.AccountName("fio.treasury"), "tpidclaim", actor,
 		PayTpidRewards{Actor: actor},
 	)
@@ -19,7 +19,7 @@ type BpClaim struct {
 }
 
 func NewBpClaim(fioAddress string, actor eos.AccountName) *Action {
-	return newAction(
+	return NewAction(
 		eos.AccountName("fio.treasury"), "bpclaim", actor,
 		BpClaim{
 			FioAddress: fioAddress,

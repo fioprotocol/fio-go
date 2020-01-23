@@ -36,7 +36,7 @@ type UpdateTpid struct {
 }
 
 func NewUpdateTpid(actor eos.AccountName, tpid string, amount uint64) *Action {
-	return newAction(
+	return NewAction(
 		"fio.tpid", "updatepid", actor,
 		UpdateTpid{
 			Tpid:   tpid,
@@ -51,7 +51,7 @@ type RewardsPaid struct {
 }
 
 func NewRewardsPaid(actor eos.AccountName, tpid string) *Action {
-	return newAction(
+	return NewAction(
 		"fio.tpid", "rewardspaid", actor,
 		UpdateTpid{
 			Tpid:  tpid,
@@ -65,7 +65,7 @@ type UpdateBounty struct {
 }
 
 func NewUpdateBounty(actor eos.AccountName, amount uint64) *Action {
-	return newAction(
+	return NewAction(
 		"fio.tpid", "updatebounty", actor,
 		UpdateBounty{Amount: amount},
 	)

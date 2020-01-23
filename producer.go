@@ -29,7 +29,7 @@ type VoteProducer struct {
 
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
 func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress string) *Action {
-	return newAction(
+	return NewAction(
 		eos.AccountName("eosio"), "voteproducer", actor,
 		VoteProducer{
 			Producers:  producers,
@@ -69,7 +69,7 @@ func NewRegProducer(fioAddress string, fioPubKey string, url string, location Pr
 	if !strings.Contains("10 20 30 40 50 60 70 80", strconv.Itoa(int(location))) {
 		return nil, errors.New("location must be one of: 10 20 30 40 50 60 70 80")
 	}
-	return newAction("eosio", "regproducer", actor,
+	return NewAction("eosio", "regproducer", actor,
 		RegProducer{
 			FioAddress: fioAddress,
 			FioPubKey:  fioPubKey,
@@ -87,7 +87,7 @@ type UnRegProducer struct {
 }
 
 func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
-	return newAction("eosio", "unregprod", actor, UnRegProducer{
+	return NewAction("eosio", "unregprod", actor, UnRegProducer{
 		FioAddress: fioAddress,
 		Actor:      actor,
 		MaxFee:     Tokens(GetMaxFee("unregister_producer")),
@@ -102,7 +102,7 @@ type VoteProxy struct {
 }
 
 func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Action {
-	return newAction("eosio", "voteproxy", actor,
+	return NewAction("eosio", "voteproxy", actor,
 		VoteProxy{
 			Proxy:      proxy,
 			FioAddress: fioAddress,
@@ -119,7 +119,7 @@ type RegProxy struct {
 }
 
 func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
-	return newAction("eosio", "regproxy", actor,
+	return NewAction("eosio", "regproxy", actor,
 		RegProxy{
 			FioAddress: fioAddress,
 			Actor:      actor,
