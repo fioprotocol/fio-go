@@ -572,7 +572,10 @@ func (api API) GetPendingFioRequests(pubKey string, limit int, offset int) (pend
 		Limit:        limit,
 		Offset:       offset,
 	}
-	j, _ := json.Marshal(query)
+	j, err := json.Marshal(query)
+	if err != nil {
+		return PendingFioRequestsResponse{}, false, err
+	}
 	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_pending_fio_requests`, bytes.NewBuffer(j))
 	if err != nil {
 		return PendingFioRequestsResponse{}, false, err
