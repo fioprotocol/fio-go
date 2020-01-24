@@ -71,7 +71,7 @@ func TestDecode(t *testing.T) {
 	// our encode and theirs will probably be different, so encode to json for compare
 	const newFundsContentHex = "0B70757273652E616C69636501310A66696F2E7265716F6274000000"
 	obtBin, _ := hex.DecodeString(newFundsContentHex)
-	abiReader := bytes.NewReader([]byte(obtAbiJson))
+	abiReader := bytes.NewReader([]byte(ObtAbiJson))
 	abi, err := eos.NewABI(abiReader)
 	if err != nil {
 		t.Error(err)
@@ -210,7 +210,7 @@ func TestEciesDecrypt(t *testing.T) {
 		OfflineUrl:         "",
 	}
 	j, _ := json.Marshal(&obtRequest)
-	abiReader := bytes.NewReader([]byte(obtAbiJson))
+	abiReader := bytes.NewReader([]byte(ObtAbiJson))
 	abi, _ := eos.NewABI(abiReader)
 	b, err := abi.EncodeAction("new_funds_content", j)
 	if err != nil {

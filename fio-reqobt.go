@@ -52,13 +52,31 @@ type ObtRequestContent struct {
 	OfflineUrl         string `json:"offline_url"`
 }
 
+// ObtRequestContent holds details for requesting funds
+type obtRequestContentOmit struct {
+	PayeePublicAddress string `json:"payee_public_address"`
+	Amount             string `json:"amount"`
+	TokenCode          string `json:"token_code"`
+	Memo               string `json:"memo,omitempty"`
+	Hash               string `json:"hash,omitempty"`
+	OfflineUrl         string `json:"offline_url,omitempty"`
+}
+
 // Encrypt serializes and encrypts the 'content' field for OBT requests
 func (req ObtRequestContent) Encrypt(from *Account, toPubKey string) (content string, err error) {
-	j, err := json.Marshal(req)
+	reqOmit := obtRequestContentOmit{
+		PayeePublicAddress: req.PayeePublicAddress,
+		Amount:             req.Amount,
+		TokenCode:          req.TokenCode,
+		Memo:               req.Memo,
+		Hash:               req.Hash,
+		OfflineUrl:         req.OfflineUrl,
+	}
+	j, err := json.Marshal(reqOmit)
 	if err != nil {
 		return "", err
 	}
-	abiReader := bytes.NewReader([]byte(obtAbiJson))
+	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
 	abi, _ := eos.NewABI(abiReader)
 	//bin, err := abi.DecodeTableRowTyped("record_send_content", j)
 	bin, err := abi.EncodeAction("new_funds_content", j)
@@ -84,13 +102,36 @@ type ObtRecordContent struct {
 	OfflineUrl         string `json:"offline_url"`
 }
 
+type obtRecordContentOmit struct {
+	PayerPublicAddress string `json:"payer_public_address"`
+	PayeePublicAddress string `json:"payee_public_address"`
+	Amount             string `json:"amount"`
+	TokenCode          string `json:"token_code"`
+	Status             string `json:"status"`
+	ObtId              string `json:"obt_id"`
+	Memo               string `json:"memo,omitempty"`
+	Hash               string `json:"hash,omitempty"`
+	OfflineUrl         string `json:"offline_url,omitempty"`
+}
+
 // Encrypt serializes and encrypts the 'content' field for OBT requests
 func (rec ObtRecordContent) Encrypt(from *Account, toPubKey string) (content string, err error) {
-	j, err := json.Marshal(rec)
+	recOmit := obtRecordContentOmit{
+		rec.PayerPublicAddress,
+		rec.PayeePublicAddress,
+		rec.Amount,
+		rec.TokenCode,
+		rec.Status,
+		rec.ObtId,
+		rec.Memo,
+		rec.Hash,
+		rec.OfflineUrl,
+	}
+	j, err := json.Marshal(recOmit)
 	if err != nil {
 		return "", err
 	}
-	abiReader := bytes.NewReader([]byte(obtAbiJson))
+	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
 	abi, _ := eos.NewABI(abiReader)
 	//bin, err := abi.DecodeTableRowTyped("record_send_content", j)
 	bin, err := abi.EncodeAction("record_send_content", j)
@@ -140,15 +181,7 @@ func DecryptContent(to *Account, fromPubKey string, encrypted string, obtType Ob
 	}
 	switch obtType {
 	case ObtRequestType:
-		content := &ObtRequestContent{}
-		abiReader := bytes.NewReader([]byte(obtAbiJson))
-		abi, _ := eos.NewABI(abiReader)
-		decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(decode, content)
-		//err := eos.UnmarshalBinary(bin, content)
+		content, err := tryDecryptRequest(bin, obtType)
 		if err != nil {
 			return nil, err
 		}
@@ -156,15 +189,7 @@ func DecryptContent(to *Account, fromPubKey string, encrypted string, obtType Ob
 		return result, nil
 
 	case ObtResponseType:
-		content := &ObtRecordContent{}
-		abiReader := bytes.NewReader([]byte(obtAbiJson))
-		abi, _ := eos.NewABI(abiReader)
-		decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(decode, content)
-		//err := eos.UnmarshalBinary(bin, content)
+		content, err := tryDecryptRecord(bin, obtType)
 		if err != nil {
 			return nil, err
 		}
@@ -454,6 +479,48 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 	return nil, errors.New("unknown error in EciesDecrypt")
 }
 
+// depending on how the request was built it's possible to get a slightly different abi encoding,
+// this will try three different ways of decoding the request ...
+func tryDecryptRequest(bin []byte, obtType ObtType) (content *ObtRequestContent, err error) {
+	content = &ObtRequestContent{}
+	abiReader := bytes.NewReader([]byte(ObtAbiJson))
+	abi, _ := eos.NewABI(abiReader)
+	decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
+	if err != nil {
+		abiReader = bytes.NewReader([]byte(obtAbiJsonOmit))
+		abi, _ = eos.NewABI(abiReader)
+		decode, err = abi.DecodeTableRowTyped(obtType.String(), bin)
+		if err != nil {
+			err := eos.UnmarshalBinary(bin, content)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	err = json.Unmarshal(decode, content)
+	return
+}
+
+func tryDecryptRecord(bin []byte, obtType ObtType) (content *ObtRecordContent, err error) {
+	content = &ObtRecordContent{}
+	abiReader := bytes.NewReader([]byte(ObtAbiJson))
+	abi, _ := eos.NewABI(abiReader)
+	decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
+	if err != nil {
+		abiReader = bytes.NewReader([]byte(obtAbiJsonOmit))
+		abi, _ = eos.NewABI(abiReader)
+		decode, err = abi.DecodeTableRowTyped(obtType.String(), bin)
+		if err != nil {
+			err := eos.UnmarshalBinary(bin, content)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	err = json.Unmarshal(decode, content)
+	return
+}
+
 // EciesSecret derives the ecies pre-shared key from a private and public key.
 // The 'secret' returned is the actual secret, the 'hash' returned is what is actually used
 // in the OBT implementation, allowing the secret to be stretched into two keys, one for
@@ -539,7 +606,7 @@ func swapEndian(orig []byte) (flipped []byte) {
 }
 
 // note, added non-existent actions for eos-go encoder ...
-var obtAbiJson = `{
+var ObtAbiJson = `{
     "version": "eosio::abi/1.0",
     "types": [],
     "actions": [{
@@ -580,3 +647,47 @@ var obtAbiJson = `{
     }]
 }
 `
+
+// note, added non-existent actions for eos-go encoder ...
+var obtAbiJsonOmit = `{
+    "version": "eosio::abi/1.0",
+    "types": [],
+    "actions": [{
+         "name": "new_funds_content",
+         "type": "new_funds_content",
+         "ricardian_contract": ""
+      },{
+         "name": "record_send_content",
+         "type": "record_send_content",
+         "ricardian_contract": ""
+      }
+    ],
+    "structs": [{
+        "name": "new_funds_content",
+        "base": "",
+        "fields": [
+            {"name": "payee_public_address", "type": "string"},
+            {"name": "amount", "type": "string"},
+            {"name": "token_code", "type": "string"},
+            {"name": "memo", "type": "string?"},
+            {"name": "hash", "type": "string?"},
+            {"name": "offline_url", "type": "string?"}
+        ]
+    }, {
+        "name": "record_send_content",
+        "base": "",
+        "fields": [
+            {"name": "payer_public_address", "type": "string"},
+            {"name": "payee_public_address", "type": "string"},
+            {"name": "amount", "type": "string"},
+            {"name": "token_code", "type": "string"},
+            {"name": "status", "type": "string"},
+            {"name": "obt_id", "type": "string"},
+            {"name": "memo", "type": "string?"},
+            {"name": "hash", "type": "string?"},
+            {"name": "offline_url", "type": "string?"}
+        ]
+    }]
+}`
+
+
