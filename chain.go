@@ -1,10 +1,13 @@
 package fio
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/ecc"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -187,6 +190,72 @@ func (api API) WaitForIrreversible(block uint32, seconds int) (err error) {
 		time.Sleep(time.Second)
 	}
 	return errors.New("timeout waiting for irreversible block")
+}
+
+// PushEndpointRaw is adapted from eos-go call() function in api.go to allow overriding the endpoint for a push-transaction
+// the endpoint provided should be the full path to the endpoint such as "/v1/chain/push_transaction"
+func (api API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawMessage, err error) {
+	enc := func(v interface{}) (io.Reader, error) {
+		if v == nil {
+			return nil, nil
+		}
+		buffer := &bytes.Buffer{}
+		encoder := json.NewEncoder(buffer)
+		encoder.SetEscapeHTML(false)
+		err := encoder.Encode(v)
+		if err != nil {
+			return nil, err
+		}
+		return buffer, nil
+	}
+	jsonBody, err := enc(body)
+	if err != nil {
+		return nil, err
+	}
+	targetURL := fmt.Sprintf("%s/%s", api.BaseURL, endpoint)
+	req, err := http.NewRequest("POST", targetURL, jsonBody)
+	if err != nil {
+		return nil, fmt.Errorf("NewRequest: %s", err)
+	}
+	for k, v := range api.Header {
+		if req.Header == nil {
+			req.Header = http.Header{}
+		}
+		req.Header[k] = append(req.Header[k], v...)
+	}
+	resp, err := api.HttpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", req.URL.String(), err)
+	}
+	defer resp.Body.Close()
+	var cnt bytes.Buffer
+	_, err = io.Copy(&cnt, resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Copy: %s", err)
+	}
+	if resp.StatusCode == 404 {
+		var apiErr eos.APIError
+		if err := json.Unmarshal(cnt.Bytes(), &apiErr); err != nil {
+			return nil, eos.ErrNotFound
+		}
+		return nil, apiErr
+	}
+	if resp.StatusCode > 299 {
+		var apiErr eos.APIError
+		if err := json.Unmarshal(cnt.Bytes(), &apiErr); err != nil {
+			return nil, fmt.Errorf("%s: status code=%d, body=%s", req.URL.String(), resp.StatusCode, cnt.String())
+		}
+		// Handle cases where some API calls (/v1/chain/get_account for example) returns a 500
+		// error when retrieving data that does not exist.
+		if apiErr.IsUnknownKeyError() {
+			return nil, eos.ErrNotFound
+		}
+		return nil, apiErr
+	}
+	if err := json.Unmarshal(cnt.Bytes(), &out); err != nil {
+		return nil, fmt.Errorf("Unmarshal: %s", err)
+	}
+	return out, nil
 }
 
 type Producers struct {
