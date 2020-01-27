@@ -212,8 +212,7 @@ func (api API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawM
 	if err != nil {
 		return nil, err
 	}
-	targetURL := fmt.Sprintf("%s/%s", api.BaseURL, endpoint)
-	req, err := http.NewRequest("POST", targetURL, jsonBody)
+	req, err := http.NewRequest("POST", api.BaseURL+endpoint, jsonBody)
 	if err != nil {
 		return nil, fmt.Errorf("NewRequest: %s", err)
 	}
