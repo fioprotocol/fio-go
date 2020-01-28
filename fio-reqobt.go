@@ -212,7 +212,7 @@ type RecordSend struct {
 // NewRecordSend builds the action for providing the result of a off-chain transaction
 func NewRecordSend(actor eos.AccountName, reqId string, payer string, payee string, content string) *Action {
 	return NewAction(
-		"fio.reqobt", "recordsend", actor,
+		"fio.reqobt", "recordobt", actor,
 		RecordSend{
 			FioRequestId:    reqId,
 			PayerFioAddress: payer,
