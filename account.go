@@ -108,9 +108,9 @@ type Address string
 //  Rules:
 //    Min: 3
 //    Max: 64
-//    Characters allowed: ASCII a-z0-9 - (dash) : (colon)
+//    Characters allowed: ASCII a-z0-9 - (dash) @ (ampersat)
 //    Characters required:
-//       only one : (colon) and at least one a-z0-9 on either side of colon.
+//       only one @ and at least one a-z0-9 on either side of colon.
 //       a-z0-9 is required on either side of any dash
 //    Case-insensitive
 func (a Address) Valid() (ok bool) {
