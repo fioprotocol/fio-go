@@ -1,6 +1,136 @@
 package fio
 
-import "github.com/eoscanada/eos-go"
+import (
+	"encoding/json"
+	"github.com/eoscanada/eos-go"
+	"sync"
+)
+
+const (
+	FeeAddPubAddress        = "add_pub_address"
+	FeeAddToWhitelist       = "add_to_whitelist"
+	FeeAuthDelete           = "auth_delete"
+	FeeAuthLink             = "auth_link"
+	FeeAuthUpdate           = "auth_update"
+	FeeBurnExpired          = "burnexpired"
+	FeeMsigApprove          = "msig_approve"
+	FeeMsigCancel           = "msig_cancel"
+	FeeMsigExec             = "msig_exec"
+	FeeMsigInvalidate       = "msig_invalidate"
+	FeeMsigPropose          = "msig_propose"
+	FeeMsigUnapprove        = "msig_unapprove"
+	FeeNewFundsRequest      = "new_funds_request"
+	FeeProxyVote            = "proxy_vote"
+	FeeRecordObtData        = "record_obt_data"
+	FeeRecordSend           = "record_send" // outdated endpoint name
+	FeeRegisterFioAddress   = "register_fio_address"
+	FeeRegisterFioDomain    = "register_fio_domain"
+	FeeRegisterProducer     = "register_producer"
+	FeeRegisterProxy        = "register_proxy"
+	FeeRejectFundsRequest   = "reject_funds_request"
+	FeeRemoveFromWhitelist  = "remove_from_whitelist"
+	FeeRenewFioAddress      = "renew_fio_address"
+	FeeRenewFioDomain       = "renew_fio_domain"
+	FeeSetDomainPub         = "set_fio_domain_public"
+	FeeSubmitBundledTrans   = "submit_bundled_transaction"
+	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
+	FeeUnregisterProducer   = "unregister_producer"
+	FeeUnregisterProxy      = "unregister_proxy"
+	FeeVoteProducer         = "vote_producer"
+)
+
+var (
+	// maxFees holds the fees for transactions
+	// use fio.GetMaxFee() instead of directly accessing this map to ensure concurrent safe access
+	// IMPORTANT: these are default values: call `fio.UpdateMaxFees` to refresh values from the on-chain table.
+	maxFees = map[string]float64{
+		"add_pub_address":             0.4,
+		"add_to_whitelist":            0.0,
+		"auth_delete":                 0.4,
+		"auth_link":                   0.4,
+		"auth_update":                 0.4,
+		"burnexpired":                 0.1,
+		"msig_approve":                0.4,
+		"msig_cancel":                 0.4,
+		"msig_exec":                   0.4,
+		"msig_invalidate":             0.4,
+		"msig_propose":                0.4,
+		"msig_unapprove":              0.4,
+		"new_funds_request":           0.8,
+		"proxy_vote":                  0.4,
+		"record_obt_data":             0.8,
+		"record_send":                 0.8, // outdated endpoint name.
+		"register_fio_address":        40.0,
+		"register_fio_domain":         800.0,
+		"register_producer":           200.0,
+		"register_proxy":              0.4,
+		"reject_funds_request":        0.4,
+		"remove_from_whitelist":       0.0,
+		"renew_fio_address":           40.0,
+		"renew_fio_domain":            800.0,
+		"set_fio_domain_public":       0.4,
+		"setdomainpub":                0.4, // outdated endpoint name.
+		"submit_bundled_transaction":  0.0,
+		"transfer_tokens_fio_address": 0.1,
+		"transfer_tokens_pub_key":     2.0,
+		"unregister_proxy":            0.4,
+		"vote_producer":               0.4,
+	}
+	maxFeeMutex    = sync.RWMutex{}
+	maxFeesUpdated = false
+)
+
+// UpdateMaxFees refreshes the maxFees map from the on-chain table. This is automatically called
+// by NewConnection if fees are not already up-to-date.
+func UpdateMaxFees(api *API) bool {
+	type feeRow struct {
+		EndPoint  string `json:"end_point"`
+		SufAmount uint64 `json:"suf_amount"`
+	}
+	fees, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:  "fio.fee",
+		Scope: "fio.fee",
+		Table: "fiofees",
+		Limit: 100,
+		JSON:  true,
+	})
+	if err != nil {
+		return false
+	}
+	results := make([]feeRow, 0)
+	err = json.Unmarshal(fees.Rows, &results)
+	if err != nil {
+		return false
+	}
+	maxFeeMutex.Lock()
+	for _, f := range results {
+		maxFees[f.EndPoint] = float64(f.SufAmount) / 1000000000.0
+	}
+	maxFeeMutex.Unlock()
+	maxFeesUpdated = true
+	return true
+}
+
+// GetMaxFee looks up a fee from the map
+func GetMaxFee(name string) (fioTokens float64) {
+	maxFeeMutex.RLock()
+	fioTokens = maxFees[name]
+	maxFeeMutex.RUnlock()
+	return fioTokens
+}
+
+// MaxFeesUpdated checks if the fee map has been updated, or if using the default (possibly wrong) values
+func MaxFeesUpdated() bool {
+	return maxFeesUpdated
+}
+
+// MaxFeesJson provides a JSON representation of the current fee map
+func MaxFeesJson() []byte {
+	maxFeeMutex.RLock()
+	j, _ := json.MarshalIndent(maxFees, "", "  ")
+	maxFeeMutex.RUnlock()
+	return j
+}
 
 type CreateFee struct {
 	EndPoint  string `json:"end_point"`

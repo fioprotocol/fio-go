@@ -110,7 +110,7 @@ type Address string
 //    Max: 64
 //    Characters allowed: ASCII a-z0-9 - (dash) @ (ampersat)
 //    Characters required:
-//       only one @ and at least one a-z0-9 on either side of colon.
+//       only one @ and at least one a-z0-9 on either side of @.
 //       a-z0-9 is required on either side of any dash
 //    Case-insensitive
 func (a Address) Valid() (ok bool) {
@@ -123,7 +123,7 @@ func (a Address) Valid() (ok bool) {
 	if bad, err := regexp.MatchString(`(?:--|@@|@.*@|-@|@-|^-|-$)`, string(a)); bad || err != nil {
 		return false
 	}
-	if match, err := regexp.MatchString(`[a-zA-Z0-9-]+(?::|@)[a-zA-Z0-9-]`, string(a)); err != nil || !match {
+	if match, err := regexp.MatchString(`[a-zA-Z0-9-]+[:@][a-zA-Z0-9-]`, string(a)); err != nil || !match {
 		return false
 	}
 	return true

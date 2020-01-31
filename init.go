@@ -1,8 +1,7 @@
 package fio
 
-// CompressOBT controls whether the obt payloads should be zlib compressed
-// *before* encrypting. This combined with base64 encoding requires about
-// 25% of the storage of uncompressed, hex-encoded strings.
+// CompressOBT controls whether the obt payloads should be use base64 encoding
+// the old spec was hex-encoded strings.
 //
 // Old spec does not use zlib, and hex-encodes the strings , new is zlib + base64
 // setting this to true will allow implementing the new behavior, which will hopefully

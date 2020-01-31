@@ -1,100 +1,8 @@
 package fio
 
 import (
-	"encoding/json"
 	"github.com/eoscanada/eos-go"
-	"sync"
 )
-
-const (
-	FeeRegisterFioAddress   = "register_fio_address"
-	FeeAddPubAddress        = "add_pub_address"
-	FeeRegisterFioDomain    = "register_fio_domain"
-	FeeRenewFioDomain       = "renew_fio_domain"
-	FeeRenewFioAddress      = "renew_fio_address"
-	FeeBurnExpired          = "burnexpired"
-	FeeSetDomainPub         = "setdomainpub"
-	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
-	FeeRecordSend           = "record_send"
-	FeeNewFundsRequest      = "new_funds_request"
-	FeeRejectFundsRequest   = "reject_funds_request"
-	FeeVoteProducer         = "vote_producer"
-)
-
-var (
-	// maxFees holds the fees for transactions
-	// use fio.GetMaxFee() instead of directly accessing this map to ensure concurrent safe access
-	// IMPORTANT: these are default values: call `fio.UpdateMaxFees` to refresh values from the on-chain table.
-	maxFees = map[string]float64{
-		"register_fio_address":        5.0,
-		"add_pub_address":             0.01,
-		"register_fio_domain":         40.0,
-		"renew_fio_domain":            40.0,
-		"renew_fio_address":           5.0,
-		"burnexpired":                 0.1,
-		"setdomainpub":                0.1,
-		"transfer_tokens_fio_address": 0.1,
-		"transfer_tokens_pub_key":     0.25,
-		"record_send":                 0.1,
-		"new_funds_request":           0.1,
-		"reject_funds_request":        0.1,
-		"vote_producer":               0.01,
-	}
-	maxFeeMutex    = sync.RWMutex{}
-	maxFeesUpdated = false
-)
-
-// UpdateMaxFees refreshes the maxFees map from the on-chain table. This is automatically called
-// by NewConnection if fees are not already up-to-date.
-func UpdateMaxFees(api *API) bool {
-	type feeRow struct {
-		EndPoint  string `json:"end_point"`
-		SufAmount uint64 `json:"suf_amount"`
-	}
-	fees, err := api.GetTableRows(eos.GetTableRowsRequest{
-		Code:  "fio.fee",
-		Scope: "fio.fee",
-		Table: "fiofees",
-		Limit: 100,
-		JSON:  true,
-	})
-	if err != nil {
-		return false
-	}
-	results := make([]feeRow, 0)
-	err = json.Unmarshal(fees.Rows, &results)
-	if err != nil {
-		return false
-	}
-	maxFeeMutex.Lock()
-	for _, f := range results {
-		maxFees[f.EndPoint] = float64(f.SufAmount) / 1000000000.0
-	}
-	maxFeeMutex.Unlock()
-	maxFeesUpdated = true
-	return true
-}
-
-// GetMaxFee looks up a fee from the map
-func GetMaxFee(name string) (fioTokens float64) {
-	maxFeeMutex.RLock()
-	fioTokens = maxFees[name]
-	maxFeeMutex.RUnlock()
-	return fioTokens
-}
-
-// MaxFeesUpdated checks if the fee map has been updated, or if using the default (possibly wrong) values
-func MaxFeesUpdated() bool {
-	return maxFeesUpdated
-}
-
-// MaxFeesJson provides a JSON representation of the current fee map
-func MaxFeesJson() []byte {
-	maxFeeMutex.RLock()
-	j, _ := json.MarshalIndent(maxFees, "", "  ")
-	maxFeeMutex.RUnlock()
-	return j
-}
 
 // Tokens is a convenience function for converting from a float for human readability.
 // Example 1 FIO Token: Tokens(1.0) == uint64(1000000000)
@@ -118,7 +26,7 @@ func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amou
 		TransferTokensPubKey{
 			PayeePublicKey: recipientPubKey,
 			Amount:         amount,
-			MaxFee:         Tokens(GetMaxFee("transfer_tokens_pub_key")),
+			MaxFee:         Tokens(GetMaxFee(FeeTransferTokensPubKey)),
 			Actor:          actor,
 			Tpid:           CurrentTpid(),
 		},
@@ -147,7 +55,7 @@ func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64
 					Symbol:    "FIO",
 				},
 			},
-			MaxFee: Tokens(GetMaxFee("transfer_tokens_fio_address")),
+			MaxFee: Tokens(GetMaxFee(FeeTransferTokensPubKey)),
 		},
 	)
 }

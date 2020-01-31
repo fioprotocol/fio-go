@@ -35,7 +35,7 @@ func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress strin
 			Producers:  producers,
 			FioAddress: fioAddress,
 			Actor:      actor,
-			MaxFee:     Tokens(GetMaxFee("vote_producer")),
+			MaxFee:     Tokens(GetMaxFee(FeeVoteProducer)),
 		},
 	)
 }
@@ -76,7 +76,7 @@ func NewRegProducer(fioAddress string, fioPubKey string, url string, location Pr
 			Url:        url,
 			Location:   uint16(location),
 			Actor:      actor,
-			MaxFee:     Tokens(GetMaxFee("register_producer")),
+			MaxFee:     Tokens(GetMaxFee(FeeRegisterProducer)),
 		}), nil
 }
 
@@ -90,7 +90,7 @@ func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
 	return NewAction("eosio", "unregprod", actor, UnRegProducer{
 		FioAddress: fioAddress,
 		Actor:      actor,
-		MaxFee:     Tokens(GetMaxFee("unregister_producer")),
+		MaxFee:     Tokens(GetMaxFee(FeeUnregisterProducer)),
 	})
 }
 
@@ -107,7 +107,7 @@ func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Actio
 			Proxy:      proxy,
 			FioAddress: fioAddress,
 			Actor:      actor,
-			MaxFee:     Tokens(GetMaxFee("proxy_vote")),
+			MaxFee:     Tokens(GetMaxFee(FeeProxyVote)),
 		},
 	)
 }
@@ -123,7 +123,7 @@ func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
 		RegProxy{
 			FioAddress: fioAddress,
 			Actor:      actor,
-			MaxFee:     Tokens(GetMaxFee("register_proxy")),
+			MaxFee:     Tokens(GetMaxFee(FeeRegisterProxy)),
 		},
 	)
 }

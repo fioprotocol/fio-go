@@ -28,7 +28,7 @@ func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (
 		RegAddress{
 			FioAddress:        string(address),
 			OwnerFioPublicKey: ownerPubKey,
-			MaxFee:            Tokens(GetMaxFee("register_fio_address")),
+			MaxFee:            Tokens(GetMaxFee(FeeRegisterFioAddress)),
 			Actor:             actor,
 			Tpid:              CurrentTpid(),
 		},
@@ -80,7 +80,7 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publ
 		AddAddress{
 			FioAddress:      string(fioAddress),
 			PublicAddresses: []TokenPubAddr{{token, publicAddress}},
-			MaxFee:          Tokens(GetMaxFee("add_pub_address")),
+			MaxFee:          Tokens(GetMaxFee(FeeAddPubAddress)),
 			Tpid:            CurrentTpid(),
 			Actor:           actor,
 		},
@@ -102,7 +102,7 @@ func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Act
 		RegDomain{
 			FioDomain:         domain,
 			OwnerFioPublicKey: ownerPubKey,
-			MaxFee:            Tokens(GetMaxFee("register_fio_domain")),
+			MaxFee:            Tokens(GetMaxFee(FeeRegisterFioDomain)),
 			Actor:             actor,
 			Tpid:              CurrentTpid(),
 		},
@@ -139,7 +139,7 @@ func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *A
 		"fio.address", "renewdomain", actor,
 		RenewDomain{
 			FioDomain: domain,
-			MaxFee:    Tokens(GetMaxFee("renew_fio_domain")),
+			MaxFee:    Tokens(GetMaxFee(FeeRenewFioDomain)),
 			Actor:     actor,
 			Tpid:      CurrentTpid(),
 		},
@@ -158,7 +158,7 @@ func NewRenewAddress(actor eos.AccountName, address string) *Action {
 		"fio.address", "renewaddress", actor,
 		RenewAddress{
 			FioAddress: address,
-			MaxFee:     Tokens(GetMaxFee("renew_fio_address")),
+			MaxFee:     Tokens(GetMaxFee(FeeRenewFioAddress)),
 			Tpid:       CurrentTpid(),
 			Actor:      actor,
 		},
@@ -226,7 +226,7 @@ func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *Action 
 		SetDomainPub{
 			FioDomain: domain,
 			IsPublic:  uint8(isPublic),
-			MaxFee:    Tokens(GetMaxFee("setdomainpub")),
+			MaxFee:    Tokens(GetMaxFee(FeeSetDomainPub)),
 			Actor:     actor,
 			Tpid:      CurrentTpid(),
 		},
