@@ -76,8 +76,39 @@ var (
 		"unregister_proxy":            0.4,
 		"vote_producer":               0.4,
 	}
-	maxFeeMutex    = sync.RWMutex{}
-	maxFeesUpdated = false
+	// maxFeesByAction correlates fee name to action name, useful when working directly with contracts, not API endpoint
+	// slight chance fee will be wrong if there are two actions with identical name, but don't think there are any cases
+	// where that will happen right now.
+	maxFeesByAction = map[string]string{
+		"deleteauth":   FeeAuthDelete,
+		"linkauth":     FeeAuthLink,
+		"regproducer":  FeeRegisterProducer,
+		"regproxy":     FeeRegisterProxy,
+		"unregprod":    FeeUnregisterProducer,
+		"unregproxy":   FeeUnregisterProxy,
+		"updateauth":   FeeAuthUpdate,
+		"voteproducer": FeeVoteProducer,
+		"voteproxy":    FeeProxyVote,
+		"approve":      FeeMsigApprove,
+		"cancel":       FeeMsigCancel,
+		"exec":         FeeMsigExec,
+		"invalidate":   FeeMsigInvalidate,
+		"propose":      FeeMsigPropose,
+		"unapprove":    FeeMsigUnapprove,
+		"addaddress":   FeeAddPubAddress,
+		"regaddress":   FeeRegisterFioAddress,
+		"regdomain":    FeeRegisterFioDomain,
+		"renewaddress": FeeRenewFioAddress,
+		"renewdomain":  FeeRenewFioDomain,
+		"setdomainpub": FeeSetDomainPub,
+		"newfundsreq":  FeeNewFundsRequest,
+		"recordobt":    FeeRecordObtData,
+		"rejectfndreq": FeeRejectFundsRequest,
+		"trnsfiopubky": FeeTransferTokensPubKey,
+	}
+	maxFeeActionMutex = sync.RWMutex{}
+	maxFeeMutex       = sync.RWMutex{}
+	maxFeesUpdated    = false
 )
 
 // UpdateMaxFees refreshes the maxFees map from the on-chain table. This is automatically called
@@ -119,6 +150,15 @@ func GetMaxFee(name string) (fioTokens float64) {
 	return fioTokens
 }
 
+func GetMaxFeeByAction(name string) (fioTokens float64) {
+	maxFeeMutex.RLock()
+	maxFeeActionMutex.RLock()
+	fioTokens = maxFees[maxFeesByAction[name]]
+	maxFeeMutex.RUnlock()
+	maxFeeActionMutex.RUnlock()
+	return fioTokens
+}
+
 // MaxFeesUpdated checks if the fee map has been updated, or if using the default (possibly wrong) values
 func MaxFeesUpdated() bool {
 	return maxFeesUpdated
@@ -148,9 +188,26 @@ type SetFeeVote struct {
 	Actor     string     `json:"actor"`
 }
 
+func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
+	return NewAction("fio.fee", "setfeevote", actor,
+		SetFeeVote{
+			FeeRatios: ratios,
+			Actor:     string(actor),
+		})
+}
+
 type BundleVote struct {
-	BundledTransactions float64 `json:"bundled_transactions"`
-	Actor               string  `json:"actor"`
+	BundledTransactions uint64 `json:"bundled_transactions"`
+	Actor               string `json:"actor"`
+}
+
+func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
+	return NewAction("eosio", "bundlevote", actor,
+		BundleVote{
+			BundledTransactions: transactions,
+			Actor:               string(actor),
+		},
+	)
 }
 
 type SetFeeMult struct {
