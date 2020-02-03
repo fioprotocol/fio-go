@@ -1,8 +1,10 @@
 package fio
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/eoscanada/eos-go"
+	"io/ioutil"
 	"sync"
 )
 
@@ -142,7 +144,8 @@ func UpdateMaxFees(api *API) bool {
 	return true
 }
 
-// GetMaxFee looks up a fee from the map
+// GetMaxFee looks up a fee from the map, this is based on the values in the fiofees table, and does not take into
+// account any bundled transactions for the user, use GetFee() for that.
 func GetMaxFee(name string) (fioTokens float64) {
 	maxFeeMutex.RLock()
 	fioTokens = maxFees[name]
@@ -150,13 +153,48 @@ func GetMaxFee(name string) (fioTokens float64) {
 	return fioTokens
 }
 
-func GetMaxFeeByAction(name string) (fioTokens float64) {
+// GetMaxFeeByAction allows getting a fee given the contract action name instead of the API endpoint name.
+func GetMaxFeeByAction(name string) (fioTokens float64){
 	maxFeeMutex.RLock()
 	maxFeeActionMutex.RLock()
 	fioTokens = maxFees[maxFeesByAction[name]]
 	maxFeeMutex.RUnlock()
 	maxFeeActionMutex.RUnlock()
 	return fioTokens
+}
+
+type GetFeeRequest struct {
+	FioAddress string `json:"fio_address"`
+	EndPoint string `json:"end_point"`
+}
+
+type GetFeeResponse struct {
+	Fee uint64 `json:"fee"`
+}
+
+// GetFee calls the API endpoint to calculate a fee for a FIO address, taking bundled transactions into account.
+// It is an API member function because it is neither tied to the current user, and is not a signed tx.
+// To get the actual fee schedule for an transaction use GetMaxFee() or GetMaxFeeByAction()
+func (api *API) GetFee(fioAddress string, endPoint string) (fee uint64, err error) {
+	j, err := json.Marshal(&GetFeeRequest{FioAddress: fioAddress, EndPoint: endPoint})
+	if err != nil {
+		return 0, err
+	}
+	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_fee", "application/json", bytes.NewReader(j))
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	f, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+	feeResp := &GetFeeResponse{}
+	err = json.Unmarshal(f, feeResp)
+	if err != nil {
+		return 0, err
+	}
+	return feeResp.Fee, nil
 }
 
 // MaxFeesUpdated checks if the fee map has been updated, or if using the default (possibly wrong) values
