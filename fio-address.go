@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+const FioSymbol = "ᵮ"
+
 // RegAddress Registers a FIO Address on the FIO blockchain
 type RegAddress struct {
 	FioAddress        string          `json:"fio_address"`
@@ -68,18 +70,53 @@ type AddAddress struct {
 
 type TokenPubAddr struct {
 	TokenCode     string `json:"token_code"`
+	ChainCode     string `json:"chain_code"`
 	PublicAddress string `json:"public_address"`
 }
 
-func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, publicAddress string) (action *Action, ok bool) {
-	if ok := fioAddress.Valid(); !ok {
+func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, chain string, publicAddress string) (action *Action, ok bool) {
+	if !fioAddress.Valid() {
+		return nil, false
+	}
+	// ensure both chain and token are not empty
+	if token != "" && chain == "" {
+		token = chain
+	} else if chain != "" && token == "" {
+		chain = token
+	} else if chain == "" && token == "" {
 		return nil, false
 	}
 	return NewAction(
 		"fio.address", "addaddress", actor,
 		AddAddress{
 			FioAddress:      string(fioAddress),
-			PublicAddresses: []TokenPubAddr{{token, publicAddress}},
+			PublicAddresses: []TokenPubAddr{{TokenCode: token, ChainCode: chain, PublicAddress: publicAddress}},
+			MaxFee:          Tokens(GetMaxFee(FeeAddPubAddress)),
+			Tpid:            CurrentTpid(),
+			Actor:           actor,
+		},
+	), true
+}
+
+func NewAddAddresses(actor eos.AccountName, fioAddress Address, addrs []TokenPubAddr) (action *Action, ok bool) {
+	if !fioAddress.Valid() {
+		return nil, false
+	}
+	// fixup struct so both chain code and token code exist
+	for _, a := range addrs {
+		if a.TokenCode != "" && a.ChainCode == "" {
+			a.TokenCode = a.ChainCode
+		} else if a.ChainCode != "" && a.TokenCode == "" {
+			a.ChainCode = a.TokenCode
+		} else if a.ChainCode == "" && a.TokenCode == "" {
+			return nil, false
+		}
+	}
+	return NewAction(
+		"fio.address", "addaddress", actor,
+		AddAddress{
+			FioAddress:      string(fioAddress),
+			PublicAddresses: addrs,
 			MaxFee:          Tokens(GetMaxFee(FeeAddPubAddress)),
 			Tpid:            CurrentTpid(),
 			Actor:           actor,
@@ -110,6 +147,8 @@ func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Act
 }
 
 // RegDomain simplifies the process of registering by making it a single step that waits for confirm
+//
+// Deprecated: not an idiomatic implementation, other calls do not behave this way
 func (api *API) RegDomain(txOpts *TxOptions, actor *Account, ownerPub string, domain string) (txId string, ok bool, err error) {
 	action := NewRegDomain(actor.Actor, domain, ownerPub)
 	tx := NewTransaction([]*Action{action}, txOpts)

@@ -19,6 +19,13 @@ type Account struct {
 	Domains   []FioName
 }
 
+// Name wraps eos.Name for convenience and less imports for client
+type Name eos.Name
+
+func (n Name) ToEos() eos.Name {
+	return eos.Name(n)
+}
+
 // NewAccountFromWif builds an Account given a private key string.
 // Note: this is an ephemeral, in-memory, account which has no relation to keosd, and is not persistent.
 func NewAccountFromWif(wif string) (*Account, error) {
