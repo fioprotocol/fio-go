@@ -3,6 +3,7 @@ package fio
 import (
 	"errors"
 	"github.com/eoscanada/eos-go"
+	"sort"
 	"time"
 )
 
@@ -18,6 +19,7 @@ func NewPermissionLevel(account eos.AccountName) *PermissionLevel {
 
 func NewPermissionLevelSlice(accounts []string) []*PermissionLevel {
 	l := make([]*PermissionLevel, 0)
+	sort.Strings(accounts)
 	for _, a := range accounts {
 		l = append(l, NewPermissionLevel(eos.AccountName(a)))
 	}
@@ -50,12 +52,14 @@ type MsigApprovalsInfo struct {
 	ProvidedApprovals  []MsigApproval `json:"provided_approvals"`
 }
 
+/*
 // TODO: This looks suspiciously incorrect, we can probably replace PackedTransaction with an eos.Transaction and
 // bypass a step when unmarshalling
 type MsigProposal struct {
 	ProposalName     eos.Name `json:"proposal_name"`
-	PackedTrasaction []byte   `json:"packed_trasaction"`
+	PackedTransaction []byte   `json:"packed_trasaction"`
 }
+*/
 
 // TODO: This smells like there is another intermediate type involved, or an enum that needs to be included here
 //TODO: read up on extensions and ensure this is idiomatic
@@ -115,7 +119,7 @@ Actions
 */
 
 type MsigApprove struct {
-	Proposer     eos.Name        `json:"proposer"`
+	Proposer     eos.AccountName `json:"proposer"`
 	ProposalName eos.Name        `json:"proposal_name"`
 	Level        PermissionLevel `json:"level"`
 	MaxFee       uint64          `json:"max_fee"`
@@ -123,17 +127,17 @@ type MsigApprove struct {
 }
 
 type MsigCancel struct {
-	Proposer     eos.Name `json:"proposer"`
-	ProposalName eos.Name `json:"proposal_name"`
-	Canceler     eos.Name `json:"canceler"`
-	MaxFee       uint64   `json:"max_fee"`
+	Proposer     eos.AccountName `json:"proposer"`
+	ProposalName eos.Name        `json:"proposal_name"`
+	Canceler     eos.AccountName `json:"canceler"`
+	MaxFee       uint64          `json:"max_fee"`
 }
 
 type MsigExec struct {
-	Proposer     eos.Name `json:"proposer"`
-	ProposalName eos.Name `json:"proposal_name"`
-	MaxFee       uint64   `json:"max_fee"`
-	Executer     eos.Name `json:"executer"`
+	Proposer     eos.AccountName `json:"proposer"`
+	ProposalName eos.Name        `json:"proposal_name"`
+	MaxFee       uint64          `json:"max_fee"`
+	Executer     eos.Name        `json:"executer"`
 }
 
 type MsigInvalidate struct {
@@ -150,13 +154,21 @@ type MsigPropose struct {
 }
 
 // NewMsigPropose is provided for consistency, but it will make more sense to use NewSignedMsigPropose to build multisig proposals since it
-// abstracts several steps.
+// abstracts several steps. Note that the []PermissionLever.
 func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*PermissionLevel, signedTx *eos.SignedTransaction) *Action {
+	var feeBytes uint64
+	packedTx, err := signedTx.Pack(CompressionNone)
+	if err != nil {
+		feeBytes = 1
+	} else {
+		feeBytes = uint64((len(packedTx.PackedTransaction) / 1000) + 1)
+	}
+
 	return NewAction("eosio.msig", "propose", proposer, MsigPropose{
 		Proposer:     proposer,
 		ProposalName: proposal,
 		Requested:    signers,
-		MaxFee:       Tokens(GetMaxFee(FeeMsigPropose)),
+		MaxFee:       Tokens(GetMaxFee(FeeMsigPropose))*feeBytes,
 		Trx:          signedTx,
 	})
 }
@@ -177,17 +189,18 @@ func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, acti
 	}
 	propTx := NewTransaction(actions, txOpt)
 	propTx.Expiration = eos.JSONTime{Time: time.Now().UTC().Add(expires)}
-	propTxSigned, _, err := api.SignTransaction(propTx, txOpt.ChainID, CompressionNone)
+	propTxSigned, propTxPacked, err := api.SignTransaction(propTx, txOpt.ChainID, CompressionNone)
 	if err != nil {
 		return nil, err
 	}
+	feeBytes := uint64((len(propTxPacked.PackedTransaction) / 1000) + 1)
 
 	newTx := NewTransaction([]*Action{NewAction(
 		"eosio.msig", "propose", signer.Actor, MsigPropose{
 			Proposer:     signer.Actor,
 			ProposalName: proposalName.ToEos(),
 			Requested:    NewPermissionLevelSlice(approvers),
-			MaxFee:       Tokens(GetMaxFee(FeeMsigPropose)),
+			MaxFee:       Tokens(GetMaxFee(FeeMsigPropose))*feeBytes,
 			Trx:          propTxSigned,
 		},
 	)}, txOpt)
@@ -201,7 +214,7 @@ func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, acti
 }
 
 type MsigUnapprove struct {
-	Proposer     eos.Name        `json:"proposer"`
+	Proposer     eos.AccountName `json:"proposer"`
 	ProposalName eos.Name        `json:"proposal_name"`
 	Level        PermissionLevel `json:"level"`
 	MaxFee       uint64          `json:"max_fee"`
@@ -220,6 +233,7 @@ type UpdateAuth struct {
 // NewUpdateAuthSimple just takes a list of accounts and a threshold. Nothing fancy, most basic EOS msig account.
 func NewUpdateAuthSimple(account eos.AccountName, actors []string, threshold uint32) *Action {
 	acts := make([]eos.PermissionLevelWeight, 0)
+	sort.Strings(actors) // actors must be sorted in ascending alphabetic order, or will get an invalid {$auth} error.
 	for _, a := range actors {
 		acts = append(acts, eos.PermissionLevelWeight{
 			Weight:     1,
