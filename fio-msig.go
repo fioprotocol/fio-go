@@ -179,7 +179,7 @@ func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, acti
 		return nil, err
 	}
 	_, tx, err := api.SignTransaction(NewTransaction([]*Action{NewAction(
-		"eos.msig", "propose", signer.Actor, MsigPropose{
+		"eosio.msig", "propose", signer.Actor, MsigPropose{
 			Proposer:     signer.Actor,
 			ProposalName: proposalName.ToEos(),
 			Requested:    NewPermissionLevelSlice(approvers),
