@@ -37,6 +37,15 @@ func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (
 	), true
 }
 
+// MustNewRegAddress panics on a bad address, but allows embedding because it only returns one value
+func MustNewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (action *Action) {
+	a, ok := NewRegAddress(actor, address, ownerPubKey)
+	if !ok {
+		panic("invalid fio address in call to MustNewRegAddress")
+	}
+	return a
+}
+
 // RegAddress simplifies the process of registering by making it a single step that waits for confirm
 func (api *API) RegAddress(txOpts *TxOptions, actor *Account, ownerPub string, address string) (txId string, ok bool, err error) {
 	action, ok := NewRegAddress(actor.Actor, Address(address), ownerPub)

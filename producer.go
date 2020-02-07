@@ -1,8 +1,13 @@
 package fio
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/eoscanada/eos-go"
+	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -27,8 +32,8 @@ type VoteProducer struct {
 	MaxFee     uint64 `json:"max_fee"`
 }
 
-// NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
 func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress string) *Action {
+	sort.Strings(producers)
 	return NewAction(
 		eos.AccountName("eosio"), "voteproducer", actor,
 		VoteProducer{
@@ -80,6 +85,15 @@ func NewRegProducer(fioAddress string, fioPubKey string, url string, location Pr
 		}), nil
 }
 
+func MustNewRegProducer(fioAddress string, fioPubKey string, url string, location ProducerLocation, actor eos.AccountName) *Action {
+	p, err := NewRegProducer(fioAddress, fioPubKey, url, location, actor)
+	if err != nil {
+		fmt.Println("MustNewRegProducer failed")
+		panic(err)
+	}
+	return p
+}
+
 type UnRegProducer struct {
 	FioAddress string          `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
@@ -127,3 +141,48 @@ func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
 		},
 	)
 }
+
+// Schedule is a convenience struct for deserializing the producer schedule, it is fully
+// encapsulated to prevent conflicts with other types
+type ProducerSchedule struct {
+	Active struct {
+		Version uint32 `json:"version"`
+		Producers []struct {
+			ProducerName eos.AccountName `json:"producer_name"`
+			BlockSigningKey string `json:"block_signing_key"`
+		} `json:"producers"`
+	} `json:"active"`
+	Pending struct {
+		Version uint32 `json:"version"`
+		Producers []struct {
+			ProducerName eos.AccountName `json:"producer_name"`
+			BlockSigningKey string `json:"block_signing_key"`
+		} `json:"producers"`
+	} `json:"pending"`
+	Proposed struct {
+		Version uint32 `json:"version"`
+		Producers []struct {
+			ProducerName eos.AccountName `json:"producer_name"`
+			BlockSigningKey string `json:"block_signing_key"`
+		} `json:"producers"`
+	}
+}
+
+func (api *API) GetProducerSchedule() (*ProducerSchedule, error) {
+	res, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_producer_schedule", "application/json", bytes.NewReader(nil))
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	sched := &ProducerSchedule{}
+	err = json.Unmarshal(body, sched)
+	if err != nil {
+		return nil, err
+	}
+	return sched, nil
+}
+
