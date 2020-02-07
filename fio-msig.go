@@ -3,6 +3,7 @@ package fio
 import (
 	"errors"
 	"github.com/eoscanada/eos-go"
+	"time"
 )
 
 // PermissionLevel wraps eos.PermissionLevel to add a convenience function
@@ -145,24 +146,24 @@ type MsigPropose struct {
 	ProposalName eos.Name               `json:"proposal_name"`
 	Requested    []*PermissionLevel     `json:"requested"`
 	MaxFee       uint64                 `json:"max_fee"`
-	Trx          *eos.PackedTransaction `json:"trx"`
+	Trx          *eos.SignedTransaction `json:"trx"`
 }
 
 // NewMsigPropose is provided for consistency, but it will make more sense to use NewSignedMsigPropose to build multisig proposals since it
 // abstracts several steps.
-func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*PermissionLevel, packedTx *eos.PackedTransaction) *MsigPropose {
-	return &MsigPropose{
+func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*PermissionLevel, signedTx *eos.SignedTransaction) *Action {
+	return NewAction("eosio.msig", "propose", proposer, MsigPropose{
 		Proposer:     proposer,
 		ProposalName: proposal,
 		Requested:    signers,
 		MaxFee:       Tokens(GetMaxFee(FeeMsigPropose)),
-		Trx:          packedTx,
-	}
+		Trx:          signedTx,
+	})
 }
 
 // NewSignedMsigPropose simplifies the process of building an MsigPropose by packing and signing the slice of Actions provided into a TX
 // and then wrapping that into a signed transaction ready to be submitted.
-func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, actions []*Action, signer *Account, txOpt *TxOptions) (*eos.PackedTransaction, error) {
+func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, actions []*Action, expires time.Duration, signer *Account, txOpt *TxOptions) (*eos.PackedTransaction, error) {
 	if len(actions) == 0 {
 		return nil, errors.New("no actions provided")
 	}
@@ -174,26 +175,29 @@ func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, acti
 			return nil, errors.New("invalid approver in list, account name should be < 12 chars")
 		}
 	}
-	_, propTxPacked, err := api.SignTransaction(NewTransaction(actions, txOpt), txOpt.ChainID, CompressionZlib)
+	propTx := NewTransaction(actions, txOpt)
+	propTx.Expiration = eos.JSONTime{Time: time.Now().UTC().Add(expires)}
+	propTxSigned, _, err := api.SignTransaction(propTx, txOpt.ChainID, CompressionNone)
 	if err != nil {
 		return nil, err
 	}
-	_, tx, err := api.SignTransaction(NewTransaction([]*Action{NewAction(
+
+	newTx := NewTransaction([]*Action{NewAction(
 		"eosio.msig", "propose", signer.Actor, MsigPropose{
 			Proposer:     signer.Actor,
 			ProposalName: proposalName.ToEos(),
 			Requested:    NewPermissionLevelSlice(approvers),
 			MaxFee:       Tokens(GetMaxFee(FeeMsigPropose)),
-			Trx:          propTxPacked,
+			Trx:          propTxSigned,
 		},
-	)}, txOpt),
-		txOpt.ChainID,
-		CompressionZlib,
-	)
+	)}, txOpt)
+	newTx.Expiration = eos.JSONTime{Time: time.Now().UTC().Add(expires)}
+	_, packedTx, err := api.SignTransaction(newTx, txOpt.ChainID, CompressionZlib)
 	if err != nil {
 		return nil, err
 	}
-	return tx, nil
+
+	return packedTx, nil
 }
 
 type MsigUnapprove struct {
@@ -205,13 +209,30 @@ type MsigUnapprove struct {
 
 type Authority eos.Authority
 
-
 type UpdateAuth struct {
-	Account    Name      `json:"account"`
-	Permission Name      `json:"permission"`
-	Parent     Name      `json:"parent"`
-	Auth       Authority `json:"auth"`
-	MaxFee     uint64    `json:"max_fee"`
+	Account    eos.AccountName `json:"account"`
+	Permission eos.Name        `json:"permission"`
+	Parent     eos.Name        `json:"parent"`
+	Auth       Authority       `json:"auth"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
-type MsigUpdateAuth UpdateAuth
+// NewUpdateAuthSimple just takes a list of accounts and a threshold. Nothing fancy, most basic EOS msig account.
+func NewUpdateAuthSimple(account eos.AccountName, actors []string, threshold uint32) *Action {
+	acts := make([]eos.PermissionLevelWeight, 0)
+	for _, a := range actors {
+		acts = append(acts, eos.PermissionLevelWeight{
+			Weight:     1,
+			Permission: eos.PermissionLevel{Actor: eos.AccountName(a), Permission: "active"}})
+	}
+	return NewAction("eosio", "updateauth", eos.AccountName(account), UpdateAuth{
+		Account:    account,
+		Permission: "active",
+		Parent:     "owner",
+		Auth: Authority{
+			Threshold: threshold,
+			Accounts:  acts,
+		},
+		MaxFee: Tokens(GetMaxFee(FeeAuthUpdate)),
+	})
+}
