@@ -7,24 +7,12 @@ import (
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	"io/ioutil"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-/*
-- name: voteproducer
-  base: ""
-  fields:
-    - name: producers
-      type: string[]
-    - name: fio_address
-      type: string
-    - name: actor
-      type: name
-    - name: max_fee
-      type: int64
-*/
 type VoteProducer struct {
 	Producers  []string `json:"producers"`
 	FioAddress string   `json:"fio_address"`
@@ -109,10 +97,10 @@ func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
 }
 
 type VoteProxy struct {
-	Proxy string `json:"proxy"`
-	FioAddress string `json:"fio_address"`
-	Actor eos.AccountName `json:"actor"`
-	MaxFee uint64 `json:"max_fee"`
+	Proxy      string          `json:"proxy"`
+	FioAddress string          `json:"fio_address"`
+	Actor      eos.AccountName `json:"actor"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Action {
@@ -127,9 +115,9 @@ func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Actio
 }
 
 type RegProxy struct {
-	FioAddress string `json:"fio_address"`
-	Actor eos.AccountName `json:"actor"`
-	MaxFee uint64 `json:"max_fee"`
+	FioAddress string          `json:"fio_address"`
+	Actor      eos.AccountName `json:"actor"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
@@ -146,24 +134,24 @@ func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
 // encapsulated to prevent conflicts with other types
 type ProducerSchedule struct {
 	Active struct {
-		Version uint32 `json:"version"`
+		Version   uint32 `json:"version"`
 		Producers []struct {
-			ProducerName eos.AccountName `json:"producer_name"`
-			BlockSigningKey string `json:"block_signing_key"`
+			ProducerName    eos.AccountName `json:"producer_name"`
+			BlockSigningKey string          `json:"block_signing_key"`
 		} `json:"producers"`
 	} `json:"active"`
 	Pending struct {
-		Version uint32 `json:"version"`
+		Version   uint32 `json:"version"`
 		Producers []struct {
-			ProducerName eos.AccountName `json:"producer_name"`
-			BlockSigningKey string `json:"block_signing_key"`
+			ProducerName    eos.AccountName `json:"producer_name"`
+			BlockSigningKey string          `json:"block_signing_key"`
 		} `json:"producers"`
 	} `json:"pending"`
 	Proposed struct {
-		Version uint32 `json:"version"`
+		Version   uint32 `json:"version"`
 		Producers []struct {
-			ProducerName eos.AccountName `json:"producer_name"`
-			BlockSigningKey string `json:"block_signing_key"`
+			ProducerName    eos.AccountName `json:"producer_name"`
+			BlockSigningKey string          `json:"block_signing_key"`
 		} `json:"producers"`
 	}
 }
@@ -186,3 +174,43 @@ func (api *API) GetProducerSchedule() (*ProducerSchedule, error) {
 	return sched, nil
 }
 
+type Producers struct {
+	Producers               []Producer `json:"producers"`
+	TotalProducerVoteWeight string     `json:"total_producer_vote_weight"`
+	More                    string     `json:"more"`
+}
+
+type Producer struct {
+	Owner             eos.AccountName `json:"owner"`
+	FioAddress        Address         `json:"fio_address"`
+	TotalVotes        string          `json:"total_votes"`
+	ProducerPublicKey string          `json:"producer_public_key"`
+	IsActive          uint8           `json:"is_active"`
+	Url               string          `json:"url"`
+	UnpaidBlocks      uint64          `json:"unpaid_blocks"`
+	LastClaimTime     string          `json:"last_claim_time"`
+	Location          uint8           `json:"location"`
+}
+
+// The producers table is a litte different on FIO, use this instead of the GetProducers call from eos-go:
+func (api API) GetFioProducers() (fioProducers *Producers, err error) {
+	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_producers`, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("content-type", "application/json")
+	res, err := api.HttpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(body, &fioProducers)
+	if err != nil {
+		return nil, err
+	}
+	return
+}

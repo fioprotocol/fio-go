@@ -2,13 +2,13 @@ package fio
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/ecc"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -114,44 +114,52 @@ func (api API) GetCurrentBlock() (blockNum uint32) {
 // to search for roughly 30 seconds and then timeout. If there is an error it sets the returned block
 // number to 1
 func (api API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, err error) {
+	return api.WaitMaxForConfirm(firstBlock, txid, 30)
+}
+
+func (api API) WaitMaxForConfirm(firstBlock uint32, txid string, seconds int) (block uint32, err error) {
 	if txid == "" {
 		return 1, errors.New("invalid txid")
 	}
-	var loopErr error
+	if seconds <= 1 {
+		return 1, errors.New("must wait at least 2 seconds")
+	}
+	// allow at least one block to be produced before searching
+	time.Sleep(time.Second)
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(seconds)*time.Second))
+	defer cancel()
+	tick := time.NewTicker(time.Second)
 	tested := make(map[uint32]bool)
-	for i := 0; i < 30; i++ {
-		// allow at least one block to be produced before searching
-		time.Sleep(time.Second)
-		latest := api.GetCurrentBlock()
-		if firstBlock == 0 || firstBlock > latest {
-			return 1, errors.New("invalid starting block provided")
-		}
-		if latest == uint32(1<<32-1) {
-			continue
-		}
-		// note, this purposely doesn't check the head block until next run since that occasionally
-		// results in a false-negative
-		for b := firstBlock; firstBlock < latest; b++ {
-			if !tested[b] {
-				blockResp, err := api.GetBlockByNum(b)
-				if err != nil {
-					loopErr = err
-					time.Sleep(time.Second)
-					continue
-				}
-				tested[b] = true
-				for _, trx := range blockResp.SignedBlock.Transactions {
-					if trx.Transaction.ID.String() == txid {
-						return b, nil
+	for {
+		select {
+		case <-tick.C:
+			latest := api.GetCurrentBlock()
+			if firstBlock == 0 || firstBlock > latest {
+				return 1, errors.New("invalid starting block provided")
+			}
+			if latest == uint32(1<<32-1) {
+				continue
+			}
+			// note, this purposely doesn't check the head block until next run since that occasionally
+			// results in a false-negative
+			for b := firstBlock; firstBlock < latest; b++ {
+				if !tested[b] {
+					blockResp, err := api.GetBlockByNum(b)
+					if err != nil {
+						return 1, err
+					}
+					tested[b] = true
+					for _, trx := range blockResp.SignedBlock.Transactions {
+						if trx.Transaction.ID.String() == txid {
+							return b, nil
+						}
 					}
 				}
 			}
+		case <- ctx.Done():
+			return 1, errors.New("timeout waiting for confirmation")
 		}
 	}
-	if loopErr != nil {
-		return 1, loopErr
-	}
-	return 1, errors.New("timeout waiting for confirmation")
 }
 
 // WaitForPreCommit waits until 180 blocks (minimum pre-commit limit) have passed given a block number.
@@ -257,45 +265,6 @@ func (api API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawM
 	return out, nil
 }
 
-type Producers struct {
-	Producers               []Producer `json:"producers"`
-	TotalProducerVoteWeight string     `json:"total_producer_vote_weight"`
-	More                    string     `json:"more"`
-}
-
-type Producer struct {
-	Owner         eos.AccountName `json:"owner"`
-	FioAddress    Address         `json:"fio_address"`
-	TotalVotes    string          `json:"total_votes"`
-	IsActive      uint8           `json:"is_active"`
-	Url           string          `json:"url"`
-	UnpaidBlocks  uint64          `json:"unpaid_blocks"`
-	LastClaimTime string          `json:"last_claim_time"`
-	Location      uint8           `json:"location"`
-}
-
-// The producers table is a litte different on FIO, use this instead of the GetProducers call from eos-go:
-func (api API) GetFioProducers() (fioProducers *Producers, err error) {
-	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_producers`, nil)
-	if err != nil {
-		return &Producers{}, err
-	}
-	req.Header.Add("content-type", "application/json")
-	res, err := api.HttpClient.Do(req)
-	if err != nil {
-		return &Producers{}, err
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return &Producers{}, err
-	}
-	err = json.Unmarshal(body, &fioProducers)
-	if err != nil {
-		return &Producers{}, err
-	}
-	return
-}
 
 // AllABIs returns a map of every ABI available. This is only possible in FIO because there are a small number
 // of contracts that exist.
