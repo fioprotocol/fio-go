@@ -156,7 +156,7 @@ func (api API) WaitMaxForConfirm(firstBlock uint32, txid string, seconds int) (b
 					}
 				}
 			}
-		case <- ctx.Done():
+		case <-ctx.Done():
 			return 1, errors.New("timeout waiting for confirmation")
 		}
 	}
@@ -264,7 +264,6 @@ func (api API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawM
 	}
 	return out, nil
 }
-
 
 // AllABIs returns a map of every ABI available. This is only possible in FIO because there are a small number
 // of contracts that exist.

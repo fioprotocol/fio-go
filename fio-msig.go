@@ -168,7 +168,7 @@ func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*Perm
 		Proposer:     proposer,
 		ProposalName: proposal,
 		Requested:    signers,
-		MaxFee:       Tokens(GetMaxFee(FeeMsigPropose))*feeBytes,
+		MaxFee:       Tokens(GetMaxFee(FeeMsigPropose)) * feeBytes,
 		Trx:          signedTx,
 	})
 }
@@ -200,7 +200,7 @@ func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, acti
 			Proposer:     signer.Actor,
 			ProposalName: proposalName.ToEos(),
 			Requested:    NewPermissionLevelSlice(approvers),
-			MaxFee:       Tokens(GetMaxFee(FeeMsigPropose))*feeBytes,
+			MaxFee:       Tokens(GetMaxFee(FeeMsigPropose)) * feeBytes,
 			Trx:          propTxSigned,
 		},
 	)}, txOpt)

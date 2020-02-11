@@ -154,7 +154,7 @@ func GetMaxFee(name string) (fioTokens float64) {
 }
 
 // GetMaxFeeByAction allows getting a fee given the contract action name instead of the API endpoint name.
-func GetMaxFeeByAction(name string) (fioTokens float64){
+func GetMaxFeeByAction(name string) (fioTokens float64) {
 	maxFeeMutex.RLock()
 	maxFeeActionMutex.RLock()
 	fioTokens = maxFees[maxFeesByAction[name]]
@@ -165,7 +165,7 @@ func GetMaxFeeByAction(name string) (fioTokens float64){
 
 type GetFeeRequest struct {
 	FioAddress string `json:"fio_address"`
-	EndPoint string `json:"end_point"`
+	EndPoint   string `json:"end_point"`
 }
 
 type GetFeeResponse struct {

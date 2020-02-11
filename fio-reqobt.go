@@ -692,5 +692,3 @@ var obtAbiJsonOmit = `{
         ]
     }]
 }`
-
-
