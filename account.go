@@ -1,10 +1,13 @@
 package fio
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/ecc"
 	"github.com/mr-tron/base58"
+	"io/ioutil"
 	"regexp"
 	"strings"
 )
@@ -108,7 +111,7 @@ func ActorFromPub(pubKey string) (eos.AccountName, error) {
 	return eos.AccountName(string(actor[:12])), nil
 }
 
-// Address is a FIO address, which should be formatted as 'name:domain'
+// Address is a FIO address, which should be formatted as 'name@domain'
 type Address string
 
 // Valid checks for the correct fio.Address formatting
@@ -134,6 +137,19 @@ func (a Address) Valid() (ok bool) {
 		return false
 	}
 	return true
+}
+
+func (api *API) GetFioAccount(actor string) (*eos.AccountResp, error) {
+	q := bytes.NewReader([]byte(`{"account_name": "`+actor+`"}`))
+	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_account", "application/json", q)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	accResp := &eos.AccountResp{}
+	err = json.Unmarshal(body, accResp)
+	return accResp, err
 }
 
 // pubFromEos is a convenience function that returns the FIO pub address from an EOS pub address
