@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/eoscanada/eos-go"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 )
 
@@ -375,4 +377,38 @@ func (api API) GetFioNames(pubKey string) (names FioNames, found bool, err error
 		found = true
 	}
 	return
+}
+
+type accountMap struct {
+	Clientkey string `json:"clientkey"`
+}
+
+func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, err error) {
+	name, err := eos.StringToName(actor)
+	if err != nil {
+		return FioNames{}, false, err
+	}
+	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "fio.address",
+		Scope:      "fio.address",
+		Table:      "accountmap",
+		LowerBound: fmt.Sprintf("%d", name),
+		UpperBound: fmt.Sprintf("%d", name),
+		Limit:      math.MaxInt32,
+		KeyType:    "i64",
+		Index:      "1",
+		JSON:       true,
+	})
+	if err != nil {
+		return FioNames{}, false, err
+	}
+	results := make([]accountMap, 0)
+	err = json.Unmarshal(resp.Rows, &found)
+	if err != nil {
+		return FioNames{}, false, err
+	}
+	if len(results) == 0 {
+		return FioNames{}, false, errors.New("no matching account found in fio.address accountmap table")
+	}
+	return api.GetFioNames(results[0].Clientkey)
 }
