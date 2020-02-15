@@ -403,7 +403,7 @@ func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, e
 		return FioNames{}, false, err
 	}
 	results := make([]accountMap, 0)
-	err = json.Unmarshal(resp.Rows, &found)
+	err = json.Unmarshal(resp.Rows, &results)
 	if err != nil {
 		return FioNames{}, false, err
 	}
