@@ -9,7 +9,9 @@ import (
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/ecc"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -294,4 +296,49 @@ func (api API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
 		return nil, errors.New("could not get abis from eosio tables")
 	}
 	return abiList, nil
+}
+
+// used to deal with string vs bool in More field:
+type getTableByScopeResp struct {
+	More interface{}     `json:"more"`
+	Rows json.RawMessage `json:"rows"`
+}
+
+// GetTableByScopeMore handles responses that have either a bool or a string as the more response.
+func (api API) GetTableByScopeMore(request eos.GetTableByScopeRequest) (*eos.GetTableByScopeResp, error) {
+	reqBody, err := json.Marshal(&request)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_table_by_scope", "application/json", bytes.NewReader(reqBody))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	gt := &getTableByScopeResp{}
+	err = json.Unmarshal(body, gt)
+	if err != nil {
+		return nil, err
+	}
+	var more bool
+	moreString, ok := gt.More.(string)
+	if ok {
+		more, err = strconv.ParseBool(moreString)
+		if err != nil && moreString != "" {
+			more = true // if it's not empty, we have more.
+		}
+	} else {
+		moreBool, valid := gt.More.(bool)
+		if valid {
+			more = moreBool
+		}
+	}
+	return &eos.GetTableByScopeResp{
+		More: more,
+		Rows: gt.Rows,
+	}, nil
 }
