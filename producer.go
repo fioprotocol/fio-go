@@ -192,9 +192,10 @@ type Producer struct {
 	Location          uint8           `json:"location"`
 }
 
-// The producers table is a litte different on FIO, use this instead of the GetProducers call from eos-go:
+// The producers table is a little different on FIO, use this instead of the GetProducers call from eos-go
+// it defaults to a limit of 1,000 ... may want to rethink this as a default
 func (api API) GetFioProducers() (fioProducers *Producers, err error) {
-	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_producers`, nil)
+	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_producers`, bytes.NewReader([]byte(`{"limit": 1000}`)))
 	if err != nil {
 		return nil, err
 	}
