@@ -1,9 +1,13 @@
 package fio
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/eoscanada/eos-go"
+	"math"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -42,14 +46,49 @@ type MsigAction struct {
 
 type MsigApproval struct {
 	Level PermissionLevel `json:"level"`
-	Time  eos.TimePoint   `json:"time"`
+	Time  eos.JSONTime    `json:"time"`
 }
 
 type MsigApprovalsInfo struct {
-	Name               uint8          `json:"name"`
+	Version            uint8          `json:"version"`
 	ProposalName       eos.Name       `json:"proposal_name"`
 	RequestedApprovals []MsigApproval `json:"requested_approvals"`
 	ProvidedApprovals  []MsigApproval `json:"provided_approvals"`
+}
+
+func (api *API) GetApprovals(scope Name) (more bool, info []*MsigApprovalsInfo, err error) {
+	name, err := eos.StringToName(string(scope))
+	if err != nil {
+		return false, nil, err
+	}
+	res, err := api.GetTableRows(eos.GetTableRowsRequest{
+		JSON:       true,
+		Scope:      fmt.Sprintf("%d", name),
+		Code:       "eosio.msig",
+		Table:      "approvals2",
+		Limit:      math.MaxUint32,
+	})
+	if err != nil {
+		return false, nil, err
+	}
+	more = res.More
+	info = make([]*MsigApprovalsInfo, 0)
+	err = json.Unmarshal(res.Rows, &info)
+	return
+}
+
+func (info MsigApprovalsInfo) HasRequested(actor eos.AccountName) bool {
+	for _, r := range info.RequestedApprovals {
+		if r.Level.Actor == actor {
+			return true
+		}
+	}
+	for _, p := range info.ProvidedApprovals {
+		if p.Level.Actor == actor {
+			return true
+		}
+	}
+	return false
 }
 
 /*
@@ -88,29 +127,6 @@ type MsigTransaction struct {
 
 // MsigTransactionHeader is an alias for consistent naming
 type MsigTransactionHeader eos.TransactionHeader
-
-// TODO: add helpers for deriving RefBlockNum and RefBlockPrefix if not already in eos-go... (these are referenced in TransactionHeader)
-/*
-here's a stub from a test I did previously to figure out the process ...
-...
-	// get current block:
-	currentInfo, _ := api.GetInfo()
-	// uint16: block % (2 ^ 16)
-	refBlockNum := currentInfo.HeadBlockNum % uint32(math.Pow(2.0, 16.0))
-	// hex -> bytes[]
-	prefix, _ := hex.DecodeString(currentInfo.HeadBlockID.String())
-	// take last 24 bytes to fit, convert to uint32 (little endian)
-	refBlockPrefix := binary.LittleEndian.Uint32(prefix[8:])
-	fmt.Println("expecting ref_block_num of: ", refBlockNum)
-	fmt.Printf("expecting ref_block_prefix of: %d\n\n", refBlockPrefix)
-    // build a new tx:
-	transferPub := fio.NewTransferTokensPubKey(account.Actor, "FIO5wuXscTZrb65e9WmdZN2G2hyxtZ3SA1mr6edz9G217x9CySbME", fio.Tokens(100.0))
-	tx := fio.NewTransaction([]*fio.Action{transferPub}, opts)
-	// print it out
-	j, _ := json.MarshalIndent(tx, "", "  ")
-	fmt.Println(string(j))
-...
-*/
 
 /*
 
@@ -250,3 +266,34 @@ func NewUpdateAuthSimple(account eos.AccountName, actors []string, threshold uin
 		MaxFee: Tokens(GetMaxFee(FeeAuthUpdate)),
 	})
 }
+
+type scopeResp struct {
+	Scope string `json:"scope"`
+	Count int    `json:"count"`
+}
+
+// GetProposals fetches the proposal list from eosio.msig returning a map of scopes, with a count for each
+func (api *API) GetProposals(offset int, limit int) (more bool, scopes map[string]int, err error) {
+	res, err := api.GetTableByScopeMore(eos.GetTableByScopeRequest{
+		Code:       "eosio.msig",
+		Table:      "proposal",
+		LowerBound: strconv.Itoa(offset),
+		UpperBound: "",
+		Limit:      uint32(limit),
+	})
+	if err != nil {
+		return false, nil, err
+	}
+	more = res.More
+	resScopes := make([]scopeResp, 0)
+	err = json.Unmarshal(res.Rows, &resScopes)
+	if err != nil {
+		return false, nil, err
+	}
+	scopes = make(map[string]int)
+	for _, s := range resScopes {
+		scopes[s.Scope] = s.Count
+	}
+	return
+}
+
