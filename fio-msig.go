@@ -83,6 +83,10 @@ func (info MsigApprovalsInfo) HasRequested(actor eos.AccountName) bool {
 			return true
 		}
 	}
+	return info.HasApproved(actor)
+}
+
+func (info MsigApprovalsInfo) HasApproved(actor eos.AccountName) bool {
 	for _, p := range info.ProvidedApprovals {
 		if p.Level.Actor == actor {
 			return true
