@@ -3,6 +3,8 @@ package fio
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +12,7 @@ import (
 	"github.com/eoscanada/eos-go/ecc"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -342,3 +345,21 @@ func (api API) GetTableByScopeMore(request eos.GetTableByScopeRequest) (*eos.Get
 		Rows: gt.Rows,
 	}, nil
 }
+
+func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err error) {
+	// get current block:
+	currentInfo, err := api.GetInfo()
+	if err != nil {
+		return 0, 0, err
+	}
+	// uint16: block % (2 ^ 16)
+	refBlockNum = currentInfo.HeadBlockNum % uint32(math.Pow(2.0, 16.0))
+	prefix, err := hex.DecodeString(currentInfo.HeadBlockID.String())
+	if err != nil {
+		return 0, 0, err
+	}
+	// take last 24 bytes to fit, convert to uint32 (little endian)
+	refBlockPrefix = binary.LittleEndian.Uint32(prefix[8:])
+	return
+}
+
