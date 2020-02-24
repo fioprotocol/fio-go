@@ -1,6 +1,7 @@
 package fio
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -269,6 +270,53 @@ func NewUpdateAuthSimple(account eos.AccountName, actors []string, threshold uin
 		},
 		MaxFee: Tokens(GetMaxFee(FeeAuthUpdate)),
 	})
+}
+
+type msigProposalRow struct {
+	ProposalName eos.Name `json:"proposal_name"`
+	PackedTransaction string `json:"packed_transaction"`
+}
+
+type MsigProposal struct {
+	ProposalName eos.Name `json:"proposal_name"`
+	PackedTransaction *eos.Transaction `json:"packed_transaction"`
+}
+
+func (api *API) GetProposalTransaction(proposalAuthor eos.AccountName, proposalName eos.Name) (*MsigProposal, error){
+	name, err := eos.StringToName(string(proposalAuthor))
+	if err != nil {
+		return nil, err
+	}
+	res, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "eosio.msig",
+		Scope:      fmt.Sprintf("%v", name),
+		Table:      "proposal",
+		LowerBound: string(proposalName),
+		UpperBound: string(proposalName),
+		Index:      "1",
+		KeyType:    "name",
+		Limit:      1,
+		JSON:       true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(res.Rows) < 3 {
+		return nil, errors.New("did not find the proposal")
+	}
+	proposal := make([]*msigProposalRow, 0)
+	err = json.Unmarshal(res.Rows, &proposal)
+	if err != nil {
+		return nil, err
+	}
+	txBytes, err := hex.DecodeString(proposal[0].PackedTransaction)
+	decoder := eos.NewDecoder(txBytes)
+	tx := &eos.Transaction{}
+	err = decoder.Decode(tx)
+	if err != nil {
+		return nil, err
+	}
+	return &MsigProposal{ProposalName: proposal[0].ProposalName, PackedTransaction: tx}, nil
 }
 
 type scopeResp struct {
