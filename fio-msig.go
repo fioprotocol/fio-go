@@ -1,6 +1,7 @@
 package fio
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -280,6 +281,7 @@ type msigProposalRow struct {
 type MsigProposal struct {
 	ProposalName eos.Name `json:"proposal_name"`
 	PackedTransaction *eos.Transaction `json:"packed_transaction"`
+	ProposalHash eos.Checksum256 `json:"proposal_hash"`
 }
 
 func (api *API) GetProposalTransaction(proposalAuthor eos.AccountName, proposalName eos.Name) (*MsigProposal, error){
@@ -316,7 +318,10 @@ func (api *API) GetProposalTransaction(proposalAuthor eos.AccountName, proposalN
 	if err != nil {
 		return nil, err
 	}
-	return &MsigProposal{ProposalName: proposal[0].ProposalName, PackedTransaction: tx}, nil
+	h := sha256.New()
+	h.Write(txBytes)
+	sum := h.Sum(nil)
+	return &MsigProposal{ProposalName: proposal[0].ProposalName, PackedTransaction: tx, ProposalHash: sum}, nil
 }
 
 type scopeResp struct {
