@@ -64,11 +64,11 @@ func (api *API) GetApprovals(scope Name) (more bool, info []*MsigApprovalsInfo, 
 		return false, nil, err
 	}
 	res, err := api.GetTableRows(eos.GetTableRowsRequest{
-		JSON:       true,
-		Scope:      fmt.Sprintf("%d", name),
-		Code:       "eosio.msig",
-		Table:      "approvals2",
-		Limit:      math.MaxUint32,
+		JSON:  true,
+		Scope: fmt.Sprintf("%d", name),
+		Code:  "eosio.msig",
+		Table: "approvals2",
+		Limit: math.MaxUint32,
 	})
 	if err != nil {
 		return false, nil, err
@@ -148,6 +148,21 @@ type MsigApprove struct {
 	ProposalHash eos.Checksum256 `json:"proposal_hash"`
 }
 
+func NewMsigApprove(proposer eos.AccountName, proposal eos.Name, actor eos.AccountName, proposalHash eos.Checksum256) *Action {
+	return NewAction("eosio.msig", "approve", actor,
+		&MsigApprove{
+			Proposer:     proposer,
+			ProposalName: proposal,
+			Level: PermissionLevel{
+				Actor:      actor,
+				Permission: "active",
+			},
+			MaxFee:       Tokens(GetMaxFee(FeeMsigApprove)),
+			ProposalHash: proposalHash,
+		},
+	)
+}
+
 type MsigCancel struct {
 	Proposer     eos.AccountName `json:"proposer"`
 	ProposalName eos.Name        `json:"proposal_name"`
@@ -155,11 +170,33 @@ type MsigCancel struct {
 	MaxFee       uint64          `json:"max_fee"`
 }
 
+func NewMsigCancel(proposer eos.AccountName, proposal eos.Name, actor eos.AccountName) *Action {
+	return NewAction("eosio.msig", "cancel", actor,
+		&MsigCancel{
+			Proposer:     proposer,
+			ProposalName: proposal,
+			Canceler:     actor,
+			MaxFee:       Tokens(GetMaxFee(FeeMsigCancel)),
+		},
+	)
+}
+
 type MsigExec struct {
 	Proposer     eos.AccountName `json:"proposer"`
 	ProposalName eos.Name        `json:"proposal_name"`
 	MaxFee       uint64          `json:"max_fee"`
-	Executer     eos.Name        `json:"executer"`
+	Executer     eos.AccountName `json:"executer"`
+}
+
+func NewMsigExec(proposer eos.AccountName, proposal eos.Name, fee uint64, actor eos.AccountName) *Action {
+	return NewAction("eosio.msig", "execute", actor,
+		&MsigExec{
+			Proposer:     proposer,
+			ProposalName: proposal,
+			MaxFee:       fee,
+			Executer:     actor,
+		},
+	)
 }
 
 type MsigInvalidate struct {
@@ -176,7 +213,7 @@ type MsigPropose struct {
 }
 
 // NewMsigPropose is provided for consistency, but it will make more sense to use NewSignedMsigPropose to build multisig proposals since it
-// abstracts several steps. Note that the []PermissionLever.
+// abstracts several steps.
 func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*PermissionLevel, signedTx *eos.SignedTransaction) *Action {
 	var feeBytes uint64
 	packedTx, err := signedTx.Pack(CompressionNone)
@@ -242,6 +279,20 @@ type MsigUnapprove struct {
 	MaxFee       uint64          `json:"max_fee"`
 }
 
+func NewMsigUnapprove(proposer eos.AccountName, proposal eos.Name, actor eos.AccountName) *Action {
+	return NewAction("eosio.msig", "unapprove", actor,
+		&MsigUnapprove{
+			Proposer:     proposer,
+			ProposalName: proposal,
+			Level: PermissionLevel{
+				Actor:      actor,
+				Permission: "active",
+			},
+			MaxFee: Tokens(GetMaxFee(FeeMsigUnapprove)),
+		},
+	)
+}
+
 type Authority eos.Authority
 
 type UpdateAuth struct {
@@ -274,17 +325,17 @@ func NewUpdateAuthSimple(account eos.AccountName, actors []string, threshold uin
 }
 
 type msigProposalRow struct {
-	ProposalName eos.Name `json:"proposal_name"`
-	PackedTransaction string `json:"packed_transaction"`
+	ProposalName      eos.Name `json:"proposal_name"`
+	PackedTransaction string   `json:"packed_transaction"`
 }
 
 type MsigProposal struct {
-	ProposalName eos.Name `json:"proposal_name"`
+	ProposalName      eos.Name         `json:"proposal_name"`
 	PackedTransaction *eos.Transaction `json:"packed_transaction"`
-	ProposalHash eos.Checksum256 `json:"proposal_hash"`
+	ProposalHash      eos.Checksum256  `json:"proposal_hash"`
 }
 
-func (api *API) GetProposalTransaction(proposalAuthor eos.AccountName, proposalName eos.Name) (*MsigProposal, error){
+func (api *API) GetProposalTransaction(proposalAuthor eos.AccountName, proposalName eos.Name) (*MsigProposal, error) {
 	name, err := eos.StringToName(string(proposalAuthor))
 	if err != nil {
 		return nil, err
@@ -353,4 +404,3 @@ func (api *API) GetProposals(offset int, limit int) (more bool, scopes map[strin
 	}
 	return
 }
-
