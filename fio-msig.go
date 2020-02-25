@@ -189,7 +189,7 @@ type MsigExec struct {
 }
 
 func NewMsigExec(proposer eos.AccountName, proposal eos.Name, fee uint64, actor eos.AccountName) *Action {
-	return NewAction("eosio.msig", "execute", actor,
+	return NewAction("eosio.msig", "exec", actor,
 		&MsigExec{
 			Proposer:     proposer,
 			ProposalName: proposal,
