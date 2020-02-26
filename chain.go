@@ -105,6 +105,21 @@ func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 	}
 }
 
+// NewActionAsOwner is the same as NewAction, but specifies the owner permission, really only needed for msig updateauth in FIO
+func NewActionAsOwner(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
+	return &Action{
+		Account: contract,
+		Name:    name,
+		Authorization: []eos.PermissionLevel{
+			{
+				Actor:      actor,
+				Permission: "owner",
+			},
+		},
+		ActionData: eos.NewActionData(actionData),
+	}
+}
+
 // GetCurrentBlock provides the current head block number
 func (api API) GetCurrentBlock() (blockNum uint32) {
 	info, err := api.GetInfo()
