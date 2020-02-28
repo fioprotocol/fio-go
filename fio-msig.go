@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eoscanada/eos-go"
-	"math"
 	"sort"
 	"strconv"
 	"time"
@@ -58,7 +57,7 @@ type MsigApprovalsInfo struct {
 	ProvidedApprovals  []MsigApproval `json:"provided_approvals"`
 }
 
-func (api *API) GetApprovals(scope Name) (more bool, info []*MsigApprovalsInfo, err error) {
+func (api *API) GetApprovals(scope Name, limit int) (more bool, info []*MsigApprovalsInfo, err error) {
 	name, err := eos.StringToName(string(scope))
 	if err != nil {
 		return false, nil, err
@@ -68,7 +67,7 @@ func (api *API) GetApprovals(scope Name) (more bool, info []*MsigApprovalsInfo, 
 		Scope: fmt.Sprintf("%d", name),
 		Code:  "eosio.msig",
 		Table: "approvals2",
-		Limit: math.MaxUint32,
+		Limit: uint32(limit),
 	})
 	if err != nil {
 		return false, nil, err
