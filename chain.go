@@ -31,6 +31,15 @@ type Action struct {
 	eos.ActionData
 }
 
+func (act Action) ToEos() *eos.Action {
+	return &eos.Action{
+		Account:       act.Account,
+		Name:          act.Name,
+		Authorization: act.Authorization,
+		ActionData:    act.ActionData,
+	}
+}
+
 type TxOptions struct {
 	eos.TxOptions
 }

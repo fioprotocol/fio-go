@@ -240,7 +240,7 @@ type BundleVote struct {
 }
 
 func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
-	return NewAction("eosio", "bundlevote", actor,
+	return NewAction("fio.fee", "bundlevote", actor,
 		BundleVote{
 			BundledTransactions: transactions,
 			Actor:               string(actor),
