@@ -2,8 +2,6 @@ package fio
 
 import (
 	"bytes"
-	"compress/flate"
-	"compress/zlib"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
@@ -46,6 +44,7 @@ func (o ObtType) String() string {
 type ObtRequestContent struct {
 	PayeePublicAddress string `json:"payee_public_address"`
 	Amount             string `json:"amount"`
+	ChainCode          string `json:"chain_code"`
 	TokenCode          string `json:"token_code"`
 	Memo               string `json:"memo"`
 	Hash               string `json:"hash"`
@@ -56,6 +55,7 @@ type ObtRequestContent struct {
 type obtRequestContentOmit struct {
 	PayeePublicAddress string `json:"payee_public_address"`
 	Amount             string `json:"amount"`
+	ChainCode          string `json:"chain_code"`
 	TokenCode          string `json:"token_code"`
 	Memo               string `json:"memo,omitempty"`
 	Hash               string `json:"hash,omitempty"`
@@ -67,6 +67,7 @@ func (req ObtRequestContent) Encrypt(from *Account, toPubKey string) (content st
 	reqOmit := obtRequestContentOmit{
 		PayeePublicAddress: req.PayeePublicAddress,
 		Amount:             req.Amount,
+		ChainCode:          req.ChainCode,
 		TokenCode:          req.TokenCode,
 		Memo:               req.Memo,
 		Hash:               req.Hash,
@@ -94,6 +95,7 @@ type ObtRecordContent struct {
 	PayerPublicAddress string `json:"payer_public_address"`
 	PayeePublicAddress string `json:"payee_public_address"`
 	Amount             string `json:"amount"`
+	ChainCode          string `json:"chain_code"`
 	TokenCode          string `json:"token_code"`
 	Status             string `json:"status"`
 	ObtId              string `json:"obt_id"`
@@ -106,6 +108,7 @@ type obtRecordContentOmit struct {
 	PayerPublicAddress string `json:"payer_public_address"`
 	PayeePublicAddress string `json:"payee_public_address"`
 	Amount             string `json:"amount"`
+	ChainCode          string `json:"chain_code"`
 	TokenCode          string `json:"token_code"`
 	Status             string `json:"status"`
 	ObtId              string `json:"obt_id"`
@@ -120,6 +123,7 @@ func (rec ObtRecordContent) Encrypt(from *Account, toPubKey string) (content str
 		rec.PayerPublicAddress,
 		rec.PayeePublicAddress,
 		rec.Amount,
+		rec.ChainCode,
 		rec.TokenCode,
 		rec.Status,
 		rec.ObtId,
@@ -285,7 +289,7 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 
 // EciesEncrypt implements the encryption format used in the content field of OBT requests.
 //
-// Based on the bool CompressOBT, either:
+// Based on the bool ObtOldFormat, either:
 // The plaintext is zlib compressed, then PKCS#7 padded before being encrypted -- returned output is base64
 // - or -
 // it is left uncompressed, pk7cs padded -- output is a hex string
@@ -300,18 +304,6 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 //  IV + Ciphertext + HMAC
 // See https://github.com/fioprotocol/fiojs/blob/master/docs/message_encryption.md for more information.
 func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []byte) (content string, err error) {
-
-	if CompressOBT {
-		// compress with zlib: plainText should be a binary ABI-encoded structure
-		var compressed bytes.Buffer
-		zWriter, _ := zlib.NewWriterLevel(&compressed, flate.BestCompression)
-		_, _ = zWriter.Write(plainText)
-		err = zWriter.Close()
-		if err != nil {
-			return "", fmt.Errorf("tx writer close %s", err)
-		}
-		plainText = compressed.Bytes()
-	}
 
 	// Get the shared-secret
 	_, secretHash, err := EciesSecret(sender, recipentPub)
@@ -369,18 +361,18 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []by
 	signature := signer.Sum(nil)
 	contentBuffer.Write(signature)
 
-	switch CompressOBT {
-	case true:
+	switch ObtOldFormat {
+	case false:
 		// base64 encode the message, and it's ready to be embedded in our FundsReq.Content or RecordSend.Content fields
 		b64Buffer := bytes.NewBuffer([]byte{})
-		encoded := base64.NewEncoder(base64.URLEncoding, b64Buffer)
+		//encoded := base64.NewEncoder(base64.URLEncoding, b64Buffer)
+		encoded := base64.NewEncoder(base64.StdEncoding, b64Buffer)
 		_, err = encoded.Write(contentBuffer.Bytes())
 		_ = encoded.Close()
 		return string(b64Buffer.Bytes()), nil
-	case false:
+	default:
 		return hex.EncodeToString(contentBuffer.Bytes()), nil
 	}
-	return "", nil
 }
 
 // EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
@@ -390,16 +382,17 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 	)
 
 	var msg []byte
-	switch CompressOBT {
-	case true:
+	switch ObtOldFormat {
+	case false:
 		// convert base64 string to []byte
 		b64Reader := bytes.NewReader([]byte(message))
-		b64Decoder := base64.NewDecoder(base64.URLEncoding, b64Reader)
+		//b64Decoder := base64.NewDecoder(base64.URLEncoding, b64Reader)
+		b64Decoder := base64.NewDecoder(base64.StdEncoding, b64Reader)
 		msg, err = ioutil.ReadAll(b64Decoder)
 		if err != nil {
 			return nil, err
 		}
-	case false:
+	default:
 		// or the old style hex string
 		msg, err = hex.DecodeString(message)
 		if err != nil {
@@ -455,28 +448,7 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 		return nil, errors.New("invalid padding in message")
 	}
 
-	switch CompressOBT {
-	case true:
-		// decompress
-		buf := bytes.NewReader(plainText[:len(plainText)-padLen]) // be sure to strip PKCS7 padding
-		zlDec, err := zlib.NewReader(buf)
-		if err != nil {
-			return nil, err
-		}
-		defer zlDec.Close()
-		uncompressed, err := ioutil.ReadAll(zlDec)
-		if err != nil {
-			return nil, err
-		}
-		if len(uncompressed) == 0 {
-			return nil, errors.New("invalid message, message was empty")
-		}
-		return uncompressed, nil
-
-	case false:
-		return plainText[:len(plainText)-padLen], nil
-	}
-	return nil, errors.New("unknown error in EciesDecrypt")
+	return plainText[:len(plainText)-padLen], nil
 }
 
 // depending on how the request was built it's possible to get a slightly different abi encoding,
@@ -671,6 +643,7 @@ var obtAbiJsonOmit = `{
         "fields": [
             {"name": "payee_public_address", "type": "string"},
             {"name": "amount", "type": "string"},
+            {"name": "chain_code", "type": "string"},
             {"name": "token_code", "type": "string"},
             {"name": "memo", "type": "string?"},
             {"name": "hash", "type": "string?"},
@@ -683,6 +656,7 @@ var obtAbiJsonOmit = `{
             {"name": "payer_public_address", "type": "string"},
             {"name": "payee_public_address", "type": "string"},
             {"name": "amount", "type": "string"},
+            {"name": "chain_code", "type": "string"},
             {"name": "token_code", "type": "string"},
             {"name": "status", "type": "string"},
             {"name": "obt_id", "type": "string"},
