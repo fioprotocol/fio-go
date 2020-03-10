@@ -211,6 +211,14 @@ type MsigPropose struct {
 	Trx          *eos.SignedTransaction `json:"trx"`
 }
 
+type MsigWrappedPropose struct {
+	Proposer     eos.AccountName        `json:"proposer"`
+	ProposalName eos.Name               `json:"proposal_name"`
+	Requested    []*PermissionLevel     `json:"requested"`
+	MaxFee       uint64                 `json:"max_fee"`
+	Trx          *eos.Transaction       `json:"trx"`
+}
+
 // NewMsigPropose is provided for consistency, but it will make more sense to use NewSignedMsigPropose to build multisig proposals since it
 // abstracts several steps.
 func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*PermissionLevel, signedTx *eos.SignedTransaction) *Action {
@@ -402,4 +410,21 @@ func (api *API) GetProposals(offset int, limit int) (more bool, scopes map[strin
 		scopes[s.Scope] = s.Count
 	}
 	return
+}
+
+type WrapExecute struct {
+	Executor eos.AccountName `json:"executor"`
+	Trx *eos.Transaction `json:"trx"`
+}
+
+func NewWrapExecute(actor eos.AccountName, executor eos.AccountName, trx *eos.SignedTransaction) *Action {
+	trx.Expiration = eos.JSONTime{Time: time.Unix(0, 0)}
+	trx.RefBlockPrefix = 0
+	trx.RefBlockNum = 0
+	return NewAction("eosio.wrap", "execute", actor,
+		&WrapExecute{
+			Executor: executor,
+			Trx:      trx,
+		},
+	)
 }
