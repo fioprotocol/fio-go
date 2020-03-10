@@ -289,11 +289,7 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 
 // EciesEncrypt implements the encryption format used in the content field of OBT requests.
 //
-// Based on the bool ObtOldFormat, either:
-// The plaintext is zlib compressed, then PKCS#7 padded before being encrypted -- returned output is base64
-// - or -
-// it is left uncompressed, pk7cs padded -- output is a hex string
-//
+// The plaintext is PKCS#7 padded before being encrypted -- returned output is base64
 // Key derivation, and message format:
 //
 // A DH shared secret is created using ECIES (derives a key based on the curves of the public and private keys.)
