@@ -87,6 +87,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 			return keyBag.AvailableKeys()
 		},
 	)
+	api.Header.Set("User-Agent", "fio-go")
 	txOpts := &TxOptions{}
 	err := txOpts.FillFromChain(api)
 	if err != nil {
