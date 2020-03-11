@@ -414,7 +414,7 @@ func (api *API) GetProposals(offset int, limit int) (more bool, scopes map[strin
 
 type WrapExecute struct {
 	Executor eos.AccountName `json:"executor"`
-	Trx *eos.SignedTransaction `json:"trx"`
+	Trx *eos.Transaction `json:"trx"`
 }
 
 func NewWrapExecute(actor eos.AccountName, executor eos.AccountName, trx *eos.Transaction) *Action {
