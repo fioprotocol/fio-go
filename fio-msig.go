@@ -417,7 +417,7 @@ type WrapExecute struct {
 	Trx *eos.SignedTransaction `json:"trx"`
 }
 
-func NewWrapExecute(actor eos.AccountName, executor eos.AccountName, trx *eos.SignedTransaction) *Action {
+func NewWrapExecute(actor eos.AccountName, executor eos.AccountName, trx *eos.Transaction) *Action {
 	trx.Expiration = eos.JSONTime{Time: time.Unix(0, 0)}
 	trx.RefBlockPrefix = 0
 	trx.RefBlockNum = 0
