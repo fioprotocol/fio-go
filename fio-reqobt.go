@@ -455,7 +455,7 @@ func tryDecryptRequest(bin []byte, obtType ObtType) (content *ObtRequestContent,
 	abi, _ := eos.NewABI(abiReader)
 	decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
 	if err != nil {
-		abiReader = bytes.NewReader([]byte(obtAbiJson))
+		abiReader = bytes.NewReader([]byte(ObtAbiJson))
 		abi, _ = eos.NewABI(abiReader)
 		decode, err = abi.DecodeTableRowTyped(obtType.String(), bin)
 		if err != nil {
