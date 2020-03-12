@@ -451,11 +451,11 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 // this will try three different ways of decoding the request ...
 func tryDecryptRequest(bin []byte, obtType ObtType) (content *ObtRequestContent, err error) {
 	content = &ObtRequestContent{}
-	abiReader := bytes.NewReader([]byte(ObtAbiJson))
+	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
 	abi, _ := eos.NewABI(abiReader)
 	decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
 	if err != nil {
-		abiReader = bytes.NewReader([]byte(obtAbiJsonOmit))
+		abiReader = bytes.NewReader([]byte(obtAbiJson))
 		abi, _ = eos.NewABI(abiReader)
 		decode, err = abi.DecodeTableRowTyped(obtType.String(), bin)
 		if err != nil {
