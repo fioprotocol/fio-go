@@ -7,6 +7,7 @@ require (
 	github.com/eoscanada/eos-go v0.8.16
 	github.com/ethereum/go-ethereum v1.9.7
 	github.com/gizak/termui/v3 v3.1.0
+	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mr-tron/base58 v1.1.2
 	github.com/tidwall/gjson v1.3.5 // indirect
 	github.com/tidwall/sjson v1.0.4 // indirect
