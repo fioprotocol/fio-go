@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os/exec"
+	"sync"
 	"time"
 )
 
@@ -18,12 +19,12 @@ type KeosClient struct {
 	BaseUrl    string
 	HttpClient *http.Client
 	Socket     string
-	keys       map[string]availKey
+	Keys       map[string]KeosKeys `json:"-"`
 	Wallet     string
 	password   string
 }
 
-type availKey struct {
+type KeosKeys struct {
 	PublicKey  string `json:"public_key"`
 	PrivateKey string `json:"private_key"`
 	FioAddress string `json:"fio_address"`
@@ -33,6 +34,7 @@ func NewKeosClient(keosUrl string, socket string) *KeosClient {
 	client := &KeosClient{}
 	client.BaseUrl = "http://unix"
 	client.HttpClient = &http.Client{}
+	client.Keys = make(map[string]KeosKeys)
 	// by default we use a unix socket in the user's home directory:
 	if keosUrl == "" {
 		client.HttpClient = &http.Client{
@@ -100,8 +102,9 @@ func (k KeosClient) Start(noKeosd bool) error {
 	if noKeosd {
 		return nil
 	}
-	cmd := exec.Command("keosd", "--http-server-address", "--https-server-address", "--unix-socket-path", "keosd.sock")
-	_ = cmd.Run() // run it regardless, it won't hurt if it gets called again
+	//cmd := exec.Command("keosd", "--http-server-address", "--https-server-address", "--unix-socket-path", "keosd.sock")
+	cmd := exec.Command("clio", "wallet", "list") // let clio start keosd
+	_ = cmd.Run()                                 // ignore output
 	var isRunning bool
 	procs, _ := ps.Processes()
 	for _, p := range procs {
@@ -149,25 +152,36 @@ func (k *KeosClient) GetKeys(nodeosApi *API) error {
 	if len(pubKeys) == 0 {
 		return errors.New("no keys found in the wallet")
 	}
+	mux := sync.Mutex{}
+	wg := sync.WaitGroup{}
+	wg.Add(len(pubKeys))
 	for _, pk := range pubKeys {
-		a, e := ActorFromPub(pk[0])
-		if e != nil {
-			continue
-		}
-		k.keys[string(a)] = availKey{
-			PublicKey:  pk[0],
-			PrivateKey: pk[1],
-			FioAddress: firstName(pk[0], nodeosApi),
-		}
+		go func(pk []string) {
+			defer wg.Done()
+			a, e := ActorFromPub(pk[0])
+			if e != nil {
+				return
+			}
+			first := firstName(pk[0], nodeosApi)
+			mux.Lock()
+			k.Keys[string(a)] = KeosKeys{
+				PublicKey:  pk[0],
+				PrivateKey: pk[1],
+				FioAddress: first,
+			}
+			mux.Unlock()
+		}(pk)
 	}
+	wg.Wait()
 	return nil
 }
 
-func (k *KeosClient) PrintKeys() {
-	fmt.Printf("\n%-12s  %-53s  %s\n", "account", "Public Key", "FIO Address")
-	fmt.Printf("%-12s  %-53s  %s\n", "-------", "----------", "-----------")
-	for k, v := range k.keys {
-		fmt.Printf("%12s  %53s  %s\n", k, v.PublicKey, v.FioAddress)
+func (k *KeosClient) PrintKeys() string {
+	buf := bytes.NewBufferString("")
+	buf.WriteString(fmt.Sprintf("\n%-12s  %-53s  %s\n", "account", "Public Key", "FIO Address"))
+	buf.WriteString(fmt.Sprintf("%-12s  %-53s  %s\n", "-------", "----------", "-----------"))
+	for k, v := range k.Keys {
+		buf.WriteString(fmt.Sprintf("%12s  %53s  %s\n", k, v.PublicKey, v.FioAddress))
 	}
-	fmt.Println("")
+	return buf.String()
 }

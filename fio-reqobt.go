@@ -19,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 const (
@@ -529,12 +530,32 @@ type getPendingFioNamesRequest struct {
 }
 
 type PendingFioRequestsResponse struct {
-	Requests []FundsResp `json:"requests"`
-	More     int         `json:"more"`
+	Requests []RequestStatus `json:"requests"`
+	More     int             `json:"more"`
+}
+
+type RequestStatus struct {
+	FioRequestId      uint64       `json:"fio_request_id"`
+	PayerFioAddress   string       `json:"payer_fio_address"`
+	PayeeFioAddress   string       `json:"payee_fio_address"`
+	PayerFioPublicKey string       `json:"payer_fio_public_key"`
+	PayeeFioPublicKey string       `json:"payee_fio_public_key"`
+	Content           string       `json:"content"`
+	TimeStamp         eos.JSONTime `json:"time_stamp"`
+	Status            string       `json:"status"`
 }
 
 // GetPendingFioRequests looks for pending requests
 func (api API) GetPendingFioRequests(pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
+	return api.getFioRequests("pending", pubKey, limit, offset)
+}
+
+// GetSentFioRequests looks for sent requests
+func (api API) GetSentFioRequests(pubKey string, limit int, offset int) (sentRequests PendingFioRequestsResponse, hasSent bool, err error) {
+	return api.getFioRequests("sent", pubKey, limit, offset)
+}
+
+func (api API) getFioRequests(requestType string, pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
 	query := getPendingFioNamesRequest{
 		FioPublicKey: pubKey,
 		Limit:        limit,
@@ -544,7 +565,13 @@ func (api API) GetPendingFioRequests(pubKey string, limit int, offset int) (pend
 	if err != nil {
 		return PendingFioRequestsResponse{}, false, err
 	}
-	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_pending_fio_requests`, bytes.NewBuffer(j))
+	req := &http.Request{}
+	switch requestType {
+	case "pending":
+		req, err = http.NewRequest("POST", api.BaseURL+`/v1/chain/get_pending_fio_requests`, bytes.NewBuffer(j))
+	case "sent":
+		req, err = http.NewRequest("POST", api.BaseURL+`/v1/chain/get_sent_fio_requests`, bytes.NewBuffer(j))
+	}
 	if err != nil {
 		return PendingFioRequestsResponse{}, false, err
 	}
@@ -564,6 +591,95 @@ func (api API) GetPendingFioRequests(pubKey string, limit int, offset int) (pend
 	}
 	if len(pendingRequests.Requests) > 0 {
 		hasPending = true
+	}
+	return
+}
+
+
+// FundsReqTableResp has the most useful fields of what is stored in the fioreqctxts table. It is slightly different
+// than what is sent from the API endpoint, but is useful when a specific request needs to be retrieved.
+type FundsReqTableResp struct {
+	FioRequestId    uint64       `json:"fio_request_id"`
+	Content         string       `json:"content"`
+	TimeStamp       int64        `json:"time_stamp"`
+	Time            time.Time    `json:"time"`
+	PayerFioAddress string       `json:"payer_fio_addr"`
+	PayerKey        string       `json:"payer_key"`
+	PayeeFioAddress string       `json:"payee_fio_addr"`
+	PayeeKey        string       `json:"payee_key"`
+}
+
+// GetFioRequest gets a single FIO request using a table lookup, this is more efficient than using the API
+// endpoint because that requires knowing the offset of the request and the id. The downside is that this
+// returns a slightly different struct.
+func (api *API) GetFioRequest(requestId uint64) (request *FundsReqTableResp, err error) {
+	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "fio.reqobt",
+		Scope:      "fio.reqobt",
+		Table:      "fioreqctxts",
+		LowerBound: fmt.Sprintf("%d", requestId),
+		UpperBound: fmt.Sprintf("%d", requestId),
+		Limit:      1,
+		KeyType:    "i64",
+		Index:      "1",
+		JSON:       true,
+		EncodeType: "dec",
+	})
+	if err != nil {
+		return
+	}
+	if len(resp.Rows) < 3 {
+		return nil, errors.New("no requests found")
+	}
+	r := make([]*FundsReqTableResp, 0)
+	err = json.Unmarshal(resp.Rows, &r)
+	if err != nil {
+		return
+	}
+	if len(r) > 0 && r[0] != nil {
+		r[0].Time = time.Unix(r[0].TimeStamp, 0)
+		return r[0], nil
+	}
+	return
+}
+
+type FundsRequestStatusResp struct {
+	Id           uint64 `json:"id"`
+	FioRequestId uint64 `json:"fio_request_id"`
+	Status       uint64 `json:"status"`
+	Metadata     string `json:"metadata"`
+	TimeStamp    uint64 `json:"time_stamp"`
+}
+
+// GetFioRequestStatus gets a record from the fioreqstss, which is useful for getting the recordobt response to a request.
+// This only applies to recordobt that was in response to a request, the recordobts table stores records not tied to an
+// existing request.
+func (api *API) GetFioRequestStatus(requestId uint64) (hasResponse bool, request *FundsRequestStatusResp, err error) {
+	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "fio.reqobt",
+		Scope:      "fio.reqobt",
+		Table:      "fioreqstss",
+		LowerBound: fmt.Sprintf("%d", requestId),
+		UpperBound: fmt.Sprintf("%d", requestId),
+		Limit:      1,
+		KeyType:    "i64",
+		Index:      "2",
+		JSON:       true,
+		EncodeType: "dec",
+	})
+	if err != nil {
+		return
+	}
+	if len(resp.Rows) < 3 {
+		return false, nil, nil
+	}
+	r := make([]*FundsRequestStatusResp, 0)
+	err = json.Unmarshal(resp.Rows, &r)
+	if err != nil {
+		return
+	}
+	if len(r) > 0 && r[0] != nil {
+		return true, r[0], nil
 	}
 	return
 }
