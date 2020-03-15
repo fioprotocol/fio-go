@@ -43,7 +43,7 @@ func main() {
 	}
 	socket = fmt.Sprintf("%s%ceosio-wallet%ckeosd.sock", homeDir, os.PathSeparator, os.PathSeparator)
 
-	flag.IntVar(&limit, "limit", 10, "max count of records to fetch (optional: pending, sent")
+	flag.IntVar(&limit, "limit", 50, "max count of records to fetch (optional: pending, sent")
 	flag.IntVar(&offset, "offset", 0, "starting record for fetch (optional: pending, sent")
 	flag.StringVar(&requestId, "id", "", "FIO request id (required: view-req, reject; optional: record)")
 	flag.StringVar(&nodeosUrl, "u", "http://127.0.0.1:8888", "http url for nodeos")
@@ -149,7 +149,7 @@ func main() {
 		fmt.Println(keosd.PrintKeys())
 		os.Exit(0)
 	case "view-req":
-		outer, resp, _, err := view(requestIdRequired(), permission, keosd, nodeosUrl)
+		outer, resp, pubk, err := view(requestIdRequired(), permission, keosd, nodeosUrl)
 		if outer != nil {
 			fmt.Println("\nRequest:")
 			fmt.Println(strings.Repeat("⎺", 86))
@@ -159,6 +159,13 @@ func main() {
 		fmt.Println("\nDecrypted Content:")
 		fmt.Println(strings.Repeat("⎺", 86))
 		ppYaml(resp)
+		hasResp, recordObt, _ := viewRecord(requestIdRequired(), permission, pubk, keosd, nodeosUrl)
+		if hasResp && string(recordObt) != "" {
+			fmt.Println("\nFound a Response:")
+			fmt.Println(strings.Repeat("⎺", 86))
+			ppYaml(recordObt)
+			fmt.Println("")
+		}
 		os.Exit(0)
 	case "reject":
 		ok, resp, err := reject(requestIdRequired(), permission, keosd, nodeosUrl)
@@ -253,7 +260,7 @@ func printSentPending(which string, actor string, api *fio.API, limit int, offse
 			case "rejected":
 				status = "✘ "
 			case "sent_to_blockchain":
-				status = "︎ ✔ "
+				status = "︎ ✔︎ "
 			}
 		buf.WriteString(fmt.Sprintf("%19s %3s %-6d %16s  %-16s\n",req.TimeStamp.Time.Local().Format(time.RFC822), status, req.FioRequestId, f, t))
 	}
@@ -333,7 +340,7 @@ func reject(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl str
 	return
 }
 
-func view(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl string) (outer []byte, resp []byte, record []byte,  err error) {
+func view(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl string) (outer []byte, resp []byte, counterParty string,  err error) {
 	account, api, _, err := authenticate(actor, keosd, nodeosUrl)
 	if err != nil {
 		return
@@ -347,9 +354,9 @@ func view(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl strin
 		return
 	}
 	if request.PayerKey != account.PubKey && request.PayeeKey != account.PubKey {
-		return outer, nil, nil, errors.New("actor cannot decrypt this request, it is not a party to the transaction")
+		return outer, nil, "", errors.New("actor cannot decrypt this request, it is not a party to the transaction")
 	}
-	counterParty := request.PayeeKey
+	counterParty = request.PayeeKey
 	if account.PubKey == request.PayeeKey {
 		counterParty = request.PayerKey
 	}
@@ -362,3 +369,29 @@ func view(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl strin
 	return
 }
 
+func viewRecord(requestId uint64, actor string, counterParty string, keosd *fio.KeosClient, nodeosUrl string) (found bool, record []byte,  err error) {
+	account, api, _, err := authenticate(actor, keosd, nodeosUrl)
+	if err != nil {
+		return
+	}
+	found, request, err := api.GetFioRequestStatus(requestId)
+	switch {
+	case err != nil || !found:
+		return
+	case request.Status == 1:
+		record = []byte("Rejected: Request was rejected at "+time.Unix( int64(request.TimeStamp/1000000), 0).Local().Format(time.UnixDate))
+	case counterParty == "":
+		record = []byte("Error: cannot decrypt request, no public key for payer.")
+	case request.Metadata != "":
+		decrypted := &fio.ObtContentResult{}
+		decrypted, err = fio.DecryptContent(account, counterParty, request.Metadata, fio.ObtResponseType)
+		if err != nil {
+			return
+		}
+		record, _ = yaml.Marshal(decrypted.Record)
+		if request.TimeStamp != 0 {
+			record = append(record, []byte(fmt.Sprintf(`timestamp: "%s"`, time.Unix( int64(request.TimeStamp/1000000), 0).Local().Format(time.UnixDate)))...)
+		}
+	}
+	return
+}
