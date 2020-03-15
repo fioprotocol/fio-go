@@ -32,6 +32,8 @@ func main() {
 		limit      int
 		offset     int
 		fullResp   bool
+		template   bool
+		example    bool
 	)
 
 	homeDir, _ := os.UserHomeDir()
@@ -55,18 +57,30 @@ func main() {
 	flag.StringVar(&command, "c", "", "command to run")
 	flag.BoolVar(&noKeosd, "no-auto-keosd", false, "Don't try to launch a keosd")
 	flag.BoolVar(&fullResp, "full", false, "print full transaction result traces")
+	flag.BoolVar(&template, "template", false, "print JSON templates for funds request, and response")
+	flag.BoolVar(&example, "example", false, "show example commands")
 	flag.Parse()
+
+	if example {
+		printExample()
+		os.Exit(0)
+	}
+	if template {
+		printTemplate()
+		os.Exit(0)
+	}
 
 	printErr := func() {
 		fmt.Println("fioreq is a utility for interacting with funds requests on the FIO blockchain.")
-		fmt.Println("Usage:\n\tfioreq -password <password> -c <command> <options>")
+		fmt.Println("Usage:\n\tfioreq -password <password> -c <command> <options> <request/response request>")
 		fmt.Println("\nuse 'fioreq -h' to show other options.")
 		fmt.Println("Commands:")
 		fmt.Printf("  -c %9s - list available accounts\n", "list")
 		fmt.Printf("  -c %9s - show pending FIO requests\n", "pending")
 		fmt.Printf("  -c %9s - show sent FIO requests\n", "sent")
 		fmt.Printf("  -c %9s - view a FIO request\n", "view-req")
-		fmt.Printf("  -c %9s - view a FIO response\n", "view-resp")
+		//TODO: add ability for getting response without a corresponding request.
+		//fmt.Printf("  -c %9s - view a FIO response\n", "view-resp")
 		fmt.Printf("  -c %9s - reject request\n", "reject")
 		fmt.Printf("  -c %9s - send a request\n", "request")
 		fmt.Printf("  -c %9s - record transaction\n", "record")
@@ -151,19 +165,13 @@ func main() {
 	case "view-req":
 		outer, resp, pubk, err := view(requestIdRequired(), permission, keosd, nodeosUrl)
 		if outer != nil {
-			fmt.Println("\nRequest:")
-			fmt.Println(strings.Repeat("⎺", 86))
-			ppYaml(outer)
+			ppYaml("Request", outer)
 		}
 		must(err)
-		fmt.Println("\nDecrypted Content:")
-		fmt.Println(strings.Repeat("⎺", 86))
-		ppYaml(resp)
+		ppYaml("Decrypted Content", resp)
 		hasResp, recordObt, _ := viewRecord(requestIdRequired(), permission, pubk, keosd, nodeosUrl)
 		if hasResp && string(recordObt) != "" {
-			fmt.Println("\nFound a Response:")
-			fmt.Println(strings.Repeat("⎺", 86))
-			ppYaml(recordObt)
+			ppYaml("Response", recordObt)
 			fmt.Println("")
 		}
 		os.Exit(0)
@@ -182,19 +190,19 @@ func main() {
 	}
 }
 
-func ppYaml(y []byte){
+func ppYaml(title string, y []byte){
+	fmt.Printf("\n%19s:\n", title)
+	fmt.Printf("%19s\n", strings.Repeat("⎺", len(title)))
 	lines := strings.Split(string(y), "\n")
 	for _, l := range lines {
 		cols := strings.Split(l, ": ")
-		if len(cols) == 2 {
+		if len(cols) == 2 && cols[1] != `""` {
 			if len(cols[1]) > 64 {
 				cols[1] = cols[1][:61]+"..."
 			}
 			cols[1] = strings.TrimPrefix(cols[1], `"`)
 			cols[1] = strings.TrimSuffix(cols[1], `"`)
-			fmt.Printf("%19s   %s\n", cols[0], cols[1])
-		} else {
-			fmt.Println(l)
+			fmt.Printf("%20s   %s\n", fixupFieldName(cols[0]), cols[1])
 		}
 	}
 }
@@ -390,8 +398,110 @@ func viewRecord(requestId uint64, actor string, counterParty string, keosd *fio.
 		}
 		record, _ = yaml.Marshal(decrypted.Record)
 		if request.TimeStamp != 0 {
-			record = append(record, []byte(fmt.Sprintf(`timestamp: "%s"`, time.Unix( int64(request.TimeStamp/1000000), 0).Local().Format(time.UnixDate)))...)
+			record = append(record, []byte(fmt.Sprintf(`time: "%s"`, time.Unix( int64(request.TimeStamp/1000000), 0).Local().Format(time.UnixDate)))...)
 		}
 	}
 	return
+}
+
+func fixupFieldName(s string) string {
+	switch s {
+	case "amount":
+		return "Amount"
+	case "chaincode":
+		return "Chain Code"
+	case "content":
+		return "Content"
+	case "fiorequestid":
+		return "Fio Request ID"
+	case "hash":
+		return "Hash"
+	case "memo":
+		return "Memo"
+	case "obtid":
+		return "OBT ID"
+	case "offlineurl":
+		return "Offline URL"
+	case "payeefioaddress":
+		return "Payee FIO Address"
+	case "payeekey":
+		return "Payee Key"
+	case "payeepublicaddress":
+		return "Payee Public Address"
+	case "payerfioaddress":
+		return "Payer FIO Address"
+	case "payerkey":
+		return "Payer Key"
+	case "payerpublicaddress":
+		return "Payer Public Address"
+	case "status":
+		return "Status"
+	case "time":
+		return "Time"
+	case "timestamp":
+		return "Time Stamp"
+	case "tokencode":
+		return "Token Code"
+	}
+	return s
+}
+
+func printTemplate() {
+	fmt.Print("\n\nRequest Template:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺\n\n")
+	j, _ := json.MarshalIndent(&fio.ObtRequestContent{}, "", "  ")
+	fmt.Println(`'`+string(j)+`'`)
+
+	fmt.Print("\n\nRecord Response Template:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺\n\n")
+	j, _ = json.MarshalIndent(&fio.ObtRecordContent{}, "", "  ")
+	fmt.Println(`'`+string(j)+`'`)
+	fmt.Print("\nMore information:\n  https://developers.fioprotocol.io/api/api-spec/models/fio-request-ecrypted-content\n  https://developers.fioprotocol.io/api/api-spec/models/fio-data-encrypted-content\n\n")
+}
+
+func printExample() {
+	fmt.Println("\nImportant Options:")
+	fmt.Println("------------------")
+	fmt.Printf("  %9s 'URL for FIO nodeos endpoint'\n", "-u")
+	fmt.Printf("  %9s 'password for keosd wallet'\n", "-password")
+	fmt.Printf("  %9s 'fioreq command'\n", "-c")
+	fmt.Printf("  %9s 'actor permission (account) for transaction'\n", "-p")
+	fmt.Printf("  %9s 'request ID for command'\n", "-id")
+	fmt.Printf("  %9s 'FIO Address that *recieves* funds'\n", "-payee")
+	fmt.Printf("  %9s 'FIO Address that *sends* funds'\n", "-payer")
+	fmt.Println("\n\nView available accounts from keosd:")
+	fmt.Println("-----------------------------------")
+	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -c list")
+	fmt.Println("\n\nView sent requests for an account:")
+	fmt.Println("----------------------------------")
+	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c sent")
+	fmt.Println("\n\nView pending requests for an account:")
+	fmt.Println("-------------------------------------")
+	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c pending")
+	fmt.Println("\n\nView details for a request (including response):")
+	fmt.Println("------------------------------------------------")
+	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c view-req -id 123")
+	fmt.Println("\n\nReject a pending request")
+	fmt.Println("------------------------")
+	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c reject -id 321")
+	fmt.Println("\n\nRequest Payment:")
+	fmt.Println("----------------")
+	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c request -payer shopper@fiotestnet -payee merchant@store '")
+	fmt.Println(`    {
+      "payee_public_address": "0x42F6cA7898A0f29e17CB66190f9E9B9d26f7D635",
+      "amount": "1.23",
+      "chain_code": "ETH",
+      "token_code": "ETH",
+      "memo": "payment for order 123",
+    }'`)
+	fmt.Println("\n\nRecord a transaction for a pending request")
+	fmt.Println("------------------------------------------")
+	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c record -id 321 '")
+	fmt.Println(`    {
+      "payer_public_address": "FIO6ZJ9p6ZSvboXqaFiowR8bKLtSk8ZGUTHdT8ZkaW6pNnbusPdwa",
+      "payee_public_address": "FIO6QtJu52ho38zRP4aZCcgtciLAWQUB3CBgXnmwfFfXi6LvfVYyj",
+      "amount": "1.000",
+      "chain_code": "FIO",
+      "token_code": "FIO",
+      "hash": "797c59d1601f6bd99f0b56deb2c4fca944501a12b750829b66e4f792b0019fd4"
+    }'`)
+	fmt.Println("")
 }

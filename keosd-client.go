@@ -178,8 +178,8 @@ func (k *KeosClient) GetKeys(nodeosApi *API) error {
 
 func (k *KeosClient) PrintKeys() string {
 	buf := bytes.NewBufferString("")
-	buf.WriteString(fmt.Sprintf("\n%-12s  %-53s  %s\n", "account", "Public Key", "FIO Address"))
-	buf.WriteString(fmt.Sprintf("%-12s  %-53s  %s\n", "-------", "----------", "-----------"))
+	buf.WriteString(fmt.Sprintf("\n%-12s  %-53s  %s\n", "Account", "Public Key", "FIO Address"))
+	buf.WriteString(fmt.Sprintf("%-12s  %-53s  %s\n", "⎺⎺⎺⎺⎺⎺⎺", "⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺", "⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺"))
 	for k, v := range k.Keys {
 		buf.WriteString(fmt.Sprintf("%12s  %53s  %s\n", k, v.PublicKey, v.FioAddress))
 	}
