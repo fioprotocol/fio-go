@@ -29,6 +29,8 @@ func main() {
 		permission string
 		command    string
 		requestId  string
+		payer      string
+		payee      string
 		limit      int
 		offset     int
 		fullResp   bool
@@ -55,6 +57,8 @@ func main() {
 	flag.StringVar(&wallet, "n", "default", "wallet name")
 	flag.StringVar(&permission, "p", "", "(required for -c: show, reject, request, record) actor used for operations")
 	flag.StringVar(&command, "c", "", "command to run")
+	flag.StringVar(&payer, "payer", "", "payer for new funds request")
+	flag.StringVar(&payee, "payee", "", "payee (your address) for new funds request")
 	flag.BoolVar(&noKeosd, "no-auto-keosd", false, "Don't try to launch a keosd")
 	flag.BoolVar(&fullResp, "full", false, "print full transaction result traces")
 	flag.BoolVar(&template, "template", false, "print JSON templates for funds request, and response")
@@ -82,7 +86,7 @@ func main() {
 		//TODO: add ability for getting response without a corresponding request.
 		//fmt.Printf("  -c %9s - view a FIO response\n", "view-resp")
 		fmt.Printf("  -c %9s - reject request\n", "reject")
-		fmt.Printf("  -c %9s - send a request\n", "request")
+		fmt.Printf("  -c %9s - send a new request\n", "request")
 		fmt.Printf("  -c %9s - record transaction\n", "record")
 		os.Exit(2)
 	}
@@ -146,6 +150,29 @@ func main() {
 		return uint64(i)
 	}
 
+	jsonRequired := func() string {
+		ok := true
+		if flag.NArg() != 1 {
+			ok = false
+		}
+		js := strings.TrimSpace(flag.Arg(0))
+		if !strings.HasPrefix(js, "{") || !strings.HasSuffix(js, "}") {
+			ok = false
+		}
+		jrm := json.RawMessage([]byte(js))
+		j, err := json.Marshal(&jrm)
+		if err != nil {
+			fmt.Println(err)
+			ok = false
+		}
+		if !ok {
+			fmt.Print("\nError, a JSON document must be supplied, see the following examples\n\n")
+			printExample()
+			os.Exit(2)
+		}
+		return string(j)
+	}
+
 	get := func(){
 		actorRequired()
 		pending, err := printSentPending(command, permission, roApi, limit, offset)
@@ -184,40 +211,83 @@ func main() {
 		}
 		fmt.Println(ok)
 		os.Exit(0)
+	case "request":
+		actorRequired()
+		id, resp, err := requestNew(payer, payee, permission, jsonRequired(), keosd, nodeosUrl)
+		if err != nil {
+			fmt.Println("New Funds request failed:\n"+err.Error())
+			os.Exit(1)
+		}
+		if id == "" {
+			fmt.Println("transaction failed.")
+			os.Exit(1)
+		}
+		if fullResp {
+			rawJsonPrintLn(resp)
+			os.Exit(0)
+		}
+		fmt.Println("success, transaction id: "+id)
+		os.Exit(0)
 	default:
 		fmt.Printf("Unknown command: %s\n\n", command)
 		printErr()
 	}
 }
 
-func ppYaml(title string, y []byte){
-	fmt.Printf("\n%19s:\n", title)
-	fmt.Printf("%19s\n", strings.Repeat("⎺", len(title)))
-	lines := strings.Split(string(y), "\n")
-	for _, l := range lines {
-		cols := strings.Split(l, ": ")
-		if len(cols) == 2 && cols[1] != `""` {
-			if len(cols[1]) > 64 {
-				cols[1] = cols[1][:61]+"..."
-			}
-			cols[1] = strings.TrimPrefix(cols[1], `"`)
-			cols[1] = strings.TrimSuffix(cols[1], `"`)
-			fmt.Printf("%20s   %s\n", fixupFieldName(cols[0]), cols[1])
-		}
+func requestNew(payer string, payee string, actor string, requestJson string, keosd *fio.KeosClient, nodeosUrl string) (txid string, results json.RawMessage, err error) {
+	if !fio.Address(payer).Valid() {
+		err = errors.New("payer address is invalid")
 	}
-}
+	if !fio.Address(payee).Valid() {
+		err = errors.New("payee address is invalid")
+	}
 
-func rawJsonPrintLn(raw json.RawMessage){
-	if len(raw) < 2 {
-		fmt.Println("Empty result.")
-		return
-	}
-	j, err := json.MarshalIndent(raw, "", "  ")
+	account, api, opts, err := authenticate(actor, keosd, nodeosUrl)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
-	fmt.Println(string(j))
+	pubKey, found, err := api.PubAddressLookup(fio.Address(payer), "FIO", "FIO")
+	if err != nil {
+		return
+	}
+	if !found {
+		err = errors.New("could not get a public key for the FIO address: "+payer)
+		return
+	}
+	req := &fio.ObtRequestContent{}
+	err = json.Unmarshal([]byte(requestJson), req)
+	if err != nil {
+		return
+	}
+
+	content, err := req.Encrypt(account, pubKey.PublicAddress)
+	if err != nil {
+		return
+	}
+	_, tx, err := api.SignTransaction(
+		fio.NewTransaction([]*fio.Action{
+			fio.NewFundsReq(account.Actor, payer, payee, content),
+		}, opts), opts.ChainID, fio.CompressionZlib,
+	)
+	if err != nil {
+		return
+	}
+	results, err = api.PushTransactionRaw(tx)
+	if err != nil {
+		return
+	}
+	res := &eos.PushTransactionFullResp{}
+	err = json.Unmarshal(results, res)
+	if err != nil {
+		show := 256
+		if len(results) < show {
+			show = len(results)
+		}
+		err = errors.New(fmt.Sprintf("could not decode transaction result, showing first %d bytes of response: %s\n%s\n", show, err.Error(), string(results[:show])))
+		return
+	}
+	txid = res.TransactionID
+	return
 }
 
 func printSentPending(which string, actor string, api *fio.API, limit int, offset int) (results string, err error) {
@@ -487,10 +557,10 @@ func printExample() {
 	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c request -payer shopper@fiotestnet -payee merchant@store '")
 	fmt.Println(`    {
       "payee_public_address": "0x42F6cA7898A0f29e17CB66190f9E9B9d26f7D635",
-      "amount": "1.23",
+      "amount": "123.45",
       "chain_code": "ETH",
-      "token_code": "ETH",
-      "memo": "payment for order 123",
+      "token_code": "USDT",
+      "memo": "payment for order 123"
     }'`)
 	fmt.Println("\n\nRecord a transaction for a pending request")
 	fmt.Println("------------------------------------------")
@@ -504,4 +574,35 @@ func printExample() {
       "hash": "797c59d1601f6bd99f0b56deb2c4fca944501a12b750829b66e4f792b0019fd4"
     }'`)
 	fmt.Println("")
+}
+
+
+func ppYaml(title string, y []byte){
+	fmt.Printf("\n%19s:\n", title)
+	fmt.Printf("%19s\n", strings.Repeat("⎺", len(title)))
+	lines := strings.Split(string(y), "\n")
+	for _, l := range lines {
+		cols := strings.Split(l, ": ")
+		if len(cols) == 2 && cols[1] != `""` {
+			if len(cols[1]) > 64 {
+				cols[1] = cols[1][:61]+"..."
+			}
+			cols[1] = strings.TrimPrefix(cols[1], `"`)
+			cols[1] = strings.TrimSuffix(cols[1], `"`)
+			fmt.Printf("%20s   %s\n", fixupFieldName(cols[0]), cols[1])
+		}
+	}
+}
+
+func rawJsonPrintLn(raw json.RawMessage){
+	if len(raw) < 2 {
+		fmt.Println("Empty result.")
+		return
+	}
+	j, err := json.MarshalIndent(raw, "", "  ")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(j))
 }

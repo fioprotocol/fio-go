@@ -23,7 +23,7 @@ func ExampleNewFundsReq() {
 	}
 
 	// Get a FIO address for the Payer ...
-	payerPub, ok, _ := api.PubAddressLookup(payer, "FIO")
+	payerPub, ok, _ := api.PubAddressLookup(payer, "FIO", "FIO")
 	if !ok {
 		log.Fatal("Couldn't find PubKey for payer.")
 	}
