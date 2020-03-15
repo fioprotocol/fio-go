@@ -228,10 +228,79 @@ func main() {
 		}
 		fmt.Println("success, transaction id: "+id)
 		os.Exit(0)
+	case "record":
+		actorRequired()
+		id, resp, err := recordObt(requestIdRequired(), payer, payee, permission, jsonRequired(), keosd, nodeosUrl)
+		if err != nil {
+			fmt.Println("Record transaction failed:\n"+err.Error())
+			os.Exit(1)
+		}
+		if id == "" {
+			fmt.Println("transaction failed.")
+			os.Exit(1)
+		}
+		if fullResp {
+			rawJsonPrintLn(resp)
+			os.Exit(0)
+		}
+		fmt.Println("success, transaction id: "+id)
+		os.Exit(0)
 	default:
 		fmt.Printf("Unknown command: %s\n\n", command)
 		printErr()
 	}
+}
+
+func recordObt(requestId uint64, payer string, payee string, actor string, requestJson string, keosd *fio.KeosClient, nodeosUrl string) (txid string, results json.RawMessage, err error) {
+	if requestId == 0 {
+		err = errors.New("must supply a request id")
+	}
+	account, api, opts, err := authenticate(actor, keosd, nodeosUrl)
+	if err != nil {
+		return
+	}
+	request, err := api.GetFioRequest(requestId)
+	if err != nil {
+		return
+	}
+	req := &fio.ObtRecordContent{}
+	err = json.Unmarshal([]byte(requestJson), req)
+	if err != nil {
+		return
+	}
+	pubKey := request.PayeeKey
+	if pubKey == account.PubKey {
+		pubKey = request.PayerKey
+	}
+	content, err := req.Encrypt(account, pubKey)
+	if err != nil {
+		return
+	}
+	id := strconv.Itoa(int(requestId))
+	_, tx, err := api.SignTransaction(
+		fio.NewTransaction([]*fio.Action{
+			fio.NewRecordSend(account.Actor, id, payer, payee, content),
+		}, opts), opts.ChainID, fio.CompressionZlib,
+	)
+	if err != nil {
+		return
+	}
+	results, err = api.PushTransactionRaw(tx)
+	if err != nil {
+		return
+	}
+	res := &eos.PushTransactionFullResp{}
+	err = json.Unmarshal(results, res)
+	if err != nil {
+		show := 256
+		if len(results) < show {
+			show = len(results)
+		}
+		err = errors.New(fmt.Sprintf("could not decode transaction result, showing first %d bytes of response: %s\n%s\n", show, err.Error(), string(results[:show])))
+		return
+	}
+	txid = res.TransactionID
+	return
 }
 
 func requestNew(payer string, payee string, actor string, requestJson string, keosd *fio.KeosClient, nodeosUrl string) (txid string, results json.RawMessage, err error) {
