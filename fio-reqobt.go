@@ -472,11 +472,11 @@ func tryDecryptRequest(bin []byte, obtType ObtType) (content *ObtRequestContent,
 
 func tryDecryptRecord(bin []byte, obtType ObtType) (content *ObtRecordContent, err error) {
 	content = &ObtRecordContent{}
-	abiReader := bytes.NewReader([]byte(ObtAbiJson))
+	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
 	abi, _ := eos.NewABI(abiReader)
 	decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
 	if err != nil {
-		abiReader = bytes.NewReader([]byte(obtAbiJsonOmit))
+		abiReader = bytes.NewReader([]byte(ObtAbiJson))
 		abi, _ = eos.NewABI(abiReader)
 		decode, err = abi.DecodeTableRowTyped(obtType.String(), bin)
 		if err != nil {
@@ -712,6 +712,7 @@ var ObtAbiJson = `{
         "fields": [
             {"name": "payee_public_address", "type": "string"},
             {"name": "amount", "type": "string"},
+            {"name": "chain_code", "type": "string"},
             {"name": "token_code", "type": "string"},
             {"name": "memo", "type": "string"},
             {"name": "hash", "type": "string"},
@@ -724,6 +725,7 @@ var ObtAbiJson = `{
             {"name": "payer_public_address", "type": "string"},
             {"name": "payee_public_address", "type": "string"},
             {"name": "amount", "type": "string"},
+            {"name": "chain_code", "type": "string"},
             {"name": "token_code", "type": "string"},
             {"name": "status", "type": "string"},
             {"name": "obt_id", "type": "string"},
