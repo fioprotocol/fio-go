@@ -149,7 +149,7 @@ func (api *API) GetFioAccount(actor string) (*eos.AccountResp, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	accResp := &eos.AccountResp{}
 	err = json.Unmarshal(body, accResp)
-	if err != nil && err.Error() == `public key should start with ["PUB_K1_" | "PUB_R1_"] (or the old "EOS")` {
+	if err != nil && err.Error() == `public key should start with ["PUB_K1_" | "PUB_R1_" | "PUB_WA_"] (or the old "EOS")` {
 		err = nil
 	}
 	return accResp, err
