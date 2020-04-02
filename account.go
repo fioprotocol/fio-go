@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/dapixio/fio-go/eos-go/ecc"
 	"github.com/eoscanada/eos-go"
-	"github.com/eoscanada/eos-go/ecc"
 	"github.com/mr-tron/base58"
 	"io/ioutil"
 	"regexp"
@@ -139,6 +139,43 @@ func (a Address) Valid() (ok bool) {
 	return true
 }
 
+type AccountResp struct {
+	AccountName            eos.AccountName          `json:"account_name"`
+	Privileged             bool                 `json:"privileged"`
+	LastCodeUpdate         eos.JSONTime             `json:"last_code_update"`
+	Created                eos.JSONTime             `json:"created"`
+	CoreLiquidBalance      eos.Asset                `json:"core_liquid_balance"`
+	RAMQuota               eos.Int64                `json:"ram_quota"`
+	RAMUsage               eos.Int64                `json:"ram_usage"`
+	NetWeight              eos.Int64                `json:"net_weight"`
+	CPUWeight              eos.Int64                `json:"cpu_weight"`
+	NetLimit               eos.AccountResourceLimit `json:"net_limit"`
+	CPULimit               eos.AccountResourceLimit `json:"cpu_limit"`
+	Permissions            []Permission         `json:"permissions"`
+	TotalResources         eos.TotalResources       `json:"total_resources"`
+	SelfDelegatedBandwidth eos.DelegatedBandwidth   `json:"self_delegated_bandwidth"`
+	RefundRequest          *eos.RefundRequest       `json:"refund_request"`
+	VoterInfo              eos.VoterInfo            `json:"voter_info"`
+}
+
+type Permission struct {
+	PermName     string    `json:"perm_name"`
+	Parent       string    `json:"parent"`
+	RequiredAuth Authority `json:"required_auth"`
+}
+
+type Authority struct {
+	Threshold uint32                  `json:"threshold"`
+	Keys      []KeyWeight             `json:"keys,omitempty"`
+	Accounts  []eos.PermissionLevelWeight `json:"accounts,omitempty"`
+	Waits     []eos.WaitWeight            `json:"waits,omitempty"`
+}
+
+type KeyWeight struct {
+	PublicKey ecc.PublicKey `json:"key"`
+	Weight    uint16        `json:"weight"` // weight_type
+}
+
 func (api *API) GetFioAccount(actor string) (*eos.AccountResp, error) {
 	q := bytes.NewReader([]byte(`{"account_name": "`+actor+`"}`))
 	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_account", "application/json", q)
@@ -149,7 +186,7 @@ func (api *API) GetFioAccount(actor string) (*eos.AccountResp, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	accResp := &eos.AccountResp{}
 	err = json.Unmarshal(body, accResp)
-	if err != nil && err.Error() == `public key should start with ["PUB_K1_" | "PUB_R1_" | "PUB_WA_"] (or the old "EOS")` {
+	if err != nil && err.Error() == `public key should start with "FIO"` {
 		err = nil
 	}
 	return accResp, err

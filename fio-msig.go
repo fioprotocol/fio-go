@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-// PermissionLevel wraps eos.PermissionLevel to add a convenience function
 type PermissionLevel eos.PermissionLevel
 
 func NewPermissionLevel(account eos.AccountName) *PermissionLevel {
@@ -299,8 +298,6 @@ func NewMsigUnapprove(proposer eos.AccountName, proposal eos.Name, actor eos.Acc
 		},
 	)
 }
-
-type Authority eos.Authority
 
 type UpdateAuth struct {
 	Account    eos.AccountName `json:"account"`
