@@ -176,7 +176,7 @@ type KeyWeight struct {
 	Weight    uint16        `json:"weight"` // weight_type
 }
 
-func (api *API) GetFioAccount(actor string) (*eos.AccountResp, error) {
+func (api *API) GetFioAccount(actor string) (*AccountResp, error) {
 	q := bytes.NewReader([]byte(`{"account_name": "`+actor+`"}`))
 	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_account", "application/json", q)
 	if err != nil {
@@ -184,7 +184,7 @@ func (api *API) GetFioAccount(actor string) (*eos.AccountResp, error) {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	accResp := &eos.AccountResp{}
+	accResp := &AccountResp{}
 	err = json.Unmarshal(body, accResp)
 	if err != nil && err.Error() == `public key should start with "FIO"` {
 		err = nil
