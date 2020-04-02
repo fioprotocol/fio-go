@@ -15,6 +15,7 @@ const (
 	FeeAuthLink             = "auth_link"
 	FeeAuthUpdate           = "auth_update"
 	FeeBurnExpired          = "burnexpired"
+	FeeDomTransfer          = "domtransfer"
 	FeeMsigApprove          = "msig_approve"
 	FeeMsigCancel           = "msig_cancel"
 	FeeMsigExec             = "msig_exec"
@@ -44,7 +45,10 @@ const (
 var (
 	// maxFees holds the fees for transactions
 	// use fio.GetMaxFee() instead of directly accessing this map to ensure concurrent safe access
-	// IMPORTANT: these are default values: call `fio.UpdateMaxFees` to refresh values from the on-chain table.
+	//
+	// *IMPORTANT:* these are _default_ values: call `fio.UpdateMaxFees` to refresh values from the on-chain table.
+	// fees are automatically updated on first connect on a best-effort basis. If voting for fees it is a good
+	// idea to update immediately after voting.
 	maxFees = map[string]float64{
 		"add_pub_address":             0.4,
 		"add_to_whitelist":            0.0,
@@ -52,6 +56,7 @@ var (
 		"auth_link":                   0.4,
 		"auth_update":                 0.4,
 		"burnexpired":                 0.1,
+		"domtransfer":                 0.1, // future endpoint, placeholder
 		"msig_approve":                0.4,
 		"msig_cancel":                 0.4,
 		"msig_exec":                   0.4,
@@ -78,6 +83,7 @@ var (
 		"unregister_proxy":            0.4,
 		"vote_producer":               0.4,
 	}
+
 	// maxFeesByAction correlates fee name to action name, useful when working directly with contracts, not API endpoint
 	// slight chance fee will be wrong if there are two actions with identical name, but don't think there are any cases
 	// where that will happen right now.
@@ -99,6 +105,7 @@ var (
 		"unapprove":    FeeMsigUnapprove,
 		"addaddress":   FeeAddPubAddress,
 		"regaddress":   FeeRegisterFioAddress,
+		"domtransfer":  FeeDomTransfer,
 		"regdomain":    FeeRegisterFioDomain,
 		"renewaddress": FeeRenewFioAddress,
 		"renewdomain":  FeeRenewFioDomain,

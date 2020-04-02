@@ -196,6 +196,27 @@ func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *A
 	)
 }
 
+type DomTransfer struct {
+	FioDomain            string          `json:"fio_domain"`
+	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
+	MaxFee               uint64          `json:"max_fee"`
+	Tpid                 Address         `json:"tpid"`
+	Actor                eos.AccountName `json:"actor"`
+}
+
+func NewDomTransfer(actor eos.AccountName, domain string, newOwnerPubKey string) *Action {
+	return NewAction(
+		"fio.address", "renewdomain", actor,
+		DomTransfer{
+			FioDomain:            domain,
+			NewOwnerFioPublicKey: newOwnerPubKey,
+			MaxFee:               Tokens(GetMaxFee(FeeDomTransfer)),
+			Actor:                actor,
+			Tpid:                 CurrentTpid(),
+		},
+	)
+}
+
 type RenewAddress struct {
 	FioAddress string          `json:"fio_address"`
 	MaxFee     uint64          `json:"max_fee"`
