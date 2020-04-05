@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/dapixio/fio-go"
 	"github.com/eoscanada/eos-go"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -110,7 +111,7 @@ func main() {
 				highestBlock = info.HeadBlockNum
 				lag := info.HeadBlockTime.Sub(time.Now().UTC()) / time.Second
 				drawMux.Lock()
-				p.Title = "nodeos: " + info.ServerVersionString
+				p.Title = fmt.Sprintf("nodeos: %s @ %s", info.ServerVersionString, Url)
 				p.TextStyle.Fg = ui.ColorClear
 				p.Text = pr.Sprintf(
 					"\n    Head: %d  Irreversible: %d\n    %s",
