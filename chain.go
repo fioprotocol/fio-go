@@ -2,7 +2,6 @@ package fio
 
 import (
 	"bytes"
-	"context"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -15,7 +14,6 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 // API struct allows extending the eos.API with FIO-specific functions
@@ -138,99 +136,6 @@ func (api API) GetCurrentBlock() (blockNum uint32) {
 		return
 	}
 	return info.HeadBlockNum
-}
-
-// FIXME: remove these in a future commit:
-
-// WaitForConfirm checks if a tx made it on-chain, it uses brute force to search a range of
-// blocks since the eos.GetTransaction doesn't provide a block hint argument, it will continue
-// to search for roughly 30 seconds and then timeout. If there is an error it sets the returned block
-// number to 1
-func (api API) WaitForConfirm(firstBlock uint32, txid string) (block uint32, err error) {
-	return api.WaitMaxForConfirm(firstBlock, txid, 30)
-}
-
-func (api API) WaitMaxForConfirm(firstBlock uint32, txid string, seconds int) (block uint32, err error) {
-	if txid == "" {
-		return 1, errors.New("invalid txid")
-	}
-	if seconds <= 1 {
-		return 1, errors.New("must wait at least 2 seconds")
-	}
-	// allow at least one block to be produced before searching
-	time.Sleep(time.Second)
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Duration(seconds)*time.Second))
-	defer cancel()
-	tick := time.NewTicker(time.Second)
-	tested := make(map[uint32]bool)
-	for {
-		select {
-		case <-tick.C:
-			latest := api.GetCurrentBlock()
-			if firstBlock == 0 || firstBlock > latest {
-				return 1, errors.New("invalid starting block provided")
-			}
-			if latest == uint32(1<<32-1) {
-				continue
-			}
-			// note, this purposely doesn't check the head block until next run since that occasionally
-			// results in a false-negative
-			for b := firstBlock; firstBlock < latest; b++ {
-				if !tested[b] {
-					blockResp, err := api.GetBlockByNum(b)
-					if err != nil {
-						return 1, err
-					}
-					tested[b] = true
-					for _, trx := range blockResp.SignedBlock.Transactions {
-						if trx.Transaction.ID.String() == txid {
-							return b, nil
-						}
-					}
-				}
-			}
-		case <-ctx.Done():
-			return 1, errors.New("timeout waiting for confirmation")
-		}
-	}
-}
-
-// WaitForPreCommit waits until 180 blocks (minimum pre-commit limit) have passed given a block number.
-// It makes sense to set seconds to the same value (180).
-func (api API) WaitForPreCommit(block uint32, seconds int) (err error) {
-	if block == 0 || block == 1<<32-1 {
-		return errors.New("invalid block")
-	}
-	for i := 0; i < seconds; i++ {
-		info, err := api.GetInfo()
-		if err != nil {
-			return err
-		}
-		if info.HeadBlockNum >= block+180 {
-			return nil
-		}
-		time.Sleep(time.Second)
-	}
-	return errors.New("timeout waiting for minimum pre-committed block")
-}
-
-// WaitForIrreversible waits until the most recent irreversible block is greater than the specified block.
-// Normally this will be about 360 seconds.
-func (api API) WaitForIrreversible(block uint32, seconds int) (err error) {
-	if block == 0 || block == 1<<32-1 {
-		return errors.New("invalid block")
-	}
-	for i := 0; i < seconds; i++ {
-		info, err := api.GetInfo()
-		if err != nil {
-			return err
-		}
-		if info.LastIrreversibleBlockNum >= block {
-			return nil
-		}
-		time.Sleep(time.Second)
-	}
-	return errors.New("timeout waiting for irreversible block")
 }
 
 // PushEndpointRaw is adapted from eos-go call() function in api.go to allow overriding the endpoint for a push-transaction
