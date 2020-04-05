@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	"io/ioutil"
-	"log"
 	"math"
 	"net/http"
 )
@@ -48,29 +47,6 @@ func MustNewRegAddress(actor eos.AccountName, address Address, ownerPubKey strin
 		panic("invalid fio address in call to MustNewRegAddress")
 	}
 	return a
-}
-
-// RegAddress simplifies the process of registering by making it a single step that waits for confirm
-//
-// Deprecated: this is not idiomatic
-func (api *API) RegAddress(txOpts *TxOptions, actor *Account, ownerPub string, address string) (txId string, ok bool, err error) {
-	action, ok := NewRegAddress(actor.Actor, Address(address), ownerPub)
-	if !ok {
-		return "", false, errors.New("invalid address")
-	}
-	tx := NewTransaction([]*Action{action}, txOpts)
-	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, CompressionNone)
-	result, err := api.PushTransaction(packedTx)
-	if err != nil {
-		log.Println("push new address: " + err.Error())
-		return "", false, err
-	}
-	_, err = api.WaitForConfirm(api.GetCurrentBlock()-2, result.TransactionID)
-	if err != nil {
-		log.Println("waiting for confirm: " + err.Error())
-		return "", false, err
-	}
-	return result.TransactionID, true, nil
 }
 
 // AddAddress allows a public address of the specific blockchain type to be added to the FIO Address,
@@ -165,26 +141,6 @@ func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Act
 			Tpid:              CurrentTpid(),
 		},
 	)
-}
-
-// RegDomain simplifies the process of registering by making it a single step that waits for confirm
-//
-// Deprecated: not an idiomatic implementation, other calls do not behave this way
-func (api *API) RegDomain(txOpts *TxOptions, actor *Account, ownerPub string, domain string) (txId string, ok bool, err error) {
-	action := NewRegDomain(actor.Actor, domain, ownerPub)
-	tx := NewTransaction([]*Action{action}, txOpts)
-	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, CompressionNone)
-	result, err := api.PushTransaction(packedTx)
-	if err != nil {
-		log.Println("push new domain: " + err.Error())
-		return "", false, err
-	}
-	_, err = api.WaitForConfirm(api.GetCurrentBlock()-2, result.TransactionID)
-	if err != nil {
-		log.Println("waiting for domain: " + err.Error())
-		return "", false, err
-	}
-	return result.TransactionID, true, nil
 }
 
 // RenewDomain extends the expiration of a domain for a year
@@ -499,7 +455,7 @@ func (api *API) GetDomainOwner(domain string) (actor *eos.AccountName, err error
 		JSON:       true,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if len(resp.Rows) < 2 {
 		return nil, errors.New("not found")
