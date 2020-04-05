@@ -323,10 +323,7 @@ func main() {
 		for {
 			n, e := getPeerCounts(api)
 			if e != nil {
-				drawMux.Lock()
-				connectedPeers = "Cannot get peer information, is net_api_plugin enabled?"
-				drawMux.Unlock()
-				time.Sleep(10 * time.Minute)
+				time.Sleep(10 * time.Minute) // try again later
 				continue
 			}
 			var (
