@@ -2,6 +2,8 @@
 
 Library for interacting with the FIO network using the go language.
 
+**Warning: This is pre-release software, and under heavy development, not all APIs are stable.**
+
 ## Example
 
 This demonstrates using the library to send FIO tokens from one account to another:
