@@ -13,9 +13,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/dapixio/fio-go/eos-go/ecc"
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/btcsuite/btcutil"
-	"github.com/eoscanada/eos-go/ecc"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"io/ioutil"
 	"net/http"
@@ -503,7 +503,7 @@ func EciesSecret(private *Account, public string) (secret []byte, hash *[64]byte
 	priv := ecies.ImportECDSA(wif.PrivKey.ToECDSA())
 
 	// convert public key string into an ecies public key struct
-	eosPub, err := ecc.NewPublicKey(`EOS` + public[3:])
+	eosPub, err := ecc.NewPublicKey(public)
 	if err != nil {
 		return nil, nil, err
 	}

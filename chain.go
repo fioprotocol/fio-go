@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eoscanada/eos-go"
-	"github.com/eoscanada/eos-go/ecc"
+	eosecc "github.com/eoscanada/eos-go/ecc"
 	"io"
 	"io/ioutil"
 	"math"
@@ -83,7 +83,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	var api = eos.New(url)
 	api.SetSigner(keyBag)
 	api.SetCustomGetRequiredKeys(
-		func(tx *eos.Transaction) (keys []ecc.PublicKey, e error) {
+		func(tx *eos.Transaction) (keys []eosecc.PublicKey, e error) {
 			return keyBag.AvailableKeys()
 		},
 	)
@@ -387,4 +387,3 @@ func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err er
 	refBlockPrefix = binary.LittleEndian.Uint32(prefix[8:])
 	return
 }
-

@@ -84,6 +84,7 @@ func ExampleNewRegDomain() {
 
 }
 
+/*
 // this example looks up the public key for a FIO address, and checks if it matches our private key.
 func ExampleAPI_PubAddressLookup() {
 
@@ -116,6 +117,7 @@ func ExampleAPI_PubAddressLookup() {
 	}
 	// Output: 2019/12/02 16:09:45 Address was successfully registered, and is owned by: FIO5.....
 }
+*/
 
 // This example registers a FIO address on a domain
 func ExampleNewRegAddress() {

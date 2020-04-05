@@ -200,7 +200,7 @@ type DomTransfer struct {
 	FioDomain            string          `json:"fio_domain"`
 	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
 	MaxFee               uint64          `json:"max_fee"`
-	Tpid                 Address         `json:"tpid"`
+	Tpid                 string          `json:"tpid"`
 	Actor                eos.AccountName `json:"actor"`
 }
 
