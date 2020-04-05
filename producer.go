@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+// VoteProducer votes for a producer
 type VoteProducer struct {
 	Producers  []string `json:"producers"`
 	FioAddress string   `json:"fio_address"`
@@ -33,6 +34,7 @@ func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress strin
 	)
 }
 
+// ProducerLocation valid values are 10-80 in increments of 10
 type ProducerLocation uint16
 
 const (
@@ -130,7 +132,7 @@ func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
 	)
 }
 
-// Schedule is a convenience struct for deserializing the producer schedule, it is fully
+// ProducerSchedule is a convenience struct for deserializing the producer schedule, it is fully
 // encapsulated to prevent conflicts with other types
 type ProducerSchedule struct {
 	Active struct {
@@ -174,12 +176,14 @@ func (api *API) GetProducerSchedule() (*ProducerSchedule, error) {
 	return sched, nil
 }
 
+// Producers is a modification of the corresponding eos-go structure
 type Producers struct {
 	Producers               []Producer `json:"producers"`
 	TotalProducerVoteWeight string     `json:"total_producer_vote_weight"`
 	More                    string     `json:"more"`
 }
 
+// Producer is a modification of the corresponding eos-go structure
 type Producer struct {
 	Owner             eos.AccountName `json:"owner"`
 	FioAddress        Address         `json:"fio_address"`
@@ -192,8 +196,9 @@ type Producer struct {
 	Location          uint8           `json:"location"`
 }
 
+// GetFioProducers retrieves the producer table.
 // The producers table is a little different on FIO, use this instead of the GetProducers call from eos-go
-// it defaults to a limit of 1,000 ... may want to rethink this as a default
+// TODO: it defaults to a limit of 1,000 ... may want to rethink this as a default
 func (api API) GetFioProducers() (fioProducers *Producers, err error) {
 	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_producers`, bytes.NewReader([]byte(`{"limit": 1000}`)))
 	if err != nil {

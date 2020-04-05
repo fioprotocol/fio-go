@@ -33,7 +33,7 @@ func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amou
 	)
 }
 
-// Transfer - unsure if this is actually used, but adding since it's in the ABI
+// Transfer is a privileged call, and not normally used for sending tokens, use TransferTokensPubKey instead
 type Transfer struct {
 	From     eos.AccountName `json:"from"`
 	To       eos.AccountName `json:"to"`
@@ -60,6 +60,7 @@ func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64
 	)
 }
 
+// GetFioBalance is a convenience wrapper for GetCurrencyBalance
 func GetFioBalance(account eos.AccountName, api *API) (float64, error) {
 	a, err := api.GetCurrencyBalance(account, "FIO", eos.AccountName("fio.token"))
 	if err != nil {

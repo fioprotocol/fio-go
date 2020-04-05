@@ -40,6 +40,7 @@ func (act Action) ToEos() *eos.Action {
 	}
 }
 
+// TxOptions wraps eos.TxOptions
 type TxOptions struct {
 	eos.TxOptions
 }
@@ -138,6 +139,8 @@ func (api API) GetCurrentBlock() (blockNum uint32) {
 	}
 	return info.HeadBlockNum
 }
+
+// FIXME: remove these in a future commit:
 
 // WaitForConfirm checks if a tx made it on-chain, it uses brute force to search a range of
 // blocks since the eos.GetTransaction doesn't provide a block hint argument, it will continue

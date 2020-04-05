@@ -11,7 +11,8 @@ var globalTpid string
 var tpidMux sync.RWMutex
 
 // SetTpid will set a package variable that will include the provided TPID in all of the calls that support it.
-// This only needs to be called once.
+// This only needs to be called once. By default it is empty, and is recommended for wallet providers or other
+// service providers to set at initialization via SetTpid to get rewards.
 func SetTpid(walletAddress string) (ok bool) {
 	tpidMux.Lock()
 	defer tpidMux.Unlock()
@@ -29,6 +30,7 @@ func CurrentTpid() string {
 	return a
 }
 
+// UpdateTpid is a privileged call
 type UpdateTpid struct {
 	Tpid   string          `json:"tpid"`
 	Owner  eos.AccountName `json:"owner"`
@@ -46,6 +48,7 @@ func NewUpdateTpid(actor eos.AccountName, tpid string, amount uint64) *Action {
 	)
 }
 
+// RewardsPaid is privileged
 type RewardsPaid struct {
 	Tpid string `json:"tpid"`
 }
@@ -60,6 +63,7 @@ func NewRewardsPaid(actor eos.AccountName, tpid string) *Action {
 	)
 }
 
+// UpdateBounty is privileged
 type UpdateBounty struct {
 	Amount uint64 `json:"amount"`
 }

@@ -2,6 +2,8 @@ package fio
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -49,6 +51,8 @@ func MustNewRegAddress(actor eos.AccountName, address Address, ownerPubKey strin
 }
 
 // RegAddress simplifies the process of registering by making it a single step that waits for confirm
+//
+// Deprecated: this is not idiomatic
 func (api *API) RegAddress(txOpts *TxOptions, actor *Account, ownerPub string, address string) (txId string, ok bool, err error) {
 	action, ok := NewRegAddress(actor.Actor, Address(address), ownerPub)
 	if !ok {
@@ -71,6 +75,9 @@ func (api *API) RegAddress(txOpts *TxOptions, actor *Account, ownerPub string, a
 
 // AddAddress allows a public address of the specific blockchain type to be added to the FIO Address,
 // so that it can be returned using /pub_address_lookup
+//
+// When adding addresses, only 5 can be added in a single call, and an account is limited to 100 public
+// addresses total.
 type AddAddress struct {
 	FioAddress      string          `json:"fio_address"`
 	PublicAddresses []TokenPubAddr  `json:"public_addresses"`
@@ -79,12 +86,14 @@ type AddAddress struct {
 	Tpid            string          `json:"tpid"`
 }
 
+// TokenPubAddr holds *publicly* available token information for a FIO address, allowing anyone to lookup an address
 type TokenPubAddr struct {
 	TokenCode     string `json:"token_code"`
 	ChainCode     string `json:"chain_code"`
 	PublicAddress string `json:"public_address"`
 }
 
+// NewAddAddress adds a single public address
 func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, chain string, publicAddress string) (action *Action, ok bool) {
 	if !fioAddress.Valid() {
 		return nil, false
@@ -109,6 +118,7 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, chai
 	), true
 }
 
+// NewAddAddresses adds multiple public addresses at a time
 func NewAddAddresses(actor eos.AccountName, fioAddress Address, addrs []TokenPubAddr) (action *Action, ok bool) {
 	if !fioAddress.Valid() {
 		return nil, false
@@ -177,6 +187,7 @@ func (api *API) RegDomain(txOpts *TxOptions, actor *Account, ownerPub string, do
 	return result.TransactionID, true, nil
 }
 
+// RenewDomain extends the expiration of a domain for a year
 type RenewDomain struct {
 	FioDomain string          `json:"fio_domain"`
 	MaxFee    uint64          `json:"max_fee"`
@@ -196,6 +207,7 @@ func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *A
 	)
 }
 
+// DomTransfer (future) transfers ownership of a domain
 type DomTransfer struct {
 	FioDomain            string          `json:"fio_domain"`
 	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
@@ -217,6 +229,7 @@ func NewDomTransfer(actor eos.AccountName, domain string, newOwnerPubKey string)
 	)
 }
 
+// RenewAddress extends the expiration of an address by a year, and refreshes the bundle
 type RenewAddress struct {
 	FioAddress string          `json:"fio_address"`
 	MaxFee     uint64          `json:"max_fee"`
@@ -236,6 +249,9 @@ func NewRenewAddress(actor eos.AccountName, address string) *Action {
 	)
 }
 
+// ExpDomain is used by a test contract and not available on mainnet
+//
+// Deprecated: only used in development environments
 type ExpDomain struct {
 	Actor  eos.AccountName `json:"actor"`
 	Domain string          `json:"domain"`
@@ -251,6 +267,9 @@ func NewExpDomain(actor eos.AccountName, domain string) *Action {
 	)
 }
 
+// ExpAddresses is used by a test contract and not available on mainnet
+//
+// Deprecated: only used in development environments
 type ExpAddresses struct {
 	Actor                eos.AccountName `json:"actor"`
 	Domain               string          `json:"domain"`
@@ -270,6 +289,7 @@ func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string,
 	)
 }
 
+// BurnExpired is intended to be called by block producers to remove expired domains or addresses from RAM
 type BurnExpired struct{}
 
 func NewBurnExpired(actor eos.AccountName) *Action {
@@ -279,6 +299,7 @@ func NewBurnExpired(actor eos.AccountName) *Action {
 	)
 }
 
+// SetDomainPub changes the permissions for a domain, allowing (or not) anyone to register an address
 type SetDomainPub struct {
 	FioDomain string          `json:"fio_domain"`
 	IsPublic  uint8           `json:"is_public"`
@@ -354,12 +375,14 @@ func (api API) PubAddressLookup(fioAddress Address, chain string, token string) 
 	return
 }
 
+// FioNames holds the response when getting fio names or addresses for an account
 type FioNames struct {
 	FioDomains   []FioName `json:"fio_domains"`
 	FioAddresses []FioName `json:"fio_addresses"`
 	Message      string    `json:"message,omitifempty"`
 }
 
+// FioName holds information for either an address or a domain
 type FioName struct {
 	FioDomain  string `json:"fio_domain,omitifempty"`
 	FioAddress string `json:"fio_address,omitifempty"`
@@ -371,6 +394,7 @@ type getFioNamesRequest struct {
 	FioPublicKey string `json:"fio_public_key"`
 }
 
+// GetFioNames provides a list of domains and addresses for a public key
 func (api API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
 	query := getFioNamesRequest{
 		FioPublicKey: pubKey,
@@ -404,6 +428,8 @@ type accountMap struct {
 	Clientkey string `json:"clientkey"`
 }
 
+// GetFioNamesForActor searches the accountmap table to get a public key, then searches for fio names or domains belonging
+// to the associated public key
 func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, err error) {
 	name, err := eos.StringToName(actor)
 	if err != nil {
@@ -432,4 +458,59 @@ func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, e
 		return FioNames{}, false, errors.New("no matching account found in fio.address accountmap table")
 	}
 	return api.GetFioNames(results[0].Clientkey)
+}
+
+// DomainNameHash calculates the hash used as an index in the fio.address domains table from the domain name
+func DomainNameHash(s string) string {
+	sha := sha1.New()
+	sha.Write([]byte(s))
+	// last 16 bytes of sha1-sum, as big-endian
+	return "0x" + hex.EncodeToString(flip(sha.Sum(nil)))[8:]
+}
+
+func flip(orig []byte) []byte {
+	flipped := make([]byte, len(orig))
+	for i := range orig {
+		flipped[len(flipped)-i-1] = orig[i]
+	}
+	return flipped
+}
+
+// DomainResp holds the table query lookup result for a domain
+type DomainResp struct {
+	Name       string           `json:"name"`
+	IsPublic   uint8            `json:"is_public"`
+	Expiration int64            `json:"expiration"`
+	Account    *eos.AccountName `json:"account"`
+}
+
+// GetDomainOwner finds the account that is the owner of a domain
+func (api *API) GetDomainOwner(domain string) (actor *eos.AccountName, err error) {
+	dnh := DomainNameHash(domain)
+	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "fio.address",
+		Scope:      "fio.address",
+		Table:      "domains",
+		LowerBound: dnh,
+		UpperBound: dnh,
+		Limit:      1,
+		KeyType:    "i128",
+		Index:      "4",
+		JSON:       true,
+	})
+	if err != nil {
+		return "", err
+	}
+	if len(resp.Rows) < 2 {
+		return nil, errors.New("not found")
+	}
+	d := make([]DomainResp, 0)
+	err = json.Unmarshal(resp.Rows, &d)
+	if err != nil {
+		return nil, err
+	}
+	if len(d) == 0 {
+		return nil, errors.New("not found")
+	}
+	return d[0].Account, nil
 }

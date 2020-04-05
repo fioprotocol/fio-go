@@ -683,14 +683,6 @@ func (api *API) GetFioRequestStatus(requestId uint64) (hasResponse bool, request
 	return
 }
 
-func swapEndian(orig []byte) (flipped []byte) {
-	flipped = make([]byte, len(orig))
-	for i := range orig {
-		flipped[i] = orig[len(orig)-1-i]
-	}
-	return
-}
-
 // note, added non-existent actions for eos-go encoder ...
 var ObtAbiJson = `{
     "version": "eosio::abi/1.0",
