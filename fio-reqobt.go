@@ -290,7 +290,8 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 
 // EciesEncrypt implements the encryption format used in the content field of OBT requests.
 //
-// The plaintext is PKCS#7 padded before being encrypted -- returned output is base64
+// The plaintext is PKCS#7 padded before being encrypted -- returned output is base64.
+//
 // Key derivation, and message format:
 //
 // A DH shared secret is created using ECIES (derives a key based on the curves of the public and private keys.)
@@ -683,8 +684,10 @@ func (api *API) GetFioRequestStatus(requestId uint64) (hasResponse bool, request
 	return
 }
 
-// note, added non-existent actions for eos-go encoder ...
-var ObtAbiJson = `{
+// ObtAbiJson defines the ABI format for OBT requests. There are two variations used in fio-go, one that has
+// optional fields (obtAbiJsonOmit) which is private, and one that does not. The variations are tried in sequence to help
+// with compatibility with different wallet implementations. Under normal circumstances, ObtAbiJson is the correct choice.
+const ObtAbiJson = `{
     "version": "eosio::abi/1.0",
     "types": [],
     "actions": [{
@@ -729,7 +732,7 @@ var ObtAbiJson = `{
 `
 
 // note, added non-existent actions for eos-go encoder ...
-var obtAbiJsonOmit = `{
+const obtAbiJsonOmit = `{
     "version": "eosio::abi/1.0",
     "types": [],
     "actions": [{
