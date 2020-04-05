@@ -173,7 +173,7 @@ func main() {
 		return string(j)
 	}
 
-	get := func(){
+	get := func() {
 		actorRequired()
 		pending, err := printSentPending(command, permission, roApi, limit, offset)
 		must(err)
@@ -215,7 +215,7 @@ func main() {
 		actorRequired()
 		id, resp, err := requestNew(payer, payee, permission, jsonRequired(), keosd, nodeosUrl)
 		if err != nil {
-			fmt.Println("New Funds request failed:\n"+err.Error())
+			fmt.Println("New Funds request failed:\n" + err.Error())
 			os.Exit(1)
 		}
 		if id == "" {
@@ -226,13 +226,13 @@ func main() {
 			rawJsonPrintLn(resp)
 			os.Exit(0)
 		}
-		fmt.Println("success, transaction id: "+id)
+		fmt.Println("success, transaction id: " + id)
 		os.Exit(0)
 	case "record":
 		actorRequired()
 		id, resp, err := recordObt(requestIdRequired(), payer, payee, permission, jsonRequired(), keosd, nodeosUrl)
 		if err != nil {
-			fmt.Println("Record transaction failed:\n"+err.Error())
+			fmt.Println("Record transaction failed:\n" + err.Error())
 			os.Exit(1)
 		}
 		if id == "" {
@@ -243,7 +243,7 @@ func main() {
 			rawJsonPrintLn(resp)
 			os.Exit(0)
 		}
-		fmt.Println("success, transaction id: "+id)
+		fmt.Println("success, transaction id: " + id)
 		os.Exit(0)
 	default:
 		fmt.Printf("Unknown command: %s\n\n", command)
@@ -320,7 +320,7 @@ func requestNew(payer string, payee string, actor string, requestJson string, ke
 		return
 	}
 	if !found {
-		err = errors.New("could not get a public key for the FIO address: "+payer)
+		err = errors.New("could not get a public key for the FIO address: " + payer)
 		return
 	}
 	req := &fio.ObtRequestContent{}
@@ -370,8 +370,8 @@ func printSentPending(which string, actor string, api *fio.API, limit int, offse
 
 	var (
 		requests fio.PendingFioRequestsResponse
-		has bool
-		title string
+		has      bool
+		title    string
 	)
 	switch which {
 	case "pending":
@@ -391,25 +391,25 @@ func printSentPending(which string, actor string, api *fio.API, limit int, offse
 
 	buf := bytes.NewBufferString(title)
 	buf.WriteString(fmt.Sprintf("%-19s %3s %-6s %16s  %-16s\n", "Date", "", "ID", "From", "To"))
-	buf.WriteString(strings.Repeat("⎺", 64)+"\n")
+	buf.WriteString(strings.Repeat("⎺", 64) + "\n")
 	for _, req := range requests.Requests {
 		f := req.PayeeFioAddress
 		t := req.PayerFioAddress
 		if len(f) > 16 {
-			f = f[:13]+"..."
+			f = f[:13] + "..."
 		}
 		if len(t) > 16 {
-			t = t[:13]+"..."
+			t = t[:13] + "..."
 		}
 		status := ""
 		//hasResp, response, _ := api.GetFioRequestStatus(req.FioRequestId)
-			switch req.Status {
-			case "rejected":
-				status = "✘ "
-			case "sent_to_blockchain":
-				status = "︎ ✔︎ "
-			}
-		buf.WriteString(fmt.Sprintf("%19s %3s %-6d %16s  %-16s\n",req.TimeStamp.Time.Local().Format(time.RFC822), status, req.FioRequestId, f, t))
+		switch req.Status {
+		case "rejected":
+			status = "✘ "
+		case "sent_to_blockchain":
+			status = "︎ ✔︎ "
+		}
+		buf.WriteString(fmt.Sprintf("%19s %3s %-6d %16s  %-16s\n", req.TimeStamp.Time.Local().Format(time.RFC822), status, req.FioRequestId, f, t))
 	}
 	if requests.More > 0 {
 		buf.WriteString(fmt.Sprintf("\n%d additional pending requests.", requests.More))
@@ -454,7 +454,7 @@ func getPubForActor(actor string, api *fio.API) (pubkey string, err error) {
 
 func authenticate(actor string, keosd *fio.KeosClient, nodeosUrl string) (account *fio.Account, api *fio.API, opts *fio.TxOptions, err error) {
 	if keosd.Keys == nil || keosd.Keys[actor].PrivateKey == "" {
-		err = errors.New("could not find private key for actor "+actor)
+		err = errors.New("could not find private key for actor " + actor)
 		return
 	}
 	account, err = fio.NewAccountFromWif(keosd.Keys[actor].PrivateKey)
@@ -487,7 +487,7 @@ func reject(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl str
 	return
 }
 
-func view(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl string) (outer []byte, resp []byte, counterParty string,  err error) {
+func view(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl string) (outer []byte, resp []byte, counterParty string, err error) {
 	account, api, _, err := authenticate(actor, keosd, nodeosUrl)
 	if err != nil {
 		return
@@ -516,7 +516,7 @@ func view(requestId uint64, actor string, keosd *fio.KeosClient, nodeosUrl strin
 	return
 }
 
-func viewRecord(requestId uint64, actor string, counterParty string, keosd *fio.KeosClient, nodeosUrl string) (found bool, record []byte,  err error) {
+func viewRecord(requestId uint64, actor string, counterParty string, keosd *fio.KeosClient, nodeosUrl string) (found bool, record []byte, err error) {
 	account, api, _, err := authenticate(actor, keosd, nodeosUrl)
 	if err != nil {
 		return
@@ -526,7 +526,7 @@ func viewRecord(requestId uint64, actor string, counterParty string, keosd *fio.
 	case err != nil || !found:
 		return
 	case request.Status == 1:
-		record = []byte("Rejected: Request was rejected at "+time.Unix( int64(request.TimeStamp/1000000), 0).Local().Format(time.UnixDate))
+		record = []byte("Rejected: Request was rejected at " + time.Unix(int64(request.TimeStamp/1000000), 0).Local().Format(time.UnixDate))
 	case counterParty == "":
 		record = []byte("Error: cannot decrypt request, no public key for payer.")
 	case request.Metadata != "":
@@ -537,7 +537,7 @@ func viewRecord(requestId uint64, actor string, counterParty string, keosd *fio.
 		}
 		record, _ = yaml.Marshal(decrypted.Record)
 		if request.TimeStamp != 0 {
-			record = append(record, []byte(fmt.Sprintf(`time: "%s"`, time.Unix( int64(request.TimeStamp/1000000), 0).Local().Format(time.UnixDate)))...)
+			record = append(record, []byte(fmt.Sprintf(`time: "%s"`, time.Unix(int64(request.TimeStamp/1000000), 0).Local().Format(time.UnixDate)))...)
 		}
 	}
 	return
@@ -588,11 +588,11 @@ func fixupFieldName(s string) string {
 func printTemplate() {
 	fmt.Print("\n\nRequest Template:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺\n\n")
 	j, _ := json.MarshalIndent(&fio.ObtRequestContent{}, "", "  ")
-	fmt.Println(`'`+string(j)+`'`)
+	fmt.Println(`'` + string(j) + `'`)
 
 	fmt.Print("\n\nRecord Response Template:\n⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺⎺\n\n")
 	j, _ = json.MarshalIndent(&fio.ObtRecordContent{}, "", "  ")
-	fmt.Println(`'`+string(j)+`'`)
+	fmt.Println(`'` + string(j) + `'`)
 	fmt.Print("\nMore information:\n  https://developers.fioprotocol.io/api/api-spec/models/fio-request-ecrypted-content\n  https://developers.fioprotocol.io/api/api-spec/models/fio-data-encrypted-content\n\n")
 }
 
@@ -645,8 +645,7 @@ func printExample() {
 	fmt.Println("")
 }
 
-
-func ppYaml(title string, y []byte){
+func ppYaml(title string, y []byte) {
 	fmt.Printf("\n%19s:\n", title)
 	fmt.Printf("%19s\n", strings.Repeat("⎺", len(title)))
 	lines := strings.Split(string(y), "\n")
@@ -654,7 +653,7 @@ func ppYaml(title string, y []byte){
 		cols := strings.Split(l, ": ")
 		if len(cols) == 2 && cols[1] != `""` {
 			if len(cols[1]) > 64 {
-				cols[1] = cols[1][:61]+"..."
+				cols[1] = cols[1][:61] + "..."
 			}
 			cols[1] = strings.TrimPrefix(cols[1], `"`)
 			cols[1] = strings.TrimSuffix(cols[1], `"`)
@@ -663,7 +662,7 @@ func ppYaml(title string, y []byte){
 	}
 }
 
-func rawJsonPrintLn(raw json.RawMessage){
+func rawJsonPrintLn(raw json.RawMessage) {
 	if len(raw) < 2 {
 		fmt.Println("Empty result.")
 		return

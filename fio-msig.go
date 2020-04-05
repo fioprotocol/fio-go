@@ -211,11 +211,11 @@ type MsigPropose struct {
 }
 
 type MsigWrappedPropose struct {
-	Proposer     eos.AccountName        `json:"proposer"`
-	ProposalName eos.Name               `json:"proposal_name"`
-	Requested    []*PermissionLevel     `json:"requested"`
-	MaxFee       uint64                 `json:"max_fee"`
-	Trx          *eos.Transaction       `json:"trx"`
+	Proposer     eos.AccountName    `json:"proposer"`
+	ProposalName eos.Name           `json:"proposal_name"`
+	Requested    []*PermissionLevel `json:"requested"`
+	MaxFee       uint64             `json:"max_fee"`
+	Trx          *eos.Transaction   `json:"trx"`
 }
 
 // NewMsigPropose is provided for consistency, but it will make more sense to use NewSignedMsigPropose to build multisig proposals since it
@@ -410,8 +410,8 @@ func (api *API) GetProposals(offset int, limit int) (more bool, scopes map[strin
 }
 
 type WrapExecute struct {
-	Executor eos.AccountName `json:"executor"`
-	Trx *eos.Transaction `json:"trx"`
+	Executor eos.AccountName  `json:"executor"`
+	Trx      *eos.Transaction `json:"trx"`
 }
 
 func NewWrapExecute(actor eos.AccountName, executor eos.AccountName, trx *eos.Transaction) *Action {

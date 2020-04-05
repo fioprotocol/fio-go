@@ -595,18 +595,17 @@ func (api API) getFioRequests(requestType string, pubKey string, limit int, offs
 	return
 }
 
-
 // FundsReqTableResp has the most useful fields of what is stored in the fioreqctxts table. It is slightly different
 // than what is sent from the API endpoint, but is useful when a specific request needs to be retrieved.
 type FundsReqTableResp struct {
-	FioRequestId    uint64       `json:"fio_request_id"`
-	Content         string       `json:"content"`
-	TimeStamp       int64        `json:"time_stamp"`
-	Time            time.Time    `json:"time"`
-	PayerFioAddress string       `json:"payer_fio_addr"`
-	PayerKey        string       `json:"payer_key"`
-	PayeeFioAddress string       `json:"payee_fio_addr"`
-	PayeeKey        string       `json:"payee_key"`
+	FioRequestId    uint64    `json:"fio_request_id"`
+	Content         string    `json:"content"`
+	TimeStamp       int64     `json:"time_stamp"`
+	Time            time.Time `json:"time"`
+	PayerFioAddress string    `json:"payer_fio_addr"`
+	PayerKey        string    `json:"payer_key"`
+	PayeeFioAddress string    `json:"payee_fio_addr"`
+	PayeeKey        string    `json:"payee_key"`
 }
 
 // GetFioRequest gets a single FIO request using a table lookup, this is more efficient than using the API

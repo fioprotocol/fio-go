@@ -141,7 +141,7 @@ func (a Address) Valid() (ok bool) {
 
 type AccountResp struct {
 	AccountName            eos.AccountName          `json:"account_name"`
-	Privileged             bool                 `json:"privileged"`
+	Privileged             bool                     `json:"privileged"`
 	LastCodeUpdate         eos.JSONTime             `json:"last_code_update"`
 	Created                eos.JSONTime             `json:"created"`
 	CoreLiquidBalance      eos.Asset                `json:"core_liquid_balance"`
@@ -151,7 +151,7 @@ type AccountResp struct {
 	CPUWeight              eos.Int64                `json:"cpu_weight"`
 	NetLimit               eos.AccountResourceLimit `json:"net_limit"`
 	CPULimit               eos.AccountResourceLimit `json:"cpu_limit"`
-	Permissions            []Permission         `json:"permissions"`
+	Permissions            []Permission             `json:"permissions"`
 	TotalResources         eos.TotalResources       `json:"total_resources"`
 	SelfDelegatedBandwidth eos.DelegatedBandwidth   `json:"self_delegated_bandwidth"`
 	RefundRequest          *eos.RefundRequest       `json:"refund_request"`
@@ -165,8 +165,8 @@ type Permission struct {
 }
 
 type Authority struct {
-	Threshold uint32                  `json:"threshold"`
-	Keys      []KeyWeight             `json:"keys,omitempty"`
+	Threshold uint32                      `json:"threshold"`
+	Keys      []KeyWeight                 `json:"keys,omitempty"`
 	Accounts  []eos.PermissionLevelWeight `json:"accounts,omitempty"`
 	Waits     []eos.WaitWeight            `json:"waits,omitempty"`
 }
@@ -177,7 +177,7 @@ type KeyWeight struct {
 }
 
 func (api *API) GetFioAccount(actor string) (*AccountResp, error) {
-	q := bytes.NewReader([]byte(`{"account_name": "`+actor+`"}`))
+	q := bytes.NewReader([]byte(`{"account_name": "` + actor + `"}`))
 	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_account", "application/json", q)
 	if err != nil {
 		return nil, err
