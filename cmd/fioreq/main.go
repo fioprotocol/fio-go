@@ -633,7 +633,7 @@ func printExample() {
     }'`)
 	fmt.Println("\n\nRecord a transaction for a pending request")
 	fmt.Println("------------------------------------------")
-	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c record -id 321 '")
+	fmt.Println("  fioreq -u https://testnet.fioprotocol.io -password PW5xxxx.... -p aaaaaaaaaaaa -c record -id 321 -payee merchant@store -payer shopper@fiotestnet '")
 	fmt.Println(`    {
       "payer_public_address": "FIO6ZJ9p6ZSvboXqaFiowR8bKLtSk8ZGUTHdT8ZkaW6pNnbusPdwa",
       "payee_public_address": "FIO6QtJu52ho38zRP4aZCcgtciLAWQUB3CBgXnmwfFfXi6LvfVYyj",
