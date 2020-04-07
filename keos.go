@@ -30,6 +30,7 @@ type KeosKeys struct {
 	FioAddress string `json:"fio_address"`
 }
 
+// NewKeosClient provides a connection to keosd. It allows either a Unix socket or a TCP connection.
 func NewKeosClient(keosUrl string, socket string) *KeosClient {
 	client := &KeosClient{}
 	client.BaseUrl = "http://unix"
@@ -65,6 +66,7 @@ type alreadyUnlocked struct {
 	} `json:"error"`
 }
 
+// Unlock opens a locked keos wallet, it does not return an error if already unlocked
 func (k *KeosClient) Unlock(password string, wallet string) error {
 	k.Wallet = wallet
 	k.password = password
@@ -98,11 +100,11 @@ func (k *KeosClient) Unlock(password string, wallet string) error {
 	return nil
 }
 
+// Start attempts to launch the keosd process by spawning clio
 func (k KeosClient) Start(noKeosd bool) error {
 	if noKeosd {
 		return nil
 	}
-	//cmd := exec.Command("keosd", "--http-server-address", "--https-server-address", "--unix-socket-path", "keosd.sock")
 	cmd := exec.Command("clio", "wallet", "list") // let clio start keosd
 	_ = cmd.Run()                                 // ignore output
 	var isRunning bool
@@ -127,6 +129,7 @@ func firstName(pubkey string, api *API) string {
 	return names.FioAddresses[0].FioAddress
 }
 
+// GetKeys populates the list of keys stored in the wallet
 func (k *KeosClient) GetKeys(nodeosApi *API) error {
 	// get a list of available keys:
 	resp, err := k.HttpClient.Post(k.BaseUrl+"/v1/wallet/list_keys", "application/json", bytes.NewReader([]byte(`["`+k.Wallet+`","`+k.password+`"]`)))
@@ -176,6 +179,7 @@ func (k *KeosClient) GetKeys(nodeosApi *API) error {
 	return nil
 }
 
+// PrintKeys provides a human readable list of keys in a wallet
 func (k *KeosClient) PrintKeys() string {
 	buf := bytes.NewBufferString("")
 	buf.WriteString(fmt.Sprintf("\n%-12s  %-53s  %s\n", "Account", "Public Key", "FIO Address"))

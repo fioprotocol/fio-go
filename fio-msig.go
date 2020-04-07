@@ -12,15 +12,17 @@ import (
 	"time"
 )
 
+// PermissionLevel wraps eos-go's type to add member functions
 type PermissionLevel eos.PermissionLevel
 
 func NewPermissionLevel(account eos.AccountName) *PermissionLevel {
 	return &PermissionLevel{
 		Actor:      account,
-		Permission: "active", // Permission is always active on FIO chain
+		Permission: "active",
 	}
 }
 
+// NewPermissionLevelSlice is a convenience function for quickly building a slice of active permissions
 func NewPermissionLevelSlice(accounts []string) []*PermissionLevel {
 	l := make([]*PermissionLevel, 0)
 	sort.Strings(accounts)
@@ -30,6 +32,7 @@ func NewPermissionLevelSlice(accounts []string) []*PermissionLevel {
 	return l
 }
 
+// ToEos converts from fio.PermissionLevel to eos.PermissionLevel
 func (pl PermissionLevel) ToEos() *eos.PermissionLevel {
 	return &eos.PermissionLevel{
 		Actor:      pl.Actor,
@@ -56,6 +59,7 @@ type MsigApprovalsInfo struct {
 	ProvidedApprovals  []MsigApproval `json:"provided_approvals"`
 }
 
+// GetApprovals returns a list of approvals for an account
 func (api *API) GetApprovals(scope Name, limit int) (more bool, info []*MsigApprovalsInfo, err error) {
 	name, err := eos.StringToName(string(scope))
 	if err != nil {
@@ -77,6 +81,7 @@ func (api *API) GetApprovals(scope Name, limit int) (more bool, info []*MsigAppr
 	return
 }
 
+// HasRequested checks if an account is on the list of requested signatures
 func (info MsigApprovalsInfo) HasRequested(actor eos.AccountName) bool {
 	for _, r := range info.RequestedApprovals {
 		if r.Level.Actor == actor {
@@ -86,6 +91,7 @@ func (info MsigApprovalsInfo) HasRequested(actor eos.AccountName) bool {
 	return info.HasApproved(actor)
 }
 
+// HasApproved checks if an account has provided a signature
 func (info MsigApprovalsInfo) HasApproved(actor eos.AccountName) bool {
 	for _, p := range info.ProvidedApprovals {
 		if p.Level.Actor == actor {
@@ -95,17 +101,7 @@ func (info MsigApprovalsInfo) HasApproved(actor eos.AccountName) bool {
 	return false
 }
 
-/*
-// TODO: This looks suspiciously incorrect, we can probably replace PackedTransaction with an eos.Transaction and
-// bypass a step when unmarshalling
-type MsigProposal struct {
-	ProposalName     eos.Name `json:"proposal_name"`
-	PackedTransaction []byte   `json:"packed_trasaction"`
-}
-*/
-
-// TODO: This smells like there is another intermediate type involved, or an enum that needs to be included here
-//TODO: read up on extensions and ensure this is idiomatic
+// TODO: not sure if this is needed
 type MsigExtension struct {
 	Type uint16 `json:"type"`
 	Data []byte `json:"data"`
@@ -138,6 +134,7 @@ Actions
 
 */
 
+// MsigApprove approves a multi-sig proposal
 type MsigApprove struct {
 	Proposer     eos.AccountName `json:"proposer"`
 	ProposalName eos.Name        `json:"proposal_name"`
@@ -161,6 +158,7 @@ func NewMsigApprove(proposer eos.AccountName, proposal eos.Name, actor eos.Accou
 	)
 }
 
+// MsigCancel withdraws a proposal, must be performed by the account that proposed the transaction
 type MsigCancel struct {
 	Proposer     eos.AccountName `json:"proposer"`
 	ProposalName eos.Name        `json:"proposal_name"`
@@ -179,6 +177,7 @@ func NewMsigCancel(proposer eos.AccountName, proposal eos.Name, actor eos.Accoun
 	)
 }
 
+// MsigExec will attempt to execute a proposed transaction
 type MsigExec struct {
 	Proposer     eos.AccountName `json:"proposer"`
 	ProposalName eos.Name        `json:"proposal_name"`
@@ -197,11 +196,13 @@ func NewMsigExec(proposer eos.AccountName, proposal eos.Name, fee uint64, actor 
 	)
 }
 
+// MsigInvalidate is used to remove all approvals and proposals for an account
 type MsigInvalidate struct {
 	Name   eos.Name `json:"name"`
 	MaxFee uint64   `json:"max_fee"`
 }
 
+// MsigPropose is a new proposal
 type MsigPropose struct {
 	Proposer     eos.AccountName        `json:"proposer"`
 	ProposalName eos.Name               `json:"proposal_name"`
@@ -211,15 +212,15 @@ type MsigPropose struct {
 }
 
 type MsigWrappedPropose struct {
-	Proposer     eos.AccountName        `json:"proposer"`
-	ProposalName eos.Name               `json:"proposal_name"`
-	Requested    []*PermissionLevel     `json:"requested"`
-	MaxFee       uint64                 `json:"max_fee"`
-	Trx          *eos.Transaction       `json:"trx"`
+	Proposer     eos.AccountName    `json:"proposer"`
+	ProposalName eos.Name           `json:"proposal_name"`
+	Requested    []*PermissionLevel `json:"requested"`
+	MaxFee       uint64             `json:"max_fee"`
+	Trx          *eos.Transaction   `json:"trx"`
 }
 
-// NewMsigPropose is provided for consistency, but it will make more sense to use NewSignedMsigPropose to build multisig proposals since it
-// abstracts several steps.
+// NewMsigPropose is provided for consistency, but it will make more sense to use NewSignedMsigPropose to build *simple*
+// multisig proposals since it abstracts several steps.
 func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*PermissionLevel, signedTx *eos.SignedTransaction) *Action {
 	var feeBytes uint64
 	packedTx, err := signedTx.Pack(CompressionNone)
@@ -278,6 +279,7 @@ func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, acti
 	return packedTx, nil
 }
 
+// MsigUnapprove withdraws an existing approval for an account
 type MsigUnapprove struct {
 	Proposer     eos.AccountName `json:"proposer"`
 	ProposalName eos.Name        `json:"proposal_name"`
@@ -333,12 +335,14 @@ type msigProposalRow struct {
 	PackedTransaction string   `json:"packed_transaction"`
 }
 
+// MsigProposal is a query response for getting details of a proposed transaction
 type MsigProposal struct {
 	ProposalName      eos.Name         `json:"proposal_name"`
 	PackedTransaction *eos.Transaction `json:"packed_transaction"`
 	ProposalHash      eos.Checksum256  `json:"proposal_hash"`
 }
 
+// GetProposalTransaction will lookup a specific proposal
 func (api *API) GetProposalTransaction(proposalAuthor eos.AccountName, proposalName eos.Name) (*MsigProposal, error) {
 	name, err := eos.StringToName(string(proposalAuthor))
 	if err != nil {
@@ -409,9 +413,10 @@ func (api *API) GetProposals(offset int, limit int) (more bool, scopes map[strin
 	return
 }
 
+// WrapExecute wraps a transaction to be executed with specific permissions via eosio.wrap
 type WrapExecute struct {
-	Executor eos.AccountName `json:"executor"`
-	Trx *eos.Transaction `json:"trx"`
+	Executor eos.AccountName  `json:"executor"`
+	Trx      *eos.Transaction `json:"trx"`
 }
 
 func NewWrapExecute(actor eos.AccountName, executor eos.AccountName, trx *eos.Transaction) *Action {

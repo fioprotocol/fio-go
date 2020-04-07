@@ -290,7 +290,8 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 
 // EciesEncrypt implements the encryption format used in the content field of OBT requests.
 //
-// The plaintext is PKCS#7 padded before being encrypted -- returned output is base64
+// The plaintext is PKCS#7 padded before being encrypted -- returned output is base64.
+//
 // Key derivation, and message format:
 //
 // A DH shared secret is created using ECIES (derives a key based on the curves of the public and private keys.)
@@ -595,18 +596,17 @@ func (api API) getFioRequests(requestType string, pubKey string, limit int, offs
 	return
 }
 
-
 // FundsReqTableResp has the most useful fields of what is stored in the fioreqctxts table. It is slightly different
 // than what is sent from the API endpoint, but is useful when a specific request needs to be retrieved.
 type FundsReqTableResp struct {
-	FioRequestId    uint64       `json:"fio_request_id"`
-	Content         string       `json:"content"`
-	TimeStamp       int64        `json:"time_stamp"`
-	Time            time.Time    `json:"time"`
-	PayerFioAddress string       `json:"payer_fio_addr"`
-	PayerKey        string       `json:"payer_key"`
-	PayeeFioAddress string       `json:"payee_fio_addr"`
-	PayeeKey        string       `json:"payee_key"`
+	FioRequestId    uint64    `json:"fio_request_id"`
+	Content         string    `json:"content"`
+	TimeStamp       int64     `json:"time_stamp"`
+	Time            time.Time `json:"time"`
+	PayerFioAddress string    `json:"payer_fio_addr"`
+	PayerKey        string    `json:"payer_key"`
+	PayeeFioAddress string    `json:"payee_fio_addr"`
+	PayeeKey        string    `json:"payee_key"`
 }
 
 // GetFioRequest gets a single FIO request using a table lookup, this is more efficient than using the API
@@ -684,16 +684,10 @@ func (api *API) GetFioRequestStatus(requestId uint64) (hasResponse bool, request
 	return
 }
 
-func swapEndian(orig []byte) (flipped []byte) {
-	flipped = make([]byte, len(orig))
-	for i := range orig {
-		flipped[i] = orig[len(orig)-1-i]
-	}
-	return
-}
-
-// note, added non-existent actions for eos-go encoder ...
-var ObtAbiJson = `{
+// ObtAbiJson defines the ABI format for OBT requests. There are two variations used in fio-go, one that has
+// optional fields (obtAbiJsonOmit) which is private, and one that does not. The variations are tried in sequence to help
+// with compatibility with different wallet implementations. Under normal circumstances, ObtAbiJson is the correct choice.
+const ObtAbiJson = `{
     "version": "eosio::abi/1.0",
     "types": [],
     "actions": [{
@@ -738,7 +732,7 @@ var ObtAbiJson = `{
 `
 
 // note, added non-existent actions for eos-go encoder ...
-var obtAbiJsonOmit = `{
+const obtAbiJsonOmit = `{
     "version": "eosio::abi/1.0",
     "types": [],
     "actions": [{

@@ -228,6 +228,7 @@ type FeeValue struct {
 	Value    uint64 `json:"value"`
 }
 
+// NewSetFeeVote is used by block producers to adjust the fee for an action
 type SetFeeVote struct {
 	FeeRatios []FeeValue `json:"fee_ratios"`
 	Actor     string     `json:"actor"`
@@ -241,6 +242,8 @@ func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
 		})
 }
 
+// BundleVote is used by block producers to vote for the number of free transactions included when registering or
+// renewing a FIO address
 type BundleVote struct {
 	BundledTransactions uint64 `json:"bundled_transactions"`
 	Actor               string `json:"actor"`
@@ -255,11 +258,13 @@ func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
 	)
 }
 
+// SetFeeMult is used by block producers to vote for the fee multiplier used for calculating rewards
 type SetFeeMult struct {
 	Multiplier float64 `json:"multiplier"`
 	Actor      string  `json:"actor"`
 }
 
+// FioFee holds the details of an action's fee
 type FioFee struct {
 	FeeId        uint64      `json:"fee_id"`
 	EndPoint     string      `json:"end_point"`
@@ -268,12 +273,14 @@ type FioFee struct {
 	SufAmount    uint64      `json:"suf_amount"`
 }
 
+// FeeVoter holds information about the block producer performing a vote
 type FeeVoter struct {
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
 	FeeMultiplier     float64         `json:"fee_multiplier"`
 	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
 
+// FeeVote is used by block producers to vote for a fee
 type FeeVote struct {
 	Id                uint64          `json:"id"`
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
@@ -283,6 +290,8 @@ type FeeVote struct {
 	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
 
+// BundleVoter holds information about the block producer voting for the number of free bundled transactions for new
+// or renewed addresses
 type BundleVoter struct {
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
 	BundleVoteNumber  uint64          `json:"bundlevotenumber"`

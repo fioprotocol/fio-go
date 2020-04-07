@@ -9,7 +9,6 @@ import (
 	"github.com/mr-tron/base58"
 	"io/ioutil"
 	"regexp"
-	"strings"
 )
 
 // Account holds the information for an account, it differs from a regular EOS account in that the
@@ -139,9 +138,15 @@ func (a Address) Valid() (ok bool) {
 	return true
 }
 
+/*
+	the following override the eos-go ecc library to handle the FIO prefix, this avoids errors during
+	deserialization
+*/
+
+// AccountResp duplicates the eos.AccountResp accounting for differences in public key format
 type AccountResp struct {
 	AccountName            eos.AccountName          `json:"account_name"`
-	Privileged             bool                 `json:"privileged"`
+	Privileged             bool                     `json:"privileged"`
 	LastCodeUpdate         eos.JSONTime             `json:"last_code_update"`
 	Created                eos.JSONTime             `json:"created"`
 	CoreLiquidBalance      eos.Asset                `json:"core_liquid_balance"`
@@ -151,33 +156,38 @@ type AccountResp struct {
 	CPUWeight              eos.Int64                `json:"cpu_weight"`
 	NetLimit               eos.AccountResourceLimit `json:"net_limit"`
 	CPULimit               eos.AccountResourceLimit `json:"cpu_limit"`
-	Permissions            []Permission         `json:"permissions"`
+	Permissions            []Permission             `json:"permissions"`
 	TotalResources         eos.TotalResources       `json:"total_resources"`
 	SelfDelegatedBandwidth eos.DelegatedBandwidth   `json:"self_delegated_bandwidth"`
 	RefundRequest          *eos.RefundRequest       `json:"refund_request"`
 	VoterInfo              eos.VoterInfo            `json:"voter_info"`
 }
 
+// Permission duplicates the eos.Permission accounting for differences in public key format
 type Permission struct {
 	PermName     string    `json:"perm_name"`
 	Parent       string    `json:"parent"`
 	RequiredAuth Authority `json:"required_auth"`
 }
 
+// Authority duplicates the eos.Authority accounting for differences in public key format
 type Authority struct {
-	Threshold uint32                  `json:"threshold"`
-	Keys      []KeyWeight             `json:"keys,omitempty"`
+	Threshold uint32                      `json:"threshold"`
+	Keys      []KeyWeight                 `json:"keys,omitempty"`
 	Accounts  []eos.PermissionLevelWeight `json:"accounts,omitempty"`
 	Waits     []eos.WaitWeight            `json:"waits,omitempty"`
 }
 
+// KeyWeight duplicates the eos.KeyWeight accounting for differences in public key format
 type KeyWeight struct {
 	PublicKey ecc.PublicKey `json:"key"`
 	Weight    uint16        `json:"weight"` // weight_type
 }
 
+// GetFioAccount gets information about an account, it should be used instead of GetAccount due to differences in
+// public key formatting in eos vs fio packages.
 func (api *API) GetFioAccount(actor string) (*AccountResp, error) {
-	q := bytes.NewReader([]byte(`{"account_name": "`+actor+`"}`))
+	q := bytes.NewReader([]byte(`{"account_name": "` + actor + `"}`))
 	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_account", "application/json", q)
 	if err != nil {
 		return nil, err
@@ -194,5 +204,5 @@ func (api *API) GetFioAccount(actor string) (*AccountResp, error) {
 
 // pubFromEos is a convenience function that returns the FIO pub address from an EOS pub address
 func pubFromEos(eosPub string) (fioPub string) {
-	return strings.Replace(eosPub, "EOS", "FIO", 1)
+	return "FIO" + eosPub[3:]
 }
