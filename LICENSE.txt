@@ -1,4 +1,4 @@
-Copyright 2020 FIO Foundation <todd@dapix.io>
+Copyright (c) 2020 Foundation for Interwallet Operability <todd@dapix.io>
 Portions Copyright 2018 EOS Canada <alex@eoscanada.com>
 
 Permission is hereby granted, free of charge, to any person obtaining
