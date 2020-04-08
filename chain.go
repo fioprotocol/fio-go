@@ -279,6 +279,45 @@ func (api API) GetTableByScopeMore(request eos.GetTableByScopeRequest) (*eos.Get
 	}, nil
 }
 
+// GetTableRowsOrderRequest extends eos.GetTableRowsRequest by adding a reverse field for sorting on index, not sure
+// if it is something unique to FIO or missing for eos-go, but is very handy for limiting searches.
+type GetTableRowsOrderRequest struct {
+	Code       string `json:"code"` // Contract "code" account where table lives
+	Scope      string `json:"scope"`
+	Table      string `json:"table"`
+	LowerBound string `json:"lower_bound,omitempty"`
+	UpperBound string `json:"upper_bound,omitempty"`
+	Limit      uint32 `json:"limit,omitempty"`          // defaults to 10 => chain_plugin.hpp:struct get_table_rows_params
+	KeyType    string `json:"key_type,omitempty"`       // The key type of --index, primary only supports (i64), all others support (i64, i128, i256, float64, float128, ripemd160, sha256). Special type 'name' indicates an account name.
+	Index      string `json:"index_position,omitempty"` // Index number, 1 - primary (first), 2 - secondary index (in order defined by multi_index), 3 - third index, etc. Number or name of index can be specified, e.g. 'secondary' or '2'.
+	EncodeType string `json:"encode_type,omitempty"`    // The encoding type of key_type (i64 , i128 , float64, float128) only support decimal encoding e.g. 'dec'" "i256 - supports both 'dec' and 'hex', ripemd160 and sha256 is 'hex' only
+	JSON       bool   `json:"json"`                     // JSON output if true, binary if false
+	Reverse    bool   `json:"reverse"`                  // Sort order
+}
+
+// GetTableRowsOrder duplicates eos.GetTableRows but adds a Reverse flag
+func (api *API) GetTableRowsOrder(gtro GetTableRowsOrderRequest) (*eos.GetTableRowsResp, error) {
+	j, err := json.Marshal(&gtro)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_table_rows", "application/json", bytes.NewReader(j))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	tableRows := &eos.GetTableRowsResp{}
+	err = json.Unmarshal(body, tableRows)
+	if err != nil {
+		return nil, err
+	}
+	return tableRows, nil
+}
+
 func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err error) {
 	// get current block:
 	currentInfo, err := api.GetInfo()
