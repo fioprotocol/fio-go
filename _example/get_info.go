@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dapixio/fio-go"
+	"github.com/fioprotocol/fio-go"
 	"log"
 )
 

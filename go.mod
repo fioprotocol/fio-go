@@ -1,4 +1,4 @@
-module github.com/dapixio/fio-go
+module github.com/fioprotocol/fio-go
 
 go 1.13
 

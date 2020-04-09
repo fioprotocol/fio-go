@@ -13,7 +13,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dapixio/fio-go/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/crypto/ecies"

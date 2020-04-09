@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/dapixio/fio-go"
+	"github.com/fioprotocol/fio-go"
 	"github.com/eoscanada/eos-go"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ui "github.com/gizak/termui/v3"
