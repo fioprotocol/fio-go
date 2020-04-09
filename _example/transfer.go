@@ -1,15 +1,6 @@
-# FIO-GO
-
-Library for interacting with the FIO network using the go language.
-
-**Warning: This is pre-release software, and under heavy development, not all APIs are stable.**
-
-## Example
-
-This demonstrates using the library to send FIO tokens from one account to another:
-
-```go
 package main
+
+// example of transferring FIO tokens
 
 import (
 	"encoding/json"
@@ -32,11 +23,9 @@ func main() {
 		}
 	}
 
-	// import the private key
 	account, err := fio.NewAccountFromWif(wif)
 	fatal(err)
 
-	// connect to the network
 	api, opts, err := fio.NewConnection(account.KeyBag, url)
 	fatal(err)
 
@@ -49,9 +38,8 @@ func main() {
 	)
 	fatal(err)
 
-	// print the result
 	j, err := json.MarshalIndent(resp, "", "  ")
 	fatal(err)
 	fmt.Println(string(j))
 }
-```
+
