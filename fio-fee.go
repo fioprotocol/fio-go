@@ -15,7 +15,7 @@ const (
 	FeeAuthLink             = "auth_link"
 	FeeAuthUpdate           = "auth_update"
 	FeeBurnExpired          = "burnexpired"
-	FeeDomTransfer          = "domtransfer"
+	FeeTransferDom          = "transfer_fio_domain"
 	FeeMsigApprove          = "msig_approve"
 	FeeMsigCancel           = "msig_cancel"
 	FeeMsigExec             = "msig_exec"
@@ -56,7 +56,7 @@ var (
 		"auth_link":                   0.4,
 		"auth_update":                 0.4,
 		"burnexpired":                 0.1,
-		"domtransfer":                 0.1, // future endpoint, placeholder
+		"transfer_fio_domain":         1.0, // future endpoint, placeholder
 		"msig_approve":                0.4,
 		"msig_cancel":                 0.4,
 		"msig_exec":                   0.4,
@@ -105,7 +105,7 @@ var (
 		"unapprove":    FeeMsigUnapprove,
 		"addaddress":   FeeAddPubAddress,
 		"regaddress":   FeeRegisterFioAddress,
-		"domtransfer":  FeeDomTransfer,
+		"xferdomain":   FeeTransferDom,
 		"regdomain":    FeeRegisterFioDomain,
 		"renewaddress": FeeRenewFioAddress,
 		"renewdomain":  FeeRenewFioDomain,
