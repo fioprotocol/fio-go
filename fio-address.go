@@ -163,8 +163,8 @@ func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *A
 	)
 }
 
-// DomTransfer (future) transfers ownership of a domain
-type DomTransfer struct {
+// TransferDom (future) transfers ownership of a domain
+type TransferDom struct {
 	FioDomain            string          `json:"fio_domain"`
 	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
 	MaxFee               uint64          `json:"max_fee"`
@@ -172,13 +172,13 @@ type DomTransfer struct {
 	Actor                eos.AccountName `json:"actor"`
 }
 
-func NewDomTransfer(actor eos.AccountName, domain string, newOwnerPubKey string) *Action {
+func NewTransferDom(actor eos.AccountName, domain string, newOwnerPubKey string) *Action {
 	return NewAction(
-		"fio.address", "renewdomain", actor,
-		DomTransfer{
+		"fio.address", "xferdomain", actor,
+		TransferDom{
 			FioDomain:            domain,
 			NewOwnerFioPublicKey: newOwnerPubKey,
-			MaxFee:               Tokens(GetMaxFee(FeeDomTransfer)),
+			MaxFee:               Tokens(GetMaxFee(FeeTransferDom)),
 			Actor:                actor,
 			Tpid:                 CurrentTpid(),
 		},
