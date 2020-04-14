@@ -205,6 +205,28 @@ func NewRenewAddress(actor eos.AccountName, address string) *Action {
 	)
 }
 
+// TransferAddress (future) transfers ownership of a FIO address
+type TransferAddress struct {
+	FioAddress           Address `json:"fio_address"`
+	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
+	MaxFee               uint64          `json:"max_fee"`
+	Tpid                 string          `json:"tpid"`
+	Actor                eos.AccountName `json:"actor"`
+}
+
+func NewTransferAddress(actor eos.AccountName, address Address, newOwnerPubKey string) *Action {
+	return NewAction(
+		"fio.address", "xferaddress", actor,
+		TransferAddress{
+			FioAddress:           address,
+			NewOwnerFioPublicKey: newOwnerPubKey,
+			MaxFee:               Tokens(GetMaxFee(FeeTransferAddress)),
+			Actor:                actor,
+			Tpid:                 CurrentTpid(),
+		},
+	)
+}
+
 // ExpDomain is used by a test contract and not available on mainnet
 //
 // Deprecated: only used in development environments
