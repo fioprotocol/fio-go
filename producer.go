@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -219,4 +221,186 @@ func (api API) GetFioProducers() (fioProducers *Producers, err error) {
 		return nil, err
 	}
 	return
+}
+
+type BpJsonOrg struct {
+	CandidateName string `json:"candidate_name"`
+	Website string `json:"website"`
+	CodeOfConduct string `json:"code_of_conduct"`
+	OwnershipDisclosure string `json:"ownership_disclosure"`
+	Email string `json:"email"`
+	Branding struct {
+		Logo256 string `json:"logo_256"`
+		Logo1024 string `json:"logo_1024"`
+		LogoSvg string `json:"logo_svg"`
+	} `json:"branding"`
+	Location BpJsonLocation `json:"location"`
+}
+
+type BpJsonSocial struct {
+	Steemit string `json:"steemit"`
+	Twitter string `json:"twitter"`
+	Youtube string `json:"youtube"`
+	Facebook string `json:"facebook"`
+	Github string `json:"github"`
+	Reddit string `json:"reddit"`
+	Keybase string `json:"keybase"`
+	Telegram string `json:"telegram"`
+	Wechat string `json:"wechat"`
+}
+
+type BpJsonLocation struct {
+	Name string `json:"name"`
+	Country string `json:"country"`
+	Latitude float32 `json:"latitude"`
+	Longitude float32 `json:"longitude"`
+
+}
+
+type BpJsonNode struct {
+	Location BpJsonLocation `json:"location"`
+	NodeType string `json:"node_type"`
+	P2pEndpoint string `json:"p2p_endpoint"`
+	BnetEndpoint string `json:"bnet_endpoint"`
+	ApiEndpoint string `json:"api_endpoint"`
+	SslEndpoint string `json:"ssl_endpoint"`
+}
+
+
+type BpJson struct {
+	ProducerAccountName string `json:"producer_account_name"`
+	Org BpJsonOrg `json:"org"`
+	Nodes []BpJsonNode `json:"nodes"`
+	BpJsonUrl string `json:"bp_json_url"`
+}
+
+func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
+	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "eosio",
+		Scope:      "eosio",
+		Table:      "producers",
+		LowerBound: string(producer),
+		UpperBound: string(producer),
+		KeyType:    "name",
+		Index:      "4",
+		JSON:       true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	producerRows := make([]Producer, 0)
+	err = json.Unmarshal(gtr.Rows, &producerRows)
+	if len(producerRows) != 1 {
+		return nil, errors.New("account not found in producers table")
+	}
+	if !strings.HasPrefix(producerRows[0].Url, "http") {
+		producerRows[0].Url = "https://"+producerRows[0].Url
+	}
+	u, err := url.Parse(producerRows[0].Url)
+	if err != nil {
+		return nil, err
+	}
+	// ensure this is 1) a hostname, and 2) does not resolve to a private IP range:
+	ip := net.ParseIP(u.Host)
+	if ip != nil {
+		return nil, errors.New("URL is an IP address, refusing to fetch")
+	}
+	addrs, err := net.LookupHost(u.Host)
+	if err != nil {
+		return nil, err
+	}
+	if len(addrs) == 0 {
+		return nil, errors.New("could not resolve DNS for url")
+	}
+	for _, ip := range addrs {
+		if isPrivate(net.ParseIP(ip)) {
+			return nil, errors.New("url points to a private IP address, refusing to continue")
+		}
+	}
+
+	var regJson, chainJson string
+	info, _ := api.GetInfo()
+	if strings.HasSuffix(u.String(), "/") {
+		chainJson = u.String() + "bp." + info.ChainID.String() + ".json"
+		regJson = u.String() + "bp.json"
+	} else {
+		chainJson = u.String() + "/" + "bp." + info.ChainID.String() + ".json"
+		regJson = u.String() + "/bp.json"
+	}
+
+	// try chainId first, ignore error
+	resp, err := api.HttpClient.Get(chainJson)
+	if err == nil && resp != nil {
+		if resp.StatusCode == http.StatusOK {
+			body, _ := ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+			if len(body) != 0 {
+				bpj := &BpJson{}
+				err = json.Unmarshal(body, bpj)
+				if err == nil && bpj.ProducerAccountName != "" {
+					bpj.BpJsonUrl = chainJson
+					return bpj, nil
+				}
+			}
+		}
+	}
+
+	resp, err = api.HttpClient.Get(regJson)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	bpj := &BpJson{}
+	err = json.Unmarshal(body, bpj)
+	if err != nil {
+		return nil, err
+	}
+	if bpj.ProducerAccountName == "" {
+		return nil, errors.New("did not get valid bp.json")
+	}
+
+	bpj.BpJsonUrl = regJson
+	return bpj, nil
+}
+
+// adapted from https://github.com/emitter-io/address/blob/master/ipaddr.go
+// Copyright (c) 2018 Roman Atachiants
+var privateBlocks = []*net.IPNet{
+	parseCIDR("10.0.0.0/8"),     // RFC 1918 IPv4 private network address
+	parseCIDR("100.64.0.0/10"),  // RFC 6598 IPv4 shared address space
+	parseCIDR("127.0.0.0/8"),    // RFC 1122 IPv4 loopback address
+	parseCIDR("169.254.0.0/16"), // RFC 3927 IPv4 link local address
+	parseCIDR("172.16.0.0/12"),  // RFC 1918 IPv4 private network address
+	parseCIDR("192.0.0.0/24"),   // RFC 6890 IPv4 IANA address
+	parseCIDR("192.0.2.0/24"),   // RFC 5737 IPv4 documentation address
+	parseCIDR("192.168.0.0/16"), // RFC 1918 IPv4 private network address
+	parseCIDR("::1/128"),        // RFC 1884 IPv6 loopback address
+	parseCIDR("fe80::/10"),      // RFC 4291 IPv6 link local addresses
+	parseCIDR("fc00::/7"),       // RFC 4193 IPv6 unique local addresses
+	parseCIDR("fec0::/10"),      // RFC 1884 IPv6 site-local addresses
+	parseCIDR("2001:db8::/32"),  // RFC 3849 IPv6 documentation address
+}
+
+func parseCIDR(s string) *net.IPNet {
+	_, block, err := net.ParseCIDR(s)
+	if err != nil {
+		panic(fmt.Sprintf("Bad CIDR %s: %s", s, err))
+	}
+	return block
+}
+
+func isPrivate(ip net.IP) bool {
+	if ip == nil {
+		return false
+	}
+	for _, priv := range privateBlocks {
+		if priv.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
