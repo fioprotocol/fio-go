@@ -13,10 +13,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -602,11 +602,16 @@ type FundsReqTableResp struct {
 	FioRequestId    uint64    `json:"fio_request_id"`
 	Content         string    `json:"content"`
 	TimeStamp       int64     `json:"time_stamp"`
-	Time            time.Time `json:"time"`
 	PayerFioAddress string    `json:"payer_fio_addr"`
 	PayerKey        string    `json:"payer_key"`
 	PayeeFioAddress string    `json:"payee_fio_addr"`
 	PayeeKey        string    `json:"payee_key"`
+	Time            time.Time `json:"time"`
+
+	// additional fields indicating if the FIO address does not match the public key, which may indicate the address
+	// was transferred after the request was sent.
+	PayeeMismatch bool `json:"payee_mismatch"`
+	PayerMismatch bool `json:"payer_mismatch"`
 }
 
 // GetFioRequest gets a single FIO request using a table lookup, this is more efficient than using the API
@@ -638,9 +643,35 @@ func (api *API) GetFioRequest(requestId uint64) (request *FundsReqTableResp, err
 	}
 	if len(r) > 0 && r[0] != nil {
 		r[0].Time = time.Unix(r[0].TimeStamp, 0)
-		return r[0], nil
+		r, _, err = api.checkFRTRMismatch(r)
+		return r[0], err
 	}
 	return
+}
+
+// checkFRTRMismatch updates a FundsReqTableResp to include a bool if there is a public key mismatch, which
+// indicates that a FIO address has probably been transferred since the request was originally sent.
+func (api *API) checkFRTRMismatch(req []*FundsReqTableResp) (resp []*FundsReqTableResp, ok bool, err error) {
+	ok = true
+	for _, r := range req {
+		payerPub, _, err := api.PubAddressLookup(Address(r.PayerFioAddress), "FIO", "FIO")
+		if err != nil {
+			return req, false, err
+		}
+		if payerPub.PublicAddress != r.PayerKey {
+			ok = false
+			r.PayerMismatch = true
+		}
+		payeePub, _, err := api.PubAddressLookup(Address(r.PayeeFioAddress), "FIO", "FIO")
+		if err != nil {
+			return req, false, err
+		}
+		if payeePub.PublicAddress != r.PayeeKey {
+			r.PayeeMismatch = true
+			ok = false
+		}
+	}
+	return req, ok, nil
 }
 
 type FundsRequestStatusResp struct {
