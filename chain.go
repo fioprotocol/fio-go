@@ -349,7 +349,7 @@ type BlockHeaderState struct {
 	BlockNum                  uint32 `json:"block_num"`
 	ProposedIrrBlock          uint32 `json:"dpos_proposed_irreversible_blocknum"`
 	IrrBlock                  uint32 `json:"dpos_irreversible_blocknum"`
-	ActiveSchedule            *ProducerSchedule
+	ActiveSchedule            *Schedule
 	BlockrootMerkle           BlockrootMerkle   `json:"blockroot_merkle"`
 	ProducerToLastProduced    []json.RawMessage `json:"producer_to_last_produced"` // array of arrays with mixed types, access via member func
 	ProducerToLastImpliedIrb  []json.RawMessage `json:"producer_to_last_implied_irb"`
@@ -357,7 +357,7 @@ type BlockHeaderState struct {
 	ConfirmCount              []int `json:"confirm_count"`
 	Id                        eos.Checksum256
 	Header                    *eos.BlockHeader  `json:"header"`
-	PendingSchedule           *ProducerSchedule `json:"pending_schedule"`
+	PendingSchedule           *Schedule `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
 }
 

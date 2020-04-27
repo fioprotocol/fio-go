@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -134,30 +135,20 @@ func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
 	)
 }
 
-// ProducerSchedule is a convenience struct for deserializing the producer schedule, it is fully
-// encapsulated to prevent conflicts with other types
+type ProducerKey struct {
+	AccountName     eos.AccountName `json:"producer_name"`
+	BlockSigningKey ecc.PublicKey   `json:"block_signing_key"`
+}
+
+type Schedule struct {
+	Version   uint32        `json:"version"`
+	Producers []ProducerKey `json:"producers"`
+}
+
 type ProducerSchedule struct {
-	Active struct {
-		Version   uint32 `json:"version"`
-		Producers []struct {
-			ProducerName    eos.AccountName `json:"producer_name"`
-			BlockSigningKey string          `json:"block_signing_key"`
-		} `json:"producers"`
-	} `json:"active"`
-	Pending struct {
-		Version   uint32 `json:"version"`
-		Producers []struct {
-			ProducerName    eos.AccountName `json:"producer_name"`
-			BlockSigningKey string          `json:"block_signing_key"`
-		} `json:"producers"`
-	} `json:"pending"`
-	Proposed struct {
-		Version   uint32 `json:"version"`
-		Producers []struct {
-			ProducerName    eos.AccountName `json:"producer_name"`
-			BlockSigningKey string          `json:"block_signing_key"`
-		} `json:"producers"`
-	}
+	Active   Schedule `json:"active"`
+	Pending  Schedule `json:"pending"`
+	Proposed Schedule `json:"proposed"`
 }
 
 func (api *API) GetProducerSchedule() (*ProducerSchedule, error) {
@@ -224,54 +215,52 @@ func (api API) GetFioProducers() (fioProducers *Producers, err error) {
 }
 
 type BpJsonOrg struct {
-	CandidateName string `json:"candidate_name"`
-	Website string `json:"website"`
-	CodeOfConduct string `json:"code_of_conduct"`
+	CandidateName       string `json:"candidate_name"`
+	Website             string `json:"website"`
+	CodeOfConduct       string `json:"code_of_conduct"`
 	OwnershipDisclosure string `json:"ownership_disclosure"`
-	Email string `json:"email"`
-	Branding struct {
-		Logo256 string `json:"logo_256"`
+	Email               string `json:"email"`
+	Branding            struct {
+		Logo256  string `json:"logo_256"`
 		Logo1024 string `json:"logo_1024"`
-		LogoSvg string `json:"logo_svg"`
+		LogoSvg  string `json:"logo_svg"`
 	} `json:"branding"`
 	Location BpJsonLocation `json:"location"`
 }
 
 type BpJsonSocial struct {
-	Steemit string `json:"steemit"`
-	Twitter string `json:"twitter"`
-	Youtube string `json:"youtube"`
+	Steemit  string `json:"steemit"`
+	Twitter  string `json:"twitter"`
+	Youtube  string `json:"youtube"`
 	Facebook string `json:"facebook"`
-	Github string `json:"github"`
-	Reddit string `json:"reddit"`
-	Keybase string `json:"keybase"`
+	Github   string `json:"github"`
+	Reddit   string `json:"reddit"`
+	Keybase  string `json:"keybase"`
 	Telegram string `json:"telegram"`
-	Wechat string `json:"wechat"`
+	Wechat   string `json:"wechat"`
 }
 
 type BpJsonLocation struct {
-	Name string `json:"name"`
-	Country string `json:"country"`
-	Latitude float32 `json:"latitude"`
+	Name      string  `json:"name"`
+	Country   string  `json:"country"`
+	Latitude  float32 `json:"latitude"`
 	Longitude float32 `json:"longitude"`
-
 }
 
 type BpJsonNode struct {
-	Location BpJsonLocation `json:"location"`
-	NodeType string `json:"node_type"`
-	P2pEndpoint string `json:"p2p_endpoint"`
-	BnetEndpoint string `json:"bnet_endpoint"`
-	ApiEndpoint string `json:"api_endpoint"`
-	SslEndpoint string `json:"ssl_endpoint"`
+	Location     BpJsonLocation `json:"location"`
+	NodeType     string         `json:"node_type"`
+	P2pEndpoint  string         `json:"p2p_endpoint"`
+	BnetEndpoint string         `json:"bnet_endpoint"`
+	ApiEndpoint  string         `json:"api_endpoint"`
+	SslEndpoint  string         `json:"ssl_endpoint"`
 }
 
-
 type BpJson struct {
-	ProducerAccountName string `json:"producer_account_name"`
-	Org BpJsonOrg `json:"org"`
-	Nodes []BpJsonNode `json:"nodes"`
-	BpJsonUrl string `json:"bp_json_url"`
+	ProducerAccountName string       `json:"producer_account_name"`
+	Org                 BpJsonOrg    `json:"org"`
+	Nodes               []BpJsonNode `json:"nodes"`
+	BpJsonUrl           string       `json:"bp_json_url"`
 }
 
 func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
@@ -294,7 +283,7 @@ func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
 		return nil, errors.New("account not found in producers table")
 	}
 	if !strings.HasPrefix(producerRows[0].Url, "http") {
-		producerRows[0].Url = "https://"+producerRows[0].Url
+		producerRows[0].Url = "https://" + producerRows[0].Url
 	}
 	u, err := url.Parse(producerRows[0].Url)
 	if err != nil {
