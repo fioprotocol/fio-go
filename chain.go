@@ -346,18 +346,18 @@ type protocolFeatures struct {
 }
 
 type BlockHeaderState struct {
-	BlockNum                  uint32 `json:"block_num"`
-	ProposedIrrBlock          uint32 `json:"dpos_proposed_irreversible_blocknum"`
-	IrrBlock                  uint32 `json:"dpos_irreversible_blocknum"`
-	ActiveSchedule            *Schedule
+	BlockNum                  uint32            `json:"block_num"`
+	ProposedIrrBlock          uint32            `json:"dpos_proposed_irreversible_blocknum"`
+	IrrBlock                  uint32            `json:"dpos_irreversible_blocknum"`
+	ActiveSchedule            *Schedule         `json:"active_schedule"`
 	BlockrootMerkle           BlockrootMerkle   `json:"blockroot_merkle"`
 	ProducerToLastProduced    []json.RawMessage `json:"producer_to_last_produced"` // array of arrays with mixed types, access via member func
 	ProducerToLastImpliedIrb  []json.RawMessage `json:"producer_to_last_implied_irb"`
-	BlockSigningKey           ecc.PublicKey
-	ConfirmCount              []int `json:"confirm_count"`
-	Id                        eos.Checksum256
+	BlockSigningKey           ecc.PublicKey     `json:"block_signing_key"`
+	ConfirmCount              []int             `json:"confirm_count"`
+	Id                        eos.Checksum256   `json:"id"`
 	Header                    *eos.BlockHeader  `json:"header"`
-	PendingSchedule           *Schedule `json:"pending_schedule"`
+	PendingSchedule           *Schedule         `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
 }
 
