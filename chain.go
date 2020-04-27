@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	eosecc "github.com/eoscanada/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"io"
 	"io/ioutil"
 	"math"
@@ -332,5 +333,101 @@ func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err er
 	}
 	// take last 24 bytes to fit, convert to uint32 (little endian)
 	refBlockPrefix = binary.LittleEndian.Uint32(prefix[8:])
+	return
+}
+
+type BlockrootMerkle struct {
+	ActiveNodes []eos.Checksum256 `json:"_active_nodes"`
+	NodeCount   uint32            `json:"_node_count"`
+}
+
+type protocolFeatures struct {
+	ProtocolFeatures []interface{} `json:"protocol_features"` // not sure what goes here, leaving private
+}
+
+type BlockHeaderState struct {
+	BlockNum                  uint32 `json:"block_num"`
+	ProposedIrrBlock          uint32 `json:"dpos_proposed_irreversible_blocknum"`
+	IrrBlock                  uint32 `json:"dpos_irreversible_blocknum"`
+	ActiveSchedule            *ProducerSchedule
+	BlockrootMerkle           BlockrootMerkle   `json:"blockroot_merkle"`
+	ProducerToLastProduced    []json.RawMessage `json:"producer_to_last_produced"` // array of arrays with mixed types, access via member func
+	ProducerToLastImpliedIrb  []json.RawMessage `json:"producer_to_last_implied_irb"`
+	BlockSigningKey           ecc.PublicKey
+	ConfirmCount              []int `json:"confirm_count"`
+	Id                        ecc.PublicKey
+	Header                    *eos.BlockHeader  `json:"header"`
+	PendingSchedule           *ProducerSchedule `json:"pending_schedule"`
+	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
+}
+
+type BlockHeaderStateReq struct {
+	BlockNumOrId interface{} // can be checksum or uint32
+}
+
+func (api *API) GetBlockHeaderState(numOrId interface{}) (*BlockHeaderState, error) {
+	reqJson, err := json.Marshal(&BlockHeaderStateReq{BlockNumOrId: numOrId})
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_block_header_state", "application/json", bytes.NewReader(reqJson))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if len(body) == 0 {
+		return nil, errors.New("get_block_header_state: empty reply")
+	}
+	bhs := &BlockHeaderState{}
+	err = json.Unmarshal(body, bhs)
+	if err != nil {
+		return nil, err
+	}
+	return bhs, nil
+}
+
+const (
+	ProducerToLastProduced uint8 = iota
+	ProducerToLastImplied
+)
+
+type ProducerToLast struct {
+	Producer          eos.AccountName `json:"producer"`
+	BlockNum          uint32          `json:"block_num"`
+	ProducedOrImplied string          `json:"produced_or_implied"`
+}
+
+func (ghs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool, last []*ProducerToLast) {
+	var l []json.RawMessage
+	var pOrI string
+	switch producedOrImplied {
+	case ProducerToLastProduced:
+		if ghs.ProducerToLastProduced == nil || len(ghs.ProducerToLastProduced) == 0 {
+			return false, nil
+		}
+		l = ghs.ProducerToLastProduced
+		pOrI = "producer_to_last_produced"
+	case ProducerToLastImplied:
+		if ghs.ProducerToLastImpliedIrb == nil || len(ghs.ProducerToLastImpliedIrb) == 0 {
+			return false, nil
+		}
+		l = ghs.ProducerToLastImpliedIrb
+		pOrI = "producer_to_last_implied_irb"
+	}
+	last = make([]*ProducerToLast, 0)
+	for _, ptl := range l {
+		pl := &ProducerToLast{}
+		if e := json.Unmarshal(ptl, pl); e == nil && pl.BlockNum != 0 {
+			pl.ProducedOrImplied = pOrI
+			last = append(last, pl)
+		}
+	}
+	if len(last) > 0 {
+		found = true
+	}
 	return
 }
