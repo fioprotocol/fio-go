@@ -355,7 +355,7 @@ type BlockHeaderState struct {
 	ProducerToLastImpliedIrb  []json.RawMessage `json:"producer_to_last_implied_irb"`
 	BlockSigningKey           ecc.PublicKey
 	ConfirmCount              []int `json:"confirm_count"`
-	Id                        ecc.PublicKey
+	Id                        eos.Checksum256
 	Header                    *eos.BlockHeader  `json:"header"`
 	PendingSchedule           *ProducerSchedule `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
@@ -421,7 +421,21 @@ func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool
 	last = make([]*ProducerToLast, 0)
 	for _, ptl := range l {
 		pl := &ProducerToLast{}
-		if e := json.Unmarshal(ptl, pl); e == nil && pl.BlockNum != 0 {
+		iToPtl := make([]interface{}, 0)
+		err := json.Unmarshal(ptl, &iToPtl)
+		if err != nil {
+			continue
+		}
+		for _, v := range iToPtl {
+			switch v.(type) {
+			case string:
+				pl.Producer = eos.AccountName(v.(string))
+				continue
+			case float64:
+				pl.BlockNum = uint32(v.(float64))
+			}
+		}
+		if pl.BlockNum != 0 {
 			pl.ProducedOrImplied = pOrI
 			last = append(last, pl)
 		}
