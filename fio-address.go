@@ -492,3 +492,35 @@ func (api *API) GetDomainOwner(domain string) (actor *eos.AccountName, err error
 	}
 	return d[0].Account, nil
 }
+
+type AvailCheckReq struct {
+	FioName string `json:"fio_name"`
+}
+
+type AvailCheckResp struct {
+	IsRegistered uint8 `json:"is_registered"`
+}
+
+// AvailCheck responds with true if a domain or FIO address is available to be registered
+func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
+	req := &AvailCheckReq{FioName:addressOrDomain}
+	j, _ := json.Marshal(req)
+	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/avail_check", "application/json", bytes.NewReader(j))
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false, err
+	}
+	isReg := &AvailCheckResp{}
+	err = json.Unmarshal(body, isReg)
+	if err != nil {
+		return false, err
+	}
+	if isReg.IsRegistered == 0 {
+		return true, nil
+	}
+	return false, nil
+}
