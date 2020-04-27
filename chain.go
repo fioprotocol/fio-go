@@ -362,7 +362,7 @@ type BlockHeaderState struct {
 }
 
 type BlockHeaderStateReq struct {
-	BlockNumOrId interface{} // can be checksum or uint32
+	BlockNumOrId interface{} `json:"block_num_or_id"` // can be checksum or uint32
 }
 
 func (api *API) GetBlockHeaderState(numOrId interface{}) (*BlockHeaderState, error) {
@@ -401,21 +401,21 @@ type ProducerToLast struct {
 	ProducedOrImplied string          `json:"produced_or_implied"`
 }
 
-func (ghs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool, last []*ProducerToLast) {
+func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool, last []*ProducerToLast) {
 	var l []json.RawMessage
 	var pOrI string
 	switch producedOrImplied {
 	case ProducerToLastProduced:
-		if ghs.ProducerToLastProduced == nil || len(ghs.ProducerToLastProduced) == 0 {
+		if bhs.ProducerToLastProduced == nil || len(bhs.ProducerToLastProduced) == 0 {
 			return false, nil
 		}
-		l = ghs.ProducerToLastProduced
+		l = bhs.ProducerToLastProduced
 		pOrI = "producer_to_last_produced"
 	case ProducerToLastImplied:
-		if ghs.ProducerToLastImpliedIrb == nil || len(ghs.ProducerToLastImpliedIrb) == 0 {
+		if bhs.ProducerToLastImpliedIrb == nil || len(bhs.ProducerToLastImpliedIrb) == 0 {
 			return false, nil
 		}
-		l = ghs.ProducerToLastImpliedIrb
+		l = bhs.ProducerToLastImpliedIrb
 		pOrI = "producer_to_last_implied_irb"
 	}
 	last = make([]*ProducerToLast, 0)
