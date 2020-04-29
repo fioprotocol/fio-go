@@ -345,6 +345,19 @@ type protocolFeatures struct {
 	ProtocolFeatures []interface{} `json:"protocol_features"` // not sure what goes here, leaving private
 }
 
+// BlockHeader duplicates eos.BlockHeader to allow using the modified ecc package
+type BlockHeader struct {
+	Timestamp        eos.BlockTimestamp `json:"timestamp"`
+	Producer         eos.AccountName    `json:"producer"`
+	Confirmed        uint16             `json:"confirmed"`
+	Previous         eos.Checksum256    `json:"previous"`
+	TransactionMRoot eos.Checksum256    `json:"transaction_mroot"`
+	ActionMRoot      eos.Checksum256    `json:"action_mroot"`
+	ScheduleVersion  uint32             `json:"schedule_version"`
+	NewProducers     *Schedule          `json:"new_producers" eos:"optional"`
+	HeaderExtensions []*eos.Extension   `json:"header_extensions"`
+}
+
 type BlockHeaderState struct {
 	BlockNum                  uint32            `json:"block_num"`
 	ProposedIrrBlock          uint32            `json:"dpos_proposed_irreversible_blocknum"`
@@ -356,7 +369,7 @@ type BlockHeaderState struct {
 	BlockSigningKey           ecc.PublicKey     `json:"block_signing_key"`
 	ConfirmCount              []int             `json:"confirm_count"`
 	Id                        eos.Checksum256   `json:"id"`
-	Header                    *eos.BlockHeader  `json:"header"`
+	Header                    *BlockHeader      `json:"header"`
 	PendingSchedule           *Schedule         `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
 }
