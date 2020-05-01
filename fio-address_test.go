@@ -59,6 +59,8 @@ func TestAPI_GetFioNames(t *testing.T) {
 				t.Error(toTest + " " + err.Error())
 				break
 			}
+			hasDomain = false
+			hasAddress = true
 		}
 		if hasDomain && (names == nil || names.FioDomains == nil || len(names.FioDomains) == 0) {
 			t.Error("GetFioNames did not find at least one domain" + printResult(toTest, names))
