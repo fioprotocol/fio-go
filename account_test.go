@@ -3,12 +3,17 @@ package fio
 import (
 	"encoding/json"
 	"github.com/eoscanada/eos-go"
+	"os"
 	"testing"
 )
 
 func TestAPI_GetFioAccount(t *testing.T) {
-	api, _, _ := NewConnection(nil, "https://testnet.fio.dev")
-	a, err := api.GetFioAccount("gik4jgcjciwb")
+	nodeos := "http://dev:8889"
+	if os.Getenv("NODEOS") != "" {
+		nodeos = os.Getenv("NODEOS")
+	}
+	api, _, _ := NewConnection(nil, nodeos)
+	a, err := api.GetFioAccount("qbxn5zhw2ypw")
 	if err != nil {
 		t.Error(err)
 	}
@@ -20,7 +25,7 @@ func TestAPI_GetFioAccount(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if a.AccountName != eos.AccountName("gik4jgcjciwb") {
+	if a.AccountName != eos.AccountName("qbxn5zhw2ypw") {
 		t.Error("account name was not correct")
 	}
 }
@@ -39,9 +44,12 @@ func TestNewAccountFromWif(t *testing.T) {
 	}
 }
 
-// test +dev
 func TestAccount_GetNames(t *testing.T) {
-	api, _, err := NewConnection(nil, "http://dev:8889")
+	nodeos := "http://dev:8889"
+	if os.Getenv("NODEOS") != "" {
+		nodeos = os.Getenv("NODEOS")
+	}
+	api, _, err := NewConnection(nil, nodeos)
 	if err != nil {
 		t.Error(err)
 		return

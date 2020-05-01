@@ -14,7 +14,7 @@ func TestAPI_GetFioNames(t *testing.T) {
 		domain  = `dapixdev`
 		address = `ada@dapixdev`
 	)
-	nodeos := "https://testnet.fio.dev"
+	nodeos := "http://dev:8889"
 	if os.Getenv("NODEOS") != "" {
 		nodeos = os.Getenv("NODEOS")
 	}
