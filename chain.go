@@ -358,6 +358,7 @@ type BlockHeader struct {
 	HeaderExtensions []*eos.Extension   `json:"header_extensions"`
 }
 
+// BlockHeaderState holds information about reversible blocks.
 type BlockHeaderState struct {
 	BlockNum                  uint32            `json:"block_num"`
 	ProposedIrrBlock          uint32            `json:"dpos_proposed_irreversible_blocknum"`
@@ -378,6 +379,7 @@ type BlockHeaderStateReq struct {
 	BlockNumOrId interface{} `json:"block_num_or_id"` // can be checksum or uint32
 }
 
+// GetBlockHeaderState returns the details for a reversible block. If the block is irreversible the api will return an error.
 func (api *API) GetBlockHeaderState(numOrId interface{}) (*BlockHeaderState, error) {
 	reqJson, err := json.Marshal(&BlockHeaderStateReq{BlockNumOrId: numOrId})
 	if err != nil {
@@ -414,6 +416,10 @@ type ProducerToLast struct {
 	ProducedOrImplied string          `json:"produced_or_implied"`
 }
 
+
+// ProducerToLast extracts a slice of ProducerToLast structs from a BlockHeaderState, this contains either the last
+// block that the producer signed, or the last irreversible block. This is useful for seeing if a producer is missing
+// rounds, or is responsible for double-signed blocks causing forks.
 func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool, last []*ProducerToLast) {
 	var l []json.RawMessage
 	var pOrI string
