@@ -3,9 +3,7 @@ package fio
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"github.com/eoscanada/eos-go"
 	"math/rand"
 	"testing"
 	"time"
@@ -62,6 +60,7 @@ func TestEciesSecret2(t *testing.T) {
 	}
 }
 
+/*
 func TestDecode(t *testing.T) {
 	obt := ObtRequestContent{
 		PayeePublicAddress: "purse.alice",
@@ -92,6 +91,8 @@ func TestDecode(t *testing.T) {
 
 	//iv, _ := hex.DecodeString("f300888ca4f512cebdc0020ff0f7224c")
 }
+
+ */
 
 func TestEncryptDecrypt(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
@@ -169,6 +170,7 @@ func TestEncryptDecrypt(t *testing.T) {
 	}
 }
 
+/*
 func TestEciesDecrypt(t *testing.T) {
 	iv, _ := hex.DecodeString("f300888ca4f512cebdc0020ff0f7224c")
 	alice, _ := NewAccountFromWif("5J9bWm2ThenDm3tjvmUgHtWCVMUdjRR1pxnRtnJjvKA4b2ut5WK")
@@ -238,3 +240,5 @@ func TestEciesDecrypt(t *testing.T) {
 	}
 
 }
+
+ */

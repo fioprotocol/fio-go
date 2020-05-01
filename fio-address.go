@@ -355,9 +355,10 @@ func (api API) PubAddressLookup(fioAddress Address, chain string, token string) 
 
 // FioNames holds the response when getting fio names or addresses for an account
 type FioNames struct {
-	FioDomains   []FioName `json:"fio_domains"`
-	FioAddresses []FioName `json:"fio_addresses"`
+	FioDomains   []FioName `json:"fio_domains,omitifempty"`
+	FioAddresses []FioName `json:"fio_addresses,omitifempty"`
 	Message      string    `json:"message,omitifempty"`
+	More         uint32    `json:"more,omitifempty"`
 }
 
 // FioName holds information for either an address or a domain
@@ -370,6 +371,8 @@ type FioName struct {
 
 type getFioNamesRequest struct {
 	FioPublicKey string `json:"fio_public_key"`
+	Limit        uint32 `json:"limit,omitempty"`
+	Offset       uint32 `json:"offset,omitempty"`
 }
 
 // GetFioNames provides a list of domains and addresses for a public key
@@ -400,6 +403,50 @@ func (api API) GetFioNames(pubKey string) (names FioNames, found bool, err error
 		found = true
 	}
 	return
+}
+
+func (api *API) getFioDomainsOrNames(endpoint string, pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
+	_, err = ActorFromPub(pubKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := json.Marshal(&getFioNamesRequest{
+		FioPublicKey: pubKey,
+		Limit:        limit,
+		Offset:       offset,
+	})
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/"+endpoint, "application/json", bytes.NewReader(req))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(fmt.Sprintf("error %d: %s", resp.StatusCode, string(body)))
+	}
+	result := &FioNames{}
+	err = json.Unmarshal(body, result)
+	return result, err
+}
+
+// GetFioDomains queries for the domains owned by a Public Key. It offers paging which makes it preferable to GetFioNames
+// which may not provide the full set of results because of (silent, without error) database query timeout issues.
+// offset and limit must both be positive numbers. The returned uint32 specifies how many more results are available.
+func (api *API) GetFioDomains(pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
+	return api.getFioDomainsOrNames("get_fio_domains", pubKey, offset, limit)
+}
+
+// GetFioAddresses queries for the FIO Addresses owned by a Public Key. It offers paging which makes it preferable to GetFioNames
+// which may not provide the full set of results because of (silent, without error) database query timeout issues.
+// offset and limit must both be positive numbers. The returned uint32 specifies how many more results are available.
+func (api *API) GetFioAddresses(pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
+	return api.getFioDomainsOrNames("get_fio_addresses", pubKey, offset, limit)
 }
 
 type accountMap struct {
@@ -459,7 +506,7 @@ type DomainResp struct {
 	Name       string           `json:"name"`
 	IsPublic   uint8            `json:"is_public"`
 	Expiration int64            `json:"expiration"`
-	Account    *eos.AccountName `json:"account"`
+	Account    *eos.AccountName `json:"account,omitempty"`
 }
 
 // GetDomainOwner finds the account that is the owner of a domain
@@ -503,7 +550,7 @@ type AvailCheckResp struct {
 
 // AvailCheck responds with true if a domain or FIO address is available to be registered
 func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
-	req := &AvailCheckReq{FioName:addressOrDomain}
+	req := &AvailCheckReq{FioName: addressOrDomain}
 	j, _ := json.Marshal(req)
 	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/avail_check", "application/json", bytes.NewReader(j))
 	if err != nil {
