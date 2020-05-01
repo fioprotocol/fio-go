@@ -459,7 +459,7 @@ type DomainResp struct {
 	Name       string           `json:"name"`
 	IsPublic   uint8            `json:"is_public"`
 	Expiration int64            `json:"expiration"`
-	Account    *eos.AccountName `json:"account"`
+	Account    *eos.AccountName `json:"account,omitempty"`
 }
 
 // GetDomainOwner finds the account that is the owner of a domain
@@ -523,4 +523,51 @@ func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+type getFioDomainsReq struct {
+	FioPublicKey string `json:"fio_public_key"`
+	Limit int `json:"limit"`
+	Offset int `json:"offset"`
+}
+
+type getFioDomainsResp struct {
+	FioDomains []DomainResp `json:"fio_domains"`
+	More uint8 `json:"more"`
+}
+
+func (api *API) GetFioDomains(pubKey string, offset int, limit int) (more bool, domains []DomainResp, err error) {
+	actor, err := ActorFromPub(pubKey)
+	if err != nil {
+		return false, nil, err
+	}
+	req, err := json.Marshal(&getFioDomainsReq{
+		FioPublicKey: pubKey,
+		Limit:        limit,
+		Offset:       offset,
+	})
+	if err != nil {
+		return false, nil, err
+	}
+	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_fio_domains", "application/json", bytes.NewReader(req))
+	if err != nil {
+		return false, nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false, nil, err
+	}
+	result := &getFioDomainsResp{}
+	err = json.Unmarshal(body, domains)
+	if err != nil {
+		return false, nil, err
+	}
+	for _, d := range result.FioDomains {
+		d.Account = &actor
+	}
+	if result.More != 0 {
+		more = true
+	}
+	return more, result.FioDomains, nil
 }
