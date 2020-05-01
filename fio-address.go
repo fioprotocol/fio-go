@@ -255,6 +255,9 @@ type ExpAddresses struct {
 	NumberAddressesToAdd uint64          `json:"number_addresses_to_add"`
 }
 
+// NewExpAddresses is used by a test contract and not available on mainnet
+//
+// Deprecated: only used in development environments
 func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string, toAdd uint64) *Action {
 	return NewAction(
 		"fio.address", "expaddresses", actor,
