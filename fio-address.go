@@ -431,7 +431,7 @@ func (api *API) getFioDomainsOrNames(endpoint string, pubKey string, offset uint
 		return nil, errors.New(fmt.Sprintf("error %d: %s", resp.StatusCode, string(body)))
 	}
 	result := &FioNames{}
-	err = json.Unmarshal(body, domains)
+	err = json.Unmarshal(body, result)
 	return result, err
 }
 
