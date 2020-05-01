@@ -405,10 +405,10 @@ func (api API) GetFioNames(pubKey string) (names FioNames, found bool, err error
 	return
 }
 
-func (api *API) getFioDomainsOrNames(endpoint string, pubKey string, offset uint32, limit uint32) (more uint32, domains []FioName, err error) {
+func (api *API) getFioDomainsOrNames(endpoint string, pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
 	_, err = ActorFromPub(pubKey)
 	if err != nil {
-		return 0, nil, err
+		return nil, err
 	}
 	req, err := json.Marshal(&getFioNamesRequest{
 		FioPublicKey: pubKey,
@@ -416,39 +416,36 @@ func (api *API) getFioDomainsOrNames(endpoint string, pubKey string, offset uint
 		Offset:       offset,
 	})
 	if err != nil {
-		return 0, nil, err
+		return nil, err
 	}
 	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/"+endpoint, "application/json", bytes.NewReader(req))
 	if err != nil {
-		return 0, nil, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return 0, nil, err
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(fmt.Sprintf("error %d: %s", resp.StatusCode, string(body)))
 	}
 	result := &FioNames{}
 	err = json.Unmarshal(body, domains)
-	if err != nil {
-		return 0, nil, err
-	}
-	if result.More != 0 {
-		more = result.More
-	}
-	return more, result.FioDomains, nil
+	return result, err
 }
 
 // GetFioDomains queries for the domains owned by a Public Key. It offers paging which makes it preferable to GetFioNames
 // which may not provide the full set of results because of (silent, without error) database query timeout issues.
 // offset and limit must both be positive numbers. The returned uint32 specifies how many more results are available.
-func (api *API) GetFioDomains(pubKey string, offset uint32, limit uint32) (more uint32, domains []FioName, err error) {
+func (api *API) GetFioDomains(pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
 	return api.getFioDomainsOrNames("get_fio_domains", pubKey, offset, limit)
 }
 
 // GetFioAddresses queries for the FIO Addresses owned by a Public Key. It offers paging which makes it preferable to GetFioNames
 // which may not provide the full set of results because of (silent, without error) database query timeout issues.
 // offset and limit must both be positive numbers. The returned uint32 specifies how many more results are available.
-func (api *API) GetFioAddresses(pubKey string, offset uint32, limit uint32) (more uint32, domains []FioName, err error) {
+func (api *API) GetFioAddresses(pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
 	return api.getFioDomainsOrNames("get_fio_addresses", pubKey, offset, limit)
 }
 
