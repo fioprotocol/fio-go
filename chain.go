@@ -319,6 +319,20 @@ func (api *API) GetTableRowsOrder(gtro GetTableRowsOrderRequest) (*eos.GetTableR
 	return tableRows, nil
 }
 
+// GetRefBlockFor calculates the Reference for an arbitrary block and ID
+func GetRefBlockFor(blocknum uint32, id string) (refBlockNum uint32, refBlockPrefix uint32, err error) {
+	// uint16: block % (2 ^ 16)
+	refBlockNum = blocknum % uint32(math.Pow(2.0, 16.0))
+	prefix, err := hex.DecodeString(id)
+	if err != nil {
+		return 0, 0, err
+	}
+	// take last 24 bytes to fit, convert to uint32 (little endian)
+	refBlockPrefix = binary.LittleEndian.Uint32(prefix[8:])
+	return
+}
+
+// GetRefBlock calculates a the block reference for the last irreversible block
 func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err error) {
 	// get current block:
 	currentInfo, err := api.GetInfo()
@@ -326,14 +340,7 @@ func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err er
 		return 0, 0, err
 	}
 	// uint16: block % (2 ^ 16)
-	refBlockNum = currentInfo.HeadBlockNum % uint32(math.Pow(2.0, 16.0))
-	prefix, err := hex.DecodeString(currentInfo.HeadBlockID.String())
-	if err != nil {
-		return 0, 0, err
-	}
-	// take last 24 bytes to fit, convert to uint32 (little endian)
-	refBlockPrefix = binary.LittleEndian.Uint32(prefix[8:])
-	return
+	return GetRefBlockFor(currentInfo.LastIrreversibleBlockNum, currentInfo.LastIrreversibleBlockID.String())
 }
 
 type BlockrootMerkle struct {
