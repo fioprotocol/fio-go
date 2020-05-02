@@ -37,6 +37,23 @@ func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress strin
 	)
 }
 
+// BpClaim requests payout for a block producer
+type BpClaim struct {
+	FioAddress string          `json:"fio_address"`
+	Actor      eos.AccountName `json:"actor"`
+}
+
+func NewBpClaim(fioAddress string, actor eos.AccountName) *Action {
+	return NewAction(
+		eos.AccountName("fio.treasury"), "bpclaim", actor,
+		BpClaim{
+			FioAddress: fioAddress,
+			Actor:      actor,
+		},
+	)
+}
+
+
 // ProducerLocation valid values are 10-80 in increments of 10
 type ProducerLocation uint16
 
