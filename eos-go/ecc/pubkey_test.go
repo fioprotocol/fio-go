@@ -15,13 +15,13 @@ func Test_PublicKeyMarshalUnmarshal(t *testing.T) {
 	}{
 		{
 			name:        "K1-EOS",
-			key:         "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
-			expectedKey: "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+			key:         "FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+			expectedKey: "FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
 		},
 		{
 			name:        "K1",
 			key:         "PUB_K1_6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
-			expectedKey: "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+			expectedKey: "FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
 		},
 		{
 			name:        "R1",
@@ -47,13 +47,13 @@ func TestPublicKey_MarshalJSON(t *testing.T) {
 	}{
 		{
 			name:         "K1-EOS",
-			key:          "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
-			expectedJSON: `"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"`,
+			key:          "FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+			expectedJSON: `"FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"`,
 		},
 		{
 			name:         "K1",
 			key:          "PUB_K1_6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
-			expectedJSON: `"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"`,
+			expectedJSON: `"FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"`,
 		},
 		{
 			name:         "R1",
