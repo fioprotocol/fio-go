@@ -7,12 +7,21 @@ import (
 	"testing"
 )
 
-func TestAPI_GetFioAccount(t *testing.T) {
+func newApi() (*API, error) {
 	nodeos := "http://dev:8889"
 	if os.Getenv("NODEOS") != "" {
 		nodeos = os.Getenv("NODEOS")
 	}
-	api, _, _ := NewConnection(nil, nodeos)
+	api, _, err := NewConnection(nil, nodeos)
+	return api, err
+}
+
+func TestAPI_GetFioAccount(t *testing.T) {
+	api, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	a, err := api.GetFioAccount("qbxn5zhw2ypw")
 	if err != nil {
 		t.Error(err)
@@ -45,11 +54,7 @@ func TestNewAccountFromWif(t *testing.T) {
 }
 
 func TestAccount_GetNames(t *testing.T) {
-	nodeos := "http://dev:8889"
-	if os.Getenv("NODEOS") != "" {
-		nodeos = os.Getenv("NODEOS")
-	}
-	api, _, err := NewConnection(nil, nodeos)
+	api, err := newApi()
 	if err != nil {
 		t.Error(err)
 		return
