@@ -7,17 +7,25 @@ import (
 	"testing"
 )
 
-func newApi() (*API, error) {
+func newApi() (*Account, *API, *TxOptions, error) {
 	nodeos := "http://dev:8889"
 	if os.Getenv("NODEOS") != "" {
 		nodeos = os.Getenv("NODEOS")
 	}
-	api, _, err := NewConnection(nil, nodeos)
-	return api, err
+	account, err := NewAccountFromWif("5JBbUG5SDpLWxvBKihMeXLENinUzdNKNeozLas23Mj6ZNhz3hLS")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	api, opts, err := NewConnection(nil, nodeos)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return account, api, opts, err
 }
 
+
 func TestAPI_GetFioAccount(t *testing.T) {
-	api, err := newApi()
+	_, api, _, err := newApi()
 	if err != nil {
 		t.Error(err)
 		return
@@ -54,7 +62,7 @@ func TestNewAccountFromWif(t *testing.T) {
 }
 
 func TestAccount_GetNames(t *testing.T) {
-	api, err := newApi()
+	_, api, _, err := newApi()
 	if err != nil {
 		t.Error(err)
 		return

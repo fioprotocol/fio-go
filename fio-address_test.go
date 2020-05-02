@@ -2,7 +2,6 @@ package fio
 
 import (
 	"encoding/json"
-	"os"
 	"testing"
 )
 
@@ -14,12 +13,8 @@ func TestAPI_GetFioNames(t *testing.T) {
 		domain  = `dapixdev`
 		address = `ada@dapixdev`
 	)
-	nodeos := "http://dev:8889"
-	if os.Getenv("NODEOS") != "" {
-		nodeos = os.Getenv("NODEOS")
-	}
 
-	api, _, err := NewConnection(nil, nodeos)
+	_, api, _, err := newApi()
 	if err != nil {
 		t.Error("cannot connect to run FIO names test: " + err.Error())
 		return

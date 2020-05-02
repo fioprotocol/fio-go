@@ -9,7 +9,7 @@ import (
 )
 
 func TestAPI_GetCurrentBlock(t *testing.T) {
-	api, err := newApi()
+	_, api, _, err := newApi()
 	if err != nil {
 		t.Error(err)
 		return
@@ -21,7 +21,7 @@ func TestAPI_GetCurrentBlock(t *testing.T) {
 }
 
 func TestAPI_AllABIs(t *testing.T) {
-	api, err := newApi()
+	_, api, _, err := newApi()
 	if err != nil {
 		t.Error(err)
 		return
@@ -42,7 +42,7 @@ func TestAPI_AllABIs(t *testing.T) {
 }
 
 func TestAPI_GetTableRowsOrder(t *testing.T) {
-	api, err := newApi()
+	_, api, _, err := newApi()
 	if err != nil {
 		t.Error(err)
 		return
@@ -94,7 +94,7 @@ func TestAPI_GetRefBlockFor(t *testing.T) {
 }
 
 func TestAPI_GetBlockHeaderState(t *testing.T) {
-	api, err := newApi()
+	_, api, _, err := newApi()
 	if err != nil {
 		t.Error(err)
 		return
