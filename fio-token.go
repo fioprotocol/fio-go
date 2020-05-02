@@ -60,8 +60,8 @@ func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64
 	)
 }
 
-// GetFioBalance is a convenience wrapper for GetCurrencyBalance
-func GetFioBalance(account eos.AccountName, api *API) (float64, error) {
+// GetBalance gets an account's balance
+func (api *API) GetBalance(account eos.AccountName) (float64, error) {
 	a, err := api.GetCurrencyBalance(account, "FIO", eos.AccountName("fio.token"))
 	if err != nil {
 		return 0.0, err
@@ -73,3 +73,12 @@ func GetFioBalance(account eos.AccountName, api *API) (float64, error) {
 	}
 	return 0.0, nil
 }
+
+// GetFioBalance is a convenience wrapper for GetCurrencyBalance, it is not idiomatic since it is
+// not a member function of API, and will be removed in a future version
+//
+// deprecated: use api.GetBalance instead
+func GetFioBalance(account eos.AccountName, api *API) (float64, error) {
+	return api.GetBalance(account)
+}
+

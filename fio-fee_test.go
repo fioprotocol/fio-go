@@ -32,7 +32,7 @@ func TestAPI_GetFee(t *testing.T) {
 
 	// tests both max fee and get fee
 	max := GetMaxFee(FeeAddPubAddress)
-	if max == 0 {
+	if max == 0 || max != GetMaxFeeByAction("addaddress") {
 		t.Error("got wrong max fee")
 	}
 	actual, err := api.GetFee(account.Addresses[0].FioAddress, FeeAddPubAddress)

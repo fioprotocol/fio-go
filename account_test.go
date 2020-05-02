@@ -16,7 +16,7 @@ func newApi() (*Account, *API, *TxOptions, error) {
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	api, opts, err := NewConnection(nil, nodeos)
+	api, opts, err := NewConnection(account.KeyBag, nodeos)
 	if err != nil {
 		return nil, nil, nil, err
 	}
