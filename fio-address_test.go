@@ -5,6 +5,62 @@ import (
 	"testing"
 )
 
+func TestAddress_Valid(t *testing.T) {
+	bad := []string{
+		"has@two@ampersat",
+		"no-@dashat",
+		"no@-atdash",
+		"-nodash@start",
+		"nodash@end-",
+		"bang!not@allowed",
+		"hash#not@llowed",
+		"dollar$not@llowed",
+		"perc%not@llowed",
+		"caret^not@llowed",
+		"amp&not@llowed",
+		"splat*not@llowed",
+		"open(not@llowed",
+		"close)not@llowed",
+		"under_not@llowed",
+		"open[not@llowed",
+		"close]not@llowed",
+		"open{not@llowed",
+		"close}not@llowed",
+		"slash/not@llowed",
+		"q?not@llowed",
+		"dot.not@llowed",
+		"less>not@llowed",
+		"great>not@llowed",
+		"under_not@llowed",
+		"missingdomain@",
+		"@missingname",
+		"@",
+		"65656565656565656565656565656565@65656565656565656565656565656565",
+	}
+	for _, b := range bad {
+		if Address(b).Valid() {
+			t.Error(b+" should be an invalid address")
+		}
+	}
+	good := []string{
+		"a@b",
+		"a-b@c",
+		"a@b-c",
+		"a-b@c-d",
+		"1@2",
+		"1-2@3",
+		"1@2-3",
+		"1-2@3-4",
+		"a@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+		"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb@c",
+	}
+	for _, g := range good {
+		if !Address(g).Valid() {
+			t.Error(g+" should be a valid address")
+		}
+	}
+}
+
 func TestAPI_GetFioNames(t *testing.T) {
 
 	// these are devnet accounts that have been added to testnet so tests can run vs either:

@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"github.com/mr-tron/base58"
 	"io/ioutil"
-	"regexp"
 )
 
 // Account holds the information for an account, it differs from a regular EOS account in that the
@@ -108,34 +107,6 @@ func ActorFromPub(pubKey string) (eos.AccountName, error) {
 		result = result >> 5
 	}
 	return eos.AccountName(string(actor[:12])), nil
-}
-
-// Address is a FIO address, which should be formatted as 'name@domain'
-type Address string
-
-// Valid checks for the correct fio.Address formatting
-//  Rules:
-//    Min: 3
-//    Max: 64
-//    Characters allowed: ASCII a-z0-9 - (dash) @ (ampersat)
-//    Characters required:
-//       only one @ and at least one a-z0-9 on either side of @.
-//       a-z0-9 is required on either side of any dash
-//    Case-insensitive
-func (a Address) Valid() (ok bool) {
-	if len(string(a)) < 3 || len(string(a)) > 64 {
-		return false
-	}
-	if bad, err := regexp.MatchString(`(?:--|::|:.*:|-:|:-|^-|-$)`, string(a)); bad || err != nil {
-		return false
-	}
-	if bad, err := regexp.MatchString(`(?:--|@@|@.*@|-@|@-|^-|-$)`, string(a)); bad || err != nil {
-		return false
-	}
-	if match, err := regexp.MatchString(`[a-zA-Z0-9-]+[:@][a-zA-Z0-9-]`, string(a)); err != nil || !match {
-		return false
-	}
-	return true
 }
 
 /*
