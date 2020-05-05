@@ -53,7 +53,6 @@ func NewBpClaim(fioAddress string, actor eos.AccountName) *Action {
 	)
 }
 
-
 // ProducerLocation valid values are 10-80 in increments of 10
 type ProducerLocation uint16
 

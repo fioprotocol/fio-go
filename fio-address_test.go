@@ -42,7 +42,7 @@ func TestAddress_Valid(t *testing.T) {
 	}
 	for _, b := range bad {
 		if Address(b).Valid() {
-			t.Error(b+" should be an invalid address")
+			t.Error(b + " should be an invalid address")
 		}
 	}
 	good := []string{
@@ -59,7 +59,7 @@ func TestAddress_Valid(t *testing.T) {
 	}
 	for _, g := range good {
 		if !Address(g).Valid() {
-			t.Error(g+" should be a valid address")
+			t.Error(g + " should be a valid address")
 		}
 	}
 }
@@ -181,13 +181,13 @@ func TestAddress(t *testing.T) {
 			account.Actor,
 			accountA.PubKey,
 			Tokens(
-				GetMaxFee(FeeRegisterFioDomain) +
-				GetMaxFee(FeeRenewFioDomain) +
-				(3*GetMaxFee(FeeRegisterFioAddress)) +
-				GetMaxFee(FeeRenewFioAddress) +
-				GetMaxFee(FeeTransferDom) +
-				GetMaxFee(FeeTransferAddress) +
-				GetMaxFee(FeeSetDomainPub)),
+				GetMaxFee(FeeRegisterFioDomain)+
+					GetMaxFee(FeeRenewFioDomain)+
+					(3*GetMaxFee(FeeRegisterFioAddress))+
+					GetMaxFee(FeeRenewFioAddress)+
+					GetMaxFee(FeeTransferDom)+
+					GetMaxFee(FeeTransferAddress)+
+					GetMaxFee(FeeSetDomainPub)),
 		)}, opts),
 		opts.ChainID, CompressionNone,
 	)
@@ -203,7 +203,7 @@ func TestAddress(t *testing.T) {
 	// ensure available
 	ok, err := api.AvailCheck(domain)
 	if err != nil {
-		t.Error("check available before register: "+err.Error())
+		t.Error("check available before register: " + err.Error())
 	}
 	if !ok {
 		t.Error("domain was not available")
@@ -215,13 +215,13 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("Register domain: "+err.Error())
+		t.Error("Register domain: " + err.Error())
 	}
 
 	// ensure not available
 	ok, err = api.AvailCheck(domain)
 	if err != nil {
-		t.Error("check available after register: "+err.Error())
+		t.Error("check available after register: " + err.Error())
 	}
 	if ok {
 		t.Error("domain was still available")
@@ -233,7 +233,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("Register domain: "+err.Error())
+		t.Error("Register domain: " + err.Error())
 	}
 
 	// confirm owner
@@ -250,7 +250,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: "+err.Error())
+		t.Error("set public: " + err.Error())
 	}
 
 	// two addresses
@@ -265,7 +265,7 @@ func TestAddress(t *testing.T) {
 			optsA.ChainID, CompressionNone,
 		)
 		if err != nil {
-			t.Error("reg address: "+err.Error())
+			t.Error("reg address: " + err.Error())
 		}
 	}
 
@@ -275,7 +275,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: "+err.Error())
+		t.Error("set public: " + err.Error())
 	}
 
 	// query by actor
@@ -307,14 +307,14 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: "+err.Error())
+		t.Error("set public: " + err.Error())
 	}
 
 	// add three
 	addresses := []TokenPubAddr{
-		{ChainCode:"chain0", PublicAddress: "pubkey0", TokenCode: "token0"},
-		{ChainCode:"chain1", PublicAddress: "pubkey1", TokenCode: "token1"},
-		{ChainCode:"chain2", PublicAddress: "pubkey2", TokenCode: "token2"},
+		{ChainCode: "chain0", PublicAddress: "pubkey0", TokenCode: "token0"},
+		{ChainCode: "chain1", PublicAddress: "pubkey1", TokenCode: "token1"},
+		{ChainCode: "chain2", PublicAddress: "pubkey2", TokenCode: "token2"},
 	}
 	naas, ok := NewAddAddresses(accountA.Actor, Address(names[2]+"@"+domain), addresses)
 	if !ok {
@@ -325,7 +325,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: "+err.Error())
+		t.Error("set public: " + err.Error())
 	}
 
 	// lookup one of the addresses
@@ -346,7 +346,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: "+err.Error())
+		t.Error("set public: " + err.Error())
 	}
 
 	// transfer it
@@ -355,7 +355,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: "+err.Error())
+		t.Error("set public: " + err.Error())
 	}
 
 	// verify it transferred
@@ -376,7 +376,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: "+err.Error())
+		t.Error("set public: " + err.Error())
 	}
 
 	// verify

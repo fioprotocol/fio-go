@@ -23,7 +23,6 @@ func newApi() (*Account, *API, *TxOptions, error) {
 	return account, api, opts, err
 }
 
-
 func TestAPI_GetFioAccount(t *testing.T) {
 	_, api, _, err := newApi()
 	if err != nil {
@@ -81,4 +80,3 @@ func TestAccount_GetNames(t *testing.T) {
 		t.Error("did not have correct address")
 	}
 }
-

@@ -43,7 +43,7 @@ func TestTpid(t *testing.T) {
 		return
 	}
 	rand.Seed(time.Now().UnixNano())
-	for i:=0; i < 10; i++ {
+	for i := 0; i < 10; i++ {
 		randomAccount, err := NewRandomAccount()
 		if err != nil {
 			t.Error(err)
@@ -70,7 +70,6 @@ func TestTpid(t *testing.T) {
 	if err != nil && !strings.Contains(err.Error(), "An invalid request was sent in") {
 		t.Error(err)
 	} else if !strings.Contains(string(j), "tpids_paid") {
-		t.Error("expected tpid payout: "+string(j))
+		t.Error("expected tpid payout: " + string(j))
 	}
 }
-

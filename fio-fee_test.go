@@ -40,5 +40,3 @@ func TestAPI_GetFee(t *testing.T) {
 		t.Error("fee should have been bundled")
 	}
 }
-
-

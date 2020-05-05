@@ -423,7 +423,6 @@ type ProducerToLast struct {
 	ProducedOrImplied string          `json:"produced_or_implied"`
 }
 
-
 // ProducerToLast extracts a slice of ProducerToLast structs from a BlockHeaderState, this contains either the last
 // block that the producer signed, or the last irreversible block. This is useful for seeing if a producer is missing
 // rounds, or is responsible for double-signed blocks causing forks.
