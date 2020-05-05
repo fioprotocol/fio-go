@@ -11,9 +11,33 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"regexp"
 )
 
-const FioSymbol = "ᵮ"
+// Address is a FIO address, which should be formatted as 'name@domain'
+type Address string
+
+// Valid checks for the correct fio.Address formatting
+//  Rules:
+//    Min: 3
+//    Max: 64
+//    Characters allowed: ASCII a-z0-9 - (dash) @ (ampersat)
+//    Characters required:
+//       only one @ and at least one a-z0-9 on either side of @.
+//       a-z0-9 is required on either side of any dash
+//    Case-insensitive
+func (a Address) Valid() (ok bool) {
+	if len(string(a)) < 3 || len(string(a)) > 64 {
+		return false
+	}
+	if bad, err := regexp.MatchString(`(?:--|@@|@.*@|-@|@-|^-|-$)`, string(a)); bad || err != nil {
+		return false
+	}
+	if match, err := regexp.MatchString(`^[a-zA-Z0-9-]+[@][a-zA-Z0-9-]+$`, string(a)); err != nil || !match {
+		return false
+	}
+	return true
+}
 
 // RegAddress Registers a FIO Address on the FIO blockchain
 type RegAddress struct {
@@ -151,7 +175,7 @@ type RenewDomain struct {
 	Actor     eos.AccountName `json:"actor"`
 }
 
-func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *Action {
+func NewRenewDomain(actor eos.AccountName, domain string) *Action {
 	return NewAction(
 		"fio.address", "renewdomain", actor,
 		RenewDomain{
@@ -235,6 +259,9 @@ type ExpDomain struct {
 	Domain string          `json:"domain"`
 }
 
+// NewExpDomain is used by a test contract and not available on mainnet
+//
+// Deprecated: only used in development environments
 func NewExpDomain(actor eos.AccountName, domain string) *Action {
 	return NewAction(
 		"fio.address", "expdomain", actor,
@@ -255,6 +282,9 @@ type ExpAddresses struct {
 	NumberAddressesToAdd uint64          `json:"number_addresses_to_add"`
 }
 
+// NewExpAddresses is used by a test contract and not available on mainnet
+//
+// Deprecated: only used in development environments
 func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string, toAdd uint64) *Action {
 	return NewAction(
 		"fio.address", "expaddresses", actor,
@@ -325,8 +355,8 @@ func (api API) PubAddressLookup(fioAddress Address, chain string, token string) 
 	}
 	query := pubAddressRequest{
 		FioAddress: string(fioAddress),
-		TokenCode:  chain,
-		ChainCode:  token,
+		TokenCode:  token,
+		ChainCode:  chain,
 	}
 	j, _ := json.Marshal(query)
 	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_pub_address`, bytes.NewBuffer(j))

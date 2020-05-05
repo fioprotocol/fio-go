@@ -9,6 +9,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/mr-tron/base58 v1.1.2
+	github.com/stretchr/testify v1.4.0
 	github.com/tidwall/gjson v1.3.5 // indirect
 	github.com/tidwall/sjson v1.0.4 // indirect
 	go.uber.org/zap v1.13.0 // indirect

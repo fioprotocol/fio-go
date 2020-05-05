@@ -100,7 +100,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	return a, txOpts, nil
 }
 
-// NewAction creates an Action for FIO contract calls
+// NewAction creates an Action for FIO contract calls, assumes the permission is "active"
 func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
@@ -116,6 +116,8 @@ func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 }
 
 // NewActionAsOwner is the same as NewAction, but specifies the owner permission, really only needed for msig updateauth in FIO
+//
+// deprecated: use NewActionWithPermission instead
 func NewActionAsOwner(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
@@ -124,6 +126,21 @@ func NewActionAsOwner(contract eos.AccountName, name eos.ActionName, actor eos.A
 			{
 				Actor:      actor,
 				Permission: "owner",
+			},
+		},
+		ActionData: eos.NewActionData(actionData),
+	}
+}
+
+// NewActionWithPermission allows building an action and specifying the permission
+func NewActionWithPermission(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, permission string, actionData interface{}) *Action {
+	return &Action{
+		Account: contract,
+		Name:    name,
+		Authorization: []eos.PermissionLevel{
+			{
+				Actor:      actor,
+				Permission: eos.PermissionName(permission),
 			},
 		},
 		ActionData: eos.NewActionData(actionData),
@@ -319,6 +336,20 @@ func (api *API) GetTableRowsOrder(gtro GetTableRowsOrderRequest) (*eos.GetTableR
 	return tableRows, nil
 }
 
+// GetRefBlockFor calculates the Reference for an arbitrary block and ID
+func GetRefBlockFor(blocknum uint32, id string) (refBlockNum uint32, refBlockPrefix uint32, err error) {
+	// uint16: block % (2 ^ 16)
+	refBlockNum = blocknum % uint32(math.Pow(2.0, 16.0))
+	prefix, err := hex.DecodeString(id)
+	if err != nil {
+		return 0, 0, err
+	}
+	// take last 24 bytes to fit, convert to uint32 (little endian)
+	refBlockPrefix = binary.LittleEndian.Uint32(prefix[8:])
+	return
+}
+
+// GetRefBlock calculates a the block reference for the last irreversible block
 func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err error) {
 	// get current block:
 	currentInfo, err := api.GetInfo()
@@ -326,14 +357,7 @@ func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err er
 		return 0, 0, err
 	}
 	// uint16: block % (2 ^ 16)
-	refBlockNum = currentInfo.HeadBlockNum % uint32(math.Pow(2.0, 16.0))
-	prefix, err := hex.DecodeString(currentInfo.HeadBlockID.String())
-	if err != nil {
-		return 0, 0, err
-	}
-	// take last 24 bytes to fit, convert to uint32 (little endian)
-	refBlockPrefix = binary.LittleEndian.Uint32(prefix[8:])
-	return
+	return GetRefBlockFor(currentInfo.LastIrreversibleBlockNum, currentInfo.LastIrreversibleBlockID.String())
 }
 
 type BlockrootMerkle struct {
@@ -358,6 +382,7 @@ type BlockHeader struct {
 	HeaderExtensions []*eos.Extension   `json:"header_extensions"`
 }
 
+// BlockHeaderState holds information about reversible blocks.
 type BlockHeaderState struct {
 	BlockNum                  uint32            `json:"block_num"`
 	ProposedIrrBlock          uint32            `json:"dpos_proposed_irreversible_blocknum"`
@@ -378,6 +403,7 @@ type BlockHeaderStateReq struct {
 	BlockNumOrId interface{} `json:"block_num_or_id"` // can be checksum or uint32
 }
 
+// GetBlockHeaderState returns the details for a reversible block. If the block is irreversible the api will return an error.
 func (api *API) GetBlockHeaderState(numOrId interface{}) (*BlockHeaderState, error) {
 	reqJson, err := json.Marshal(&BlockHeaderStateReq{BlockNumOrId: numOrId})
 	if err != nil {
@@ -414,6 +440,9 @@ type ProducerToLast struct {
 	ProducedOrImplied string          `json:"produced_or_implied"`
 }
 
+// ProducerToLast extracts a slice of ProducerToLast structs from a BlockHeaderState, this contains either the last
+// block that the producer signed, or the last irreversible block. This is useful for seeing if a producer is missing
+// rounds, or is responsible for double-signed blocks causing forks.
 func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool, last []*ProducerToLast) {
 	var l []json.RawMessage
 	var pOrI string

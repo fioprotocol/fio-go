@@ -92,7 +92,7 @@ func TestDecode(t *testing.T) {
 	//iv, _ := hex.DecodeString("f300888ca4f512cebdc0020ff0f7224c")
 }
 
- */
+*/
 
 func TestEncryptDecrypt(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
@@ -241,4 +241,4 @@ func TestEciesDecrypt(t *testing.T) {
 
 }
 
- */
+*/
