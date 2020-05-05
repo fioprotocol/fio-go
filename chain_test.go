@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	"math"
+	"reflect"
 	"testing"
 )
 
@@ -150,9 +151,85 @@ func TestAPI_PushEndpointRaw(t *testing.T) {
 			opts),
 		opts.ChainID, CompressionNone,
 	)
-	_, err = api.PushEndpointRaw("transfer_tokens_pub_key", tx)
+	_, err = api.PushEndpointRaw("/v1/chain/transfer_tokens_pub_key", tx)
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestAction_ToEos(t *testing.T) {
+	account, _, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	act := NewTransferTokensPubKey(account.Actor, account.PubKey, Tokens(0.0001)).ToEos()
+	if reflect.TypeOf(*act).String() != "eos.Action" {
+		t.Error("ToEos gave wrong type")
+	}
+}
+
+func TestNewAction(t *testing.T) {
+	a := eos.AccountName("test")
+
+	actOwner := NewActionAsOwner(
+		"fio.token", "trnsfiopubky", a,
+		TransferTokensPubKey{
+			PayeePublicKey: "",
+			Amount:         1,
+			MaxFee:         Tokens(GetMaxFee(FeeTransferTokensPubKey)),
+			Actor:          a,
+			Tpid:           CurrentTpid(),
+		},
+	)
+	if actOwner.Authorization[0].Permission != eos.PermissionName("owner") {
+		t.Error("NewActionAsOwner did not set owner")
+	}
+
+	actPerm := NewActionWithPermission(
+		"fio.token", "trnsfiopubky", a, "owner",
+		TransferTokensPubKey{
+			PayeePublicKey: "",
+			Amount:         1,
+			MaxFee:         Tokens(GetMaxFee(FeeTransferTokensPubKey)),
+			Actor:          a,
+			Tpid:           CurrentTpid(),
+		},
+	)
+	if actPerm.Authorization[0].Permission != eos.PermissionName("owner") {
+		t.Error("NewActionWitherPermission did not set permission")
+	}
+}
+
+func TestAPI_GetRefBlock(t *testing.T) {
+	_, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, _, err = api.GetRefBlock()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestAPI_GetTableByScopeMore(t *testing.T) {
+	_, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	res, err := api.GetTableByScopeMore(eos.GetTableByScopeRequest{
+		Code:       "eosio",
+		Table:      "producers",
+		Limit:      1,
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if res.More != true {
+		t.Error("expected more records")
 	}
 }
 
