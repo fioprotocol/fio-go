@@ -100,7 +100,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	return a, txOpts, nil
 }
 
-// NewAction creates an Action for FIO contract calls
+// NewAction creates an Action for FIO contract calls, assumes the permission is "active"
 func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
@@ -116,6 +116,8 @@ func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 }
 
 // NewActionAsOwner is the same as NewAction, but specifies the owner permission, really only needed for msig updateauth in FIO
+//
+// deprecated: use NewActionWithPermission instead
 func NewActionAsOwner(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
@@ -124,6 +126,21 @@ func NewActionAsOwner(contract eos.AccountName, name eos.ActionName, actor eos.A
 			{
 				Actor:      actor,
 				Permission: "owner",
+			},
+		},
+		ActionData: eos.NewActionData(actionData),
+	}
+}
+
+// NewActionWithPermission allows building an action and specifying the permission
+func NewActionWithPermission(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, permission string, actionData interface{}) *Action {
+	return &Action{
+		Account: contract,
+		Name:    name,
+		Authorization: []eos.PermissionLevel{
+			{
+				Actor:      actor,
+				Permission: eos.PermissionName(permission),
 			},
 		},
 		ActionData: eos.NewActionData(actionData),

@@ -116,4 +116,43 @@ func TestAPI_GetBlockHeaderState(t *testing.T) {
 	if bhs.BlockNum != info.HeadBlockNum {
 		t.Error("did not get expected result")
 	}
+
+	ok, last := bhs.ProducerToLast(ProducerToLastImplied)
+	if !ok {
+		t.Error("last implied not found")
+	}
+	if len(last) < 3 {
+		t.Error("last implied was missing producers")
+	}
+
+	ok, last = bhs.ProducerToLast(ProducerToLastProduced)
+	if !ok {
+		t.Error("last produced not found")
+	}
+	if len(last) < 3 {
+		t.Error("last produced was missing producers")
+	}
+
 }
+
+func TestAPI_PushEndpointRaw(t *testing.T) {
+	account, api, opts, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	randAccount, _ := NewRandomAccount()
+	_, tx, err := api.SignTransaction(
+		NewTransaction(
+			[]*Action{
+				NewTransferTokensPubKey(account.Actor, randAccount.PubKey, Tokens(0.0001))},
+			opts),
+		opts.ChainID, CompressionNone,
+	)
+	_, err = api.PushEndpointRaw("transfer_tokens_pub_key", tx)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
