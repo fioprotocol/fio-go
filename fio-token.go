@@ -4,6 +4,8 @@ import (
 	"github.com/eoscanada/eos-go"
 )
 
+const FioSymbol = "ᵮ"
+
 // Tokens is a convenience function for converting from a float for human readability.
 // Example 1 FIO Token: Tokens(1.0) == uint64(1000000000)
 func Tokens(tokens float64) uint64 {
@@ -81,4 +83,3 @@ func (api *API) GetBalance(account eos.AccountName) (float64, error) {
 func GetFioBalance(account eos.AccountName, api *API) (float64, error) {
 	return api.GetBalance(account)
 }
-

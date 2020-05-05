@@ -2,7 +2,9 @@ package fio
 
 import (
 	"encoding/json"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 func TestAddress_Valid(t *testing.T) {
@@ -12,6 +14,7 @@ func TestAddress_Valid(t *testing.T) {
 		"no@-atdash",
 		"-nodash@start",
 		"nodash@end-",
+		"no@dash--dash",
 		"bang!not@allowed",
 		"hash#not@llowed",
 		"dollar$not@llowed",
@@ -59,6 +62,17 @@ func TestAddress_Valid(t *testing.T) {
 			t.Error(g+" should be a valid address")
 		}
 	}
+}
+
+func printResult(from string, result *FioNames) string {
+	if result == nil {
+		return "\n" + from + " returned a nil response"
+	}
+	j, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return "\n" + from + " could not unmarshal " + err.Error()
+	}
+	return "\n" + from + "\n" + string(j)
 }
 
 func TestAPI_GetFioNames(t *testing.T) {
@@ -137,13 +151,241 @@ func TestAPI_GetFioNames(t *testing.T) {
 	}
 }
 
-func printResult(from string, result *FioNames) string {
-	if result == nil {
-		return "\n" + from + " returned a nil response"
+func word() string {
+	var w string
+	for i := 0; i < 8; i++ {
+		w = w + string(byte(rand.Intn(26)+97))
 	}
-	j, err := json.MarshalIndent(result, "", "  ")
+	return w
+}
+
+func TestAddress(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+	account, api, opts, err := newApi()
+
+	accountA, err := NewRandomAccount()
 	if err != nil {
-		return "\n" + from + " could not unmarshal " + err.Error()
+		t.Error(err)
+		return
 	}
-	return "\n" + from + "\n" + string(j)
+	apiA, optsA, err := NewConnection(accountA.KeyBag, api.BaseURL)
+
+	accountB, err := NewRandomAccount()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	_, err = api.SignPushTransaction(NewTransaction(
+		[]*Action{NewTransferTokensPubKey(
+			account.Actor,
+			accountA.PubKey,
+			Tokens(
+				GetMaxFee(FeeRegisterFioDomain) +
+				GetMaxFee(FeeRenewFioDomain) +
+				(3*GetMaxFee(FeeRegisterFioAddress)) +
+				GetMaxFee(FeeRenewFioAddress) +
+				GetMaxFee(FeeTransferDom) +
+				GetMaxFee(FeeTransferAddress) +
+				GetMaxFee(FeeSetDomainPub)),
+		)}, opts),
+		opts.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	time.Sleep(time.Second)
+
+	domain := word()
+	names := []string{word(), word(), word()}
+
+	// ensure available
+	ok, err := api.AvailCheck(domain)
+	if err != nil {
+		t.Error("check available before register: "+err.Error())
+	}
+	if !ok {
+		t.Error("domain was not available")
+	}
+
+	// register a domain
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{NewRegDomain(accountA.Actor, domain, accountA.PubKey)}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("Register domain: "+err.Error())
+	}
+
+	// ensure not available
+	ok, err = api.AvailCheck(domain)
+	if err != nil {
+		t.Error("check available after register: "+err.Error())
+	}
+	if ok {
+		t.Error("domain was still available")
+	}
+
+	// renew a domain
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{NewRenewDomain(accountA.Actor, domain)}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("Register domain: "+err.Error())
+	}
+
+	// confirm owner
+	o, err := api.GetDomainOwner(domain)
+	if err != nil {
+		t.Error(err)
+	} else if *o != accountA.Actor {
+		t.Error("get owner had wrong result")
+	}
+
+	// set public
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{NewSetDomainPub(accountA.Actor, domain, true)}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("set public: "+err.Error())
+	}
+
+	// two addresses
+	for _, n := range names[:2] {
+		act, ok := NewRegAddress(accountA.Actor, Address(n+"@"+domain), accountA.PubKey)
+		if !ok {
+			t.Error("tried to register an invalid address")
+			continue
+		}
+		_, err = apiA.SignPushTransaction(NewTransaction(
+			[]*Action{act}, optsA),
+			optsA.ChainID, CompressionNone,
+		)
+		if err != nil {
+			t.Error("reg address: "+err.Error())
+		}
+	}
+
+	// must reg (panic on fail)
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{MustNewRegAddress(accountA.Actor, Address(names[2]+"@"+domain), accountA.PubKey)}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("set public: "+err.Error())
+	}
+
+	// query by actor
+	fioNames, ok, err := api.GetFioNamesForActor(string(accountA.Actor))
+	if err != nil {
+		t.Error(err)
+	}
+	if !ok {
+		t.Error("did not get a result for get fio names for actor")
+	} else {
+		var found bool
+		for _, a := range fioNames.FioAddresses {
+			if names[2]+"@"+domain == a.FioAddress {
+				found = true
+			}
+		}
+		if !found {
+			t.Error("could not lookup fio addresses for actor")
+		}
+	}
+
+	// add one address
+	naa, ok := NewAddAddress(accountA.Actor, Address(names[2]+"@"+domain), "token", "chain", "pubkey")
+	if !ok {
+		t.Error("invalid fio address while adding public address")
+	}
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{naa}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("set public: "+err.Error())
+	}
+
+	// add three
+	addresses := []TokenPubAddr{
+		{ChainCode:"chain0", PublicAddress: "pubkey0", TokenCode: "token0"},
+		{ChainCode:"chain1", PublicAddress: "pubkey1", TokenCode: "token1"},
+		{ChainCode:"chain2", PublicAddress: "pubkey2", TokenCode: "token2"},
+	}
+	naas, ok := NewAddAddresses(accountA.Actor, Address(names[2]+"@"+domain), addresses)
+	if !ok {
+		t.Error("invalid fio address while adding public addresses")
+	}
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{naas}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("set public: "+err.Error())
+	}
+
+	// lookup one of the addresses
+	pubAddress, ok, err := api.PubAddressLookup(Address(names[2]+"@"+domain), "chain", "token")
+	if err != nil {
+		t.Error(err)
+	}
+	if !ok {
+		t.Error("did not find address from pub address lookup")
+	}
+	if pubAddress.PublicAddress != "pubkey" {
+		t.Error("got incorrect public address")
+	}
+
+	// renew it
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{NewRenewAddress(accountA.Actor, names[2]+"@"+domain)}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("set public: "+err.Error())
+	}
+
+	// transfer it
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{NewTransferAddress(accountA.Actor, Address(names[2]+"@"+domain), accountB.PubKey)}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("set public: "+err.Error())
+	}
+
+	// verify it transferred
+	pubAddress, ok, err = api.PubAddressLookup(Address(names[2]+"@"+domain), "chain", "token")
+	if err != nil {
+		t.Error(err)
+	}
+	if !ok {
+		t.Error("did not find address from pub address lookup")
+	}
+	if pubAddress.PublicAddress != accountB.PubKey {
+		t.Error("got incorrect public address after transfer")
+	}
+
+	// transfer the domain
+	_, err = apiA.SignPushTransaction(NewTransaction(
+		[]*Action{NewTransferDom(accountA.Actor, domain, accountB.PubKey)}, optsA),
+		optsA.ChainID, CompressionNone,
+	)
+	if err != nil {
+		t.Error("set public: "+err.Error())
+	}
+
+	// verify
+	newOwner, err := api.GetDomainOwner(domain)
+	if err != nil {
+		t.Error(err)
+	}
+	if accountB.Actor != *newOwner {
+		t.Error("domain transfer failed")
+	}
+
 }

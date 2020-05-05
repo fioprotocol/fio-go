@@ -14,8 +14,6 @@ import (
 	"regexp"
 )
 
-const FioSymbol = "ᵮ"
-
 // Address is a FIO address, which should be formatted as 'name@domain'
 type Address string
 
@@ -177,7 +175,7 @@ type RenewDomain struct {
 	Actor     eos.AccountName `json:"actor"`
 }
 
-func NewRenewDomain(actor eos.AccountName, domain string, ownerPubKey string) *Action {
+func NewRenewDomain(actor eos.AccountName, domain string) *Action {
 	return NewAction(
 		"fio.address", "renewdomain", actor,
 		RenewDomain{
@@ -261,6 +259,9 @@ type ExpDomain struct {
 	Domain string          `json:"domain"`
 }
 
+// NewExpDomain is used by a test contract and not available on mainnet
+//
+// Deprecated: only used in development environments
 func NewExpDomain(actor eos.AccountName, domain string) *Action {
 	return NewAction(
 		"fio.address", "expdomain", actor,
@@ -354,8 +355,8 @@ func (api API) PubAddressLookup(fioAddress Address, chain string, token string) 
 	}
 	query := pubAddressRequest{
 		FioAddress: string(fioAddress),
-		TokenCode:  chain,
-		ChainCode:  token,
+		TokenCode:  token,
+		ChainCode:  chain,
 	}
 	j, _ := json.Marshal(query)
 	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_pub_address`, bytes.NewBuffer(j))

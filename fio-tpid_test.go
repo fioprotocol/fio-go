@@ -74,10 +74,3 @@ func TestTpid(t *testing.T) {
 	}
 }
 
-func word() string {
-	var w string
-	for i := 0; i < 8; i++ {
-		w = w + string(byte(rand.Intn(26)+97))
-	}
-	return w
-}
