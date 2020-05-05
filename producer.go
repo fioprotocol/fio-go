@@ -410,7 +410,7 @@ func parseCIDR(s string) *net.IPNet {
 
 func isPrivate(ip net.IP) bool {
 	if ip == nil {
-		return false
+		return true // presumes a true result gets rejected
 	}
 	for _, priv := range privateBlocks {
 		if priv.Contains(ip) {

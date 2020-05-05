@@ -3,6 +3,7 @@ package fio
 import (
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"sort"
 	"strings"
@@ -286,7 +287,15 @@ func servBpJson(listen chan string) {
 	  ]
 	}`)
 
+	hits := 0
 	respond := func(resp http.ResponseWriter, req *http.Request) {
+		// alternate so bp.chainid.json gets a 404 on second try
+		hits += 1
+		if hits % 2 == 1 {
+			resp.Write(nil)
+			resp.WriteHeader(http.StatusNotFound)
+			return
+		}
 		req.Body.Close()
 		resp.WriteHeader(http.StatusOK)
 		resp.Write(bpJson)
@@ -298,4 +307,22 @@ func servBpJson(listen chan string) {
 
 	listen <- url
 	panic(http.ListenAndServe(url, nil))
+}
+
+func TestIsPrivate(t *testing.T) {
+	privs := []string{
+		"169.254.169.254",
+		"10.0.0.1",
+		"192.168.0.1",
+		"172.16.0.1",
+		"127.0.0.1",
+		"::1",
+		"172,16.0.1", // intentional format errors
+		"garbagestringlkjsdlfkjsdfiu",
+	}
+	for _, ip := range privs {
+		if !isPrivate(net.ParseIP(ip)) {
+			t.Error(ip+" is not marked as a private ip")
+		}
+	}
 }
