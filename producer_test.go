@@ -137,3 +137,36 @@ func TestAPI_GetProducerSchedule(t *testing.T) {
 		t.Error("got empty producer schedule")
 	}
 }
+
+/*
+func TestAPI_Register_GetBpJson(t *testing.T) {
+	account, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	prod, _ := NewRandomAccount()
+	_, err = api.SignPushActions(
+		NewTransferTokensPubKey(
+			account.Actor,
+			prod.PubKey,
+			Tokens(GetMaxFee(FeeRegisterProducer)+GetMaxFee(FeeUnregisterProducer)+10.0),
+		).ToEos(),
+	)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	rand.Seed(time.Now().UnixNano())
+	fioAddr := "producer-" + word() + "@dapixdev"
+	_, err = api.SignPushActions(MustNewRegAddress(
+		account.Actor, Address(fioAddr), prod.PubKey).ToEos(),
+	)
+	if err != nil {
+		t.Error(err)
+		return
+
+	}
+}
+*/
