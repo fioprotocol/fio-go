@@ -279,7 +279,15 @@ type BpJson struct {
 	BpJsonUrl           string       `json:"bp_json_url"`
 }
 
+// GetBpJson attempts to retrieve the bp.json file for a producer based on the URL in the eosio.producers table.
+// It intentionally rejects URLs that are an IP address, or resolve to a private IP address to reduce the risk of
+// SSRF attacks, note however this check is not comprehensive, and is not risk free.
 func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
+	return api.getBpJson(producer, false)
+}
+
+// allows override of private ip check for tests
+func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, error) {
 	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:       "eosio",
 		Scope:      "eosio",
@@ -306,20 +314,22 @@ func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
 		return nil, err
 	}
 	// ensure this is 1) a hostname, and 2) does not resolve to a private IP range:
-	ip := net.ParseIP(u.Host)
-	if ip != nil {
-		return nil, errors.New("URL is an IP address, refusing to fetch")
-	}
-	addrs, err := net.LookupHost(u.Host)
-	if err != nil {
-		return nil, err
-	}
-	if len(addrs) == 0 {
-		return nil, errors.New("could not resolve DNS for url")
-	}
-	for _, ip := range addrs {
-		if isPrivate(net.ParseIP(ip)) {
-			return nil, errors.New("url points to a private IP address, refusing to continue")
+	if !allowIp {
+		ip := net.ParseIP(u.Host)
+		if ip != nil {
+			return nil, errors.New("URL is an IP address, refusing to fetch")
+		}
+		addrs, err := net.LookupHost(u.Host)
+		if err != nil {
+			return nil, err
+		}
+		if len(addrs) == 0 {
+			return nil, errors.New("could not resolve DNS for url")
+		}
+		for _, ip := range addrs {
+			if isPrivate(net.ParseIP(ip)) {
+				return nil, errors.New("url points to a private IP address, refusing to continue")
+			}
 		}
 	}
 
@@ -374,7 +384,7 @@ func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
 
 // adapted from https://github.com/emitter-io/address/blob/master/ipaddr.go
 // Copyright (c) 2018 Roman Atachiants
-var privateBlocks = []*net.IPNet{
+var privateBlocks = [...]*net.IPNet{
 	parseCIDR("10.0.0.0/8"),     // RFC 1918 IPv4 private network address
 	parseCIDR("100.64.0.0/10"),  // RFC 6598 IPv4 shared address space
 	parseCIDR("127.0.0.0/8"),    // RFC 1122 IPv4 loopback address
