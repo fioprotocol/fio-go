@@ -16,17 +16,19 @@ func TestNewVoteProducer(t *testing.T) {
 	}
 
 	voter, _ := NewRandomAccount()
-	_, err = api.SignPushActions(NewTransferTokensPubKey(
-		account.Actor,
-		voter.PubKey,
-		Tokens(GetMaxFee(FeeVoteProducer))+1.0).ToEos(),
+	_, err = api.SignPushActions(
+		NewTransferTokensPubKey(
+			account.Actor,
+			voter.PubKey,
+			Tokens(GetMaxFee(FeeRegisterProxy)+10.0),
+		).ToEos(),
 	)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	rand.Seed(time.Now().UnixNano())
-	fioAddr := "vote-"+word()+"@dapixdev"
+	fioAddr := "vote-" + word() + "@dapixdev"
 	_, err = api.SignPushActions(MustNewRegAddress(
 		account.Actor, Address(fioAddr), voter.PubKey).ToEos(),
 	)
@@ -79,4 +81,59 @@ func TestNewVoteProducer(t *testing.T) {
 		t.Error("votes not updated")
 	}
 
+	_, err = voterApi.SignPushActions(NewRegProxy(fioAddr, voter.Actor).ToEos())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	pVoter, _ := NewRandomAccount()
+	_, err = api.SignPushActions(
+		NewTransferTokensPubKey(
+			account.Actor,
+			pVoter.PubKey,
+			Tokens(1.0),
+		).ToEos(),
+	)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	rand.Seed(time.Now().UnixNano())
+	pFioAddr := "proxyvote-" + word() + "@dapixdev"
+	_, err = api.SignPushActions(MustNewRegAddress(
+		account.Actor, Address(pFioAddr), pVoter.PubKey).ToEos(),
+	)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	pApi, _, err := NewConnection(pVoter.KeyBag, api.BaseURL)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, err = pApi.SignPushActions(NewVoteProxy(fioAddr, pFioAddr, pVoter.Actor).ToEos())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+}
+
+func TestAPI_GetProducerSchedule(t *testing.T) {
+	_, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sched, err := api.GetProducerSchedule()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(sched.Active.Producers) == 0 {
+		t.Error("got empty producer schedule")
+	}
 }
