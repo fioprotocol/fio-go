@@ -409,3 +409,66 @@ func isPrivate(ip net.IP) bool {
 	}
 	return false
 }
+
+type existVotes struct {
+	Producers []string `json:"producers"`
+}
+
+type prodRow struct {
+	FioAddress string `json:"fio_address"`
+}
+
+// GetVotes returns a slice of an account's current votes
+func (api *API) GetVotes(account string) (votedFor []string, err error) {
+	getVote, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:  "eosio",
+		Scope: "eosio",
+		Table: "voters",
+
+		Index:      "3",
+		LowerBound: account,
+		UpperBound: account,
+		Limit:      1,
+		KeyType:    "name",
+		JSON:       true,
+	})
+	if err != nil {
+		return
+	}
+	v := make([]*existVotes, 0)
+	err = json.Unmarshal(getVote.Rows, &v)
+	if err != nil {
+		return
+	}
+	if len(v) == 0 {
+		return
+	}
+	votedFor = make([]string, 0)
+	for _, row := range v[0].Producers {
+		if row == "" {
+			continue
+		}
+		gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+			Code:       "eosio",
+			Scope:      "eosio",
+			Table:      "producers",
+			LowerBound: row,
+			UpperBound: row,
+			KeyType:    "name",
+			Index:      "4",
+			JSON:       true,
+		})
+		if err != nil {
+			continue
+		}
+		p := make([]*prodRow, 0)
+		err = json.Unmarshal(gtr.Rows, &p)
+		if err != nil {
+			continue
+		}
+		if len(p) == 1 && p[0].FioAddress != "" {
+			votedFor = append(votedFor, p[0].FioAddress)
+		}
+	}
+	return
+}
