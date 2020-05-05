@@ -357,7 +357,7 @@ func TestAddress(t *testing.T) {
 	if err != nil {
 		t.Error("set public: " + err.Error())
 	}
-	time.Sleep(500*time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// verify it transferred
 	pubAddress, ok, err = api.PubAddressLookup(Address(names[2]+"@"+domain), "FIO", "FIO")

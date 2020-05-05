@@ -1,7 +1,9 @@
 package fio
 
 import (
+	"fmt"
 	"math/rand"
+	"net/http"
 	"sort"
 	"strings"
 	"testing"
@@ -138,7 +140,6 @@ func TestAPI_GetProducerSchedule(t *testing.T) {
 	}
 }
 
-/*
 func TestAPI_Register_GetBpJson(t *testing.T) {
 	account, api, _, err := newApi()
 	if err != nil {
@@ -166,7 +167,135 @@ func TestAPI_Register_GetBpJson(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 		return
+	}
 
+	// start a mock server
+	u := make(chan string, 1)
+	var url string
+	go servBpJson(u)
+	select {
+	case <-time.After(2 * time.Second):
+		t.Error("mock server did not start")
+		return
+	case url = <-u:
+	}
+	fmt.Println(url)
+
+	prodApi, _, err := NewConnection(prod.KeyBag, api.BaseURL)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	nrp, err := NewRegProducer(fioAddr, prod.PubKey, "http://"+url, LocationEastAsia, prod.Actor)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, err = prodApi.SignPushActions(nrp.ToEos())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// try to unreg on exit, no matter what, so a dev node doesn't end up with an insufficient
+	// number of working producers to maintain quorum
+	defer func() {
+		_, _ = prodApi.SignPushActions(NewUnRegProducer(fioAddr, prod.Actor).ToEos())
+	}()
+
+	_, err = api.GetBpJson(prod.Actor)
+	if err == nil {
+		t.Error("private IP in producer table should fail")
+	}
+
+	// bypasses anti-ssrf checks:
+	gbj, err := api.getBpJson(prod.Actor, true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if gbj.ProducerAccountName != "test" {
+		t.Error("could not get bp.json info")
 	}
 }
-*/
+
+// mock http server
+func servBpJson(listen chan string) {
+	rand.Seed(time.Now().UnixNano())
+	port := rand.Intn(32768) + 32767
+
+	bpJson := []byte(`{
+	  "producer_account_name": "test",
+	  "org": {
+	    "candidate_name": "",
+	    "website": "",
+	    "code_of_conduct":"",
+	    "ownership_disclosure":"",
+	    "email":"",
+	    "branding":{
+	      "logo_256":"",
+	      "logo_1024":"",
+	      "logo_svg":""
+	    },
+	    "location": {
+	      "name": "",
+	      "country": "",
+	      "latitude": 0,
+	      "longitude": 0
+	    },
+	    "social": {
+	      "steemit": "",
+	      "twitter": "",
+	      "youtube": "",
+	      "facebook": "",
+	      "github":"",
+	      "reddit": "",
+	      "keybase": "",
+	      "telegram": "",
+	      "wechat":""
+	    }
+	  },
+	  "nodes": [
+	    {
+	      "location": {
+	        "name": "",
+	        "country": "",
+	        "latitude": 0,
+	        "longitude": 0
+	      },
+	      "node_type": "producer",
+	      "p2p_endpoint": "",
+	      "bnet_endpoint": "",
+	      "api_endpoint": "",
+	      "ssl_endpoint": ""
+	    },
+	    {
+	      "location": {
+	        "name": "",
+	        "country": "",
+	        "latitude": 0,
+	        "longitude": 0
+	      },
+	      "node_type":"seed",
+	      "p2p_endpoint": "",
+	      "bnet_endpoint": "",
+	      "api_endpoint": "",
+	      "ssl_endpoint": ""
+	    }
+	  ]
+	}`)
+
+	respond := func(resp http.ResponseWriter, req *http.Request) {
+		req.Body.Close()
+		resp.WriteHeader(http.StatusOK)
+		resp.Write(bpJson)
+	}
+
+	http.HandleFunc(`/`, respond)
+	url := fmt.Sprintf("127.0.0.1:%d", port)
+	fmt.Println("start mock bp.json server on " + url)
+
+	listen <- url
+	panic(http.ListenAndServe(url, nil))
+}

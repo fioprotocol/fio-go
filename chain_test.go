@@ -53,11 +53,31 @@ func TestAPI_GetTableRowsOrder(t *testing.T) {
 		return
 	}
 
+	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "eosio",
+		Scope:      "eosio",
+		Table:      "producers",
+		LowerBound: "2",
+		UpperBound: fmt.Sprintf("%d", math.MaxUint32),
+		Limit:      1,
+		JSON:       true,
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	prodsAsc := make([]*Producer, 0)
+	err = json.Unmarshal(gtr.Rows, &prodsAsc)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	gtro, err := api.GetTableRowsOrder(GetTableRowsOrderRequest{
 		Code:       "eosio",
 		Scope:      "eosio",
 		Table:      "producers",
-		LowerBound: "0",
+		LowerBound: "2",
 		UpperBound: fmt.Sprintf("%d", math.MaxUint32),
 		Limit:      1,
 		JSON:       true,
@@ -78,7 +98,7 @@ func TestAPI_GetTableRowsOrder(t *testing.T) {
 		t.Error("did not get a query result")
 		return
 	}
-	if prods[0].FioAddress != Address("bp3@dapixdev") {
+	if prods[0].FioAddress == prodsAsc[0].FioAddress {
 		t.Error("did not get expected result")
 	}
 }
@@ -220,9 +240,9 @@ func TestAPI_GetTableByScopeMore(t *testing.T) {
 		return
 	}
 	res, err := api.GetTableByScopeMore(eos.GetTableByScopeRequest{
-		Code:       "eosio",
-		Table:      "producers",
-		Limit:      1,
+		Code:  "eosio",
+		Table: "producers",
+		Limit: 1,
 	})
 	if err != nil {
 		t.Error(err)
@@ -232,4 +252,3 @@ func TestAPI_GetTableByScopeMore(t *testing.T) {
 		t.Error("expected more records")
 	}
 }
-
