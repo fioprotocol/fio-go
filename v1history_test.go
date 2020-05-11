@@ -20,4 +20,14 @@ func TestAPI_HistGetBlockTxids(t *testing.T) {
 		t.Error("did not get tx list")
 		fmt.Println(blocks)
 	}
+
+	trace, err := api.HistGetTransaction(blocks.Ids[0])
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if trace == nil || trace.Receipt.GlobalSequence == 0 {
+		t.Error("got empty tx")
+	}
+	fmt.Printf("%+v\n", trace)
 }

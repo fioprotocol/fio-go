@@ -34,3 +34,26 @@ func (api *API) HistGetBlockTxids(blockNum uint32) (*BlockTxidsResp, error) {
 	}
 	return blocks, nil
 }
+
+func (api *API) HistGetTransaction(id eos.Checksum256) (*eos.TransactionResp, error) {
+	resp, err := api.HttpClient.Post(
+		api.BaseURL+"/v1/history/get_transaction",
+		"application/json",
+		bytes.NewReader([]byte(fmt.Sprintf(`{"id": "%s"}`, id.String()))),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	at := &eos.ActionTrace{}
+	err = json.Unmarshal(body, at)
+	if err != nil {
+		return nil, err
+	}
+	return at, nil
+}
