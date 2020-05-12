@@ -399,8 +399,8 @@ type SignedBlockHeader struct {
 type BlockResp struct {
 	SignedBlock
 	ID             eos.Checksum256 `json:"id"`
-	BlockNum       uint32      `json:"block_num"`
-	RefBlockPrefix uint32      `json:"ref_block_prefix"`
+	BlockNum       uint32          `json:"block_num"`
+	RefBlockPrefix uint32          `json:"ref_block_prefix"`
 }
 
 // SignedBlock duplicates eos.SignedBlock to allow using the modified ecc package
@@ -429,8 +429,14 @@ type BlockHeaderState struct {
 	ConfirmCount              []int             `json:"confirm_count"`
 	Id                        eos.Checksum256   `json:"id"`
 	Header                    *BlockHeader      `json:"header"`
-	PendingSchedule           *Schedule         `json:"pending_schedule"`
+	PendingSchedule           *PendingSchedule  `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
+}
+
+type PendingSchedule struct {
+	ScheduleLibNum uint32          `json:"schedule_lib_num"`
+	ScheduleHash   eos.Checksum256 `json:"schedule_hash"`
+	Schedule       *Schedule
 }
 
 type BlockHeaderStateReq struct {
@@ -522,7 +528,6 @@ func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool
 	return
 }
 
-
 type getSupportedApisResp struct {
 	Apis []string `json:"apis"`
 }
@@ -531,7 +536,7 @@ type getSupportedApisResp struct {
 // can assist in determining what api plugins are enabled. The onlySafe bool returned will be false
 // if either the producer or network plugins are enabled, which can lead to denial of service attacks.
 func (api *API) GetSupportedApis() (onlySafe bool, apis []string, err error) {
-	resp, err := api.HttpClient.Get(api.BaseURL+"/v1/node/get_supported_apis")
+	resp, err := api.HttpClient.Get(api.BaseURL + "/v1/node/get_supported_apis")
 	if err != nil {
 		return false, nil, err
 	}
