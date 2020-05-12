@@ -15,7 +15,6 @@ const (
 	FeeAuthLink             = "auth_link"
 	FeeAuthUpdate           = "auth_update"
 	FeeBurnExpired          = "burnexpired"
-	FeeDomTransfer          = "domtransfer"
 	FeeMsigApprove          = "msig_approve"
 	FeeMsigCancel           = "msig_cancel"
 	FeeMsigExec             = "msig_exec"
@@ -36,6 +35,8 @@ const (
 	FeeRenewFioDomain       = "renew_fio_domain"
 	FeeSetDomainPub         = "set_fio_domain_public"
 	FeeSubmitBundledTrans   = "submit_bundled_transaction"
+	FeeTransferAddress      = "transfer_fio_address"
+	FeeTransferDom          = "transfer_fio_domain"
 	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
 	FeeUnregisterProducer   = "unregister_producer"
 	FeeUnregisterProxy      = "unregister_proxy"
@@ -56,7 +57,6 @@ var (
 		"auth_link":                   0.4,
 		"auth_update":                 0.4,
 		"burnexpired":                 0.1,
-		"domtransfer":                 0.1, // future endpoint, placeholder
 		"msig_approve":                0.4,
 		"msig_cancel":                 0.4,
 		"msig_exec":                   0.4,
@@ -78,6 +78,8 @@ var (
 		"set_fio_domain_public":       0.4,
 		"setdomainpub":                0.4, // outdated endpoint name.
 		"submit_bundled_transaction":  0.0,
+		"transfer_fio_address":        1.0,
+		"transfer_fio_domain":         1.0,
 		"transfer_tokens_fio_address": 0.1,
 		"transfer_tokens_pub_key":     2.0,
 		"unregister_proxy":            0.4,
@@ -105,7 +107,6 @@ var (
 		"unapprove":    FeeMsigUnapprove,
 		"addaddress":   FeeAddPubAddress,
 		"regaddress":   FeeRegisterFioAddress,
-		"domtransfer":  FeeDomTransfer,
 		"regdomain":    FeeRegisterFioDomain,
 		"renewaddress": FeeRenewFioAddress,
 		"renewdomain":  FeeRenewFioDomain,
@@ -114,6 +115,8 @@ var (
 		"recordobt":    FeeRecordObtData,
 		"rejectfndreq": FeeRejectFundsRequest,
 		"trnsfiopubky": FeeTransferTokensPubKey,
+		"xferaddress":  FeeTransferAddress,
+		"xferdomain":   FeeTransferDom,
 	}
 	maxFeeActionMutex = sync.RWMutex{}
 	maxFeeMutex       = sync.RWMutex{}
