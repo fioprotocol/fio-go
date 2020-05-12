@@ -638,15 +638,23 @@ func (api *API) VerifyAddressHistory(v VerifyAddressHistoryRequest) (AddressHist
 		return AddressHistoryInvalid, errors.New("history plugin is not available")
 	}
 	if v.ChainId == "" {
+		info, err := api.GetInfo()
+		if err != nil {
+			return AddressHistoryInvalid, err
+		}
+		if info.ChainID.String() != ChainIdMainnet {
+			return AddressHistoryInvalid, errors.New("chain id is not for mainnet")
+		}
 		v.ChainId = ChainIdMainnet
 	}
+
 	status, txid, err := api.findAddress(v)
 	if err != nil || status == AddressHistoryInvalid || txid == "" {
-		return status, err
+		return AddressHistoryInvalid, err
 	}
 	txidBytes, err := hex.DecodeString(txid)
 	if err != nil {
-		return status, err
+		return AddressHistoryInvalid, err
 	}
 
 	// ensure tx is beyond lib
@@ -662,7 +670,6 @@ func (api *API) VerifyAddressHistory(v VerifyAddressHistoryRequest) (AddressHist
 		return AddressHistoryInvalid, errors.New("address might be valid, but transaction is not yet irreversible")
 	}
 
-	// validate tx signature,
 	cid, err := hex.DecodeString(v.ChainId)
 	if err != nil {
 		return AddressHistoryInvalid, errors.New("could not decode chain id: "+err.Error())
@@ -672,30 +679,37 @@ func (api *API) VerifyAddressHistory(v VerifyAddressHistoryRequest) (AddressHist
 	if err != nil {
 		return AddressHistoryInvalid, errors.New("get block containing tx: "+err.Error())
 	}
-	//sigKeys := make([]eosecc.PublicKey, 0)
 	if block.Transactions == nil || len(block.Transactions) == 0 {
 		return AddressHistoryInvalid, errors.New("block for tx was empty")
 	}
+
+	// TODO: validate the block signature
+	// how can a block be authenticated given a few known items? And who's to say get_info isn't lying about the chainid?
+	// - should we pull block #1 and validate the pubkey and date hashes to chainid? Probably.
+	// - how can we be sure it's on the correct fork? do we need some sort of known-good block index?
+	// - one possible solution is to verify all schedule changes, but not sure how to get this, only can get
+	//   block number for the last change by looking at a block header state, can this be done without
+	//   walking the entire chain? has to be a way, the p2p protocol supports header proofs via schedule validation.
+
+	// validate tx signature,
 	var foundInBlock bool
 	for _, transaction := range block.Transactions {
 		if !bytes.Equal(transaction.Transaction.ID, txidBytes) {
 			continue
 		}
-		fmt.Println("found matching tx")
-		stx, err := transaction.Transaction.Packed.UnpackBare()
+		signedTx, err := transaction.Transaction.Packed.UnpackBare()
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 		// use chain id and tx signature to derived the signer's public key, if it matches our result is trustworthy
-		signers, err := stx.SignedByKeys(cid)
+		signers, err := signedTx.SignedByKeys(cid)
 		if err != nil {
 			continue
 		}
 		for _, signer := range signers {
-			// strip EOS and FIO to compare
+			// strip EOS and FIO to compare, SignedByKeys is using eos-go's ecc
 			if signer.String()[3:] == v.Pubkey.String()[3:] {
-				fmt.Println("found matching signature")
 				foundInBlock = true
 			}
 		}
