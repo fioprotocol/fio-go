@@ -2,7 +2,9 @@ package fio
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"os"
 	"testing"
 )
@@ -78,5 +80,60 @@ func TestAccount_GetNames(t *testing.T) {
 	}
 	if account.Addresses[0].FioAddress != "bp1@dapixdev" {
 		t.Error("did not have correct address")
+	}
+}
+
+func TestApi_getMaxActions(t *testing.T) {
+	_, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !api.HasHistory() {
+		fmt.Println("history api not available, skipping getMaxActions test")
+		return
+	}
+	h, err := api.getMaxActions("eosio")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if h < 1000 {
+		t.Errorf("eosio did not have enough action traces expected > 1000, got %d", h)
+	}
+}
+
+func TestAPI_VerifyAddressHistory(t *testing.T) {
+	_, api, opts, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !api.HasHistory() || opts.ChainID.String() != ChainIdTestnet {
+		fmt.Println("skipping test for VerifyAddressHistory, this requires a history node running on testnet")
+		return
+	}
+	pub, err := ecc.NewPublicKey("FIO5oBUYbtGTxMS66pPkjC2p8pbA3zCtc8XD4dq9fMut867GRdh82")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	status, err := api.VerifyAddressHistory(VerifyAddressHistoryRequest{
+		Pubkey:     pub,
+		FioAddress: `ada@dapixdev`,
+		Token:      "FIO",
+		Chain:      "FIO",
+		PubAddress: "FIO5oBUYbtGTxMS66pPkjC2p8pbA3zCtc8XD4dq9fMut867GRdh82",
+		ChainId:    ChainIdTestnet,
+		Limit:      -1,
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if status != AddressHistoryCurrent {
+		t.Error("ada@dapix dev should be valid for r41zuwovtn44")
 	}
 }

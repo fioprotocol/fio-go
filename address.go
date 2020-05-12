@@ -8,10 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"io/ioutil"
 	"math"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 // Address is a FIO address, which should be formatted as 'name@domain'
@@ -600,4 +602,308 @@ func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+type AddressHistoryStatus uint8
+
+const (
+	AddressHistoryCurrent  AddressHistoryStatus = iota // the address is a valid address and is current
+	AddressHistoryOutdated                             // the address has belonged to the pub key but is not current
+	AddressHistoryInvalid                              // something nefarious is afoot
+)
+
+type VerifyAddressHistoryRequest struct {
+	Pubkey     ecc.PublicKey
+	FioAddress Address
+	Token      string
+	Chain      string
+	PubAddress string
+
+	// ChainId is optional, and can be empty. If empty the ChainIdMainnet const will be used (recommend leaving empty.)
+	ChainId string
+
+	// limit specifies how many actions will be searched for the addition of the address, use -1 to search all
+	Limit int // FIXME: currently ignored.
+}
+
+// VerifyAddressHistory will search action traces for a pubkey and verify that:
+// 1. the address was added by the correct actor
+// 2. the transaction it was added in is valid and belongs to the correct chain.
+//
+// Note: this function requires access to a v1 history node and the get_actions API endpoint.
+// There is a possibility that this will return a false negative (AddressHistoryInvalid) if the history
+// node has truncated the actions for an account (see 'history-per-account' setting in config.ini).
+func (api *API) VerifyAddressHistory(v VerifyAddressHistoryRequest) (AddressHistoryStatus, error) {
+	if !api.HasHistory() {
+		return AddressHistoryInvalid, errors.New("history plugin is not available")
+	}
+	if v.ChainId == "" {
+		v.ChainId = ChainIdMainnet
+	}
+	status, txid, err := api.findAddress(v)
+	if err != nil || status == AddressHistoryInvalid || txid == "" {
+		return status, err
+	}
+	txidBytes, err := hex.DecodeString(txid)
+	if err != nil {
+		return status, err
+	}
+
+	// ensure tx is beyond lib
+	tx, err := api.GetTransaction(txid)
+	if err != nil {
+		return AddressHistoryInvalid, err
+	}
+	info, err := api.GetInfo()
+	if err != nil {
+		return AddressHistoryInvalid, err
+	}
+	if info.LastIrreversibleBlockNum < tx.BlockNum {
+		return AddressHistoryInvalid, errors.New("address might be valid, but transaction is not yet irreversible")
+	}
+
+	// validate tx signature,
+	cid, err := hex.DecodeString(v.ChainId)
+	if err != nil {
+		return AddressHistoryInvalid, errors.New("could not decode chain id: "+err.Error())
+	}
+
+	block, err := api.GetBlockByNum(tx.BlockNum)
+	if err != nil {
+		return AddressHistoryInvalid, errors.New("get block containing tx: "+err.Error())
+	}
+	//sigKeys := make([]eosecc.PublicKey, 0)
+	if block.Transactions == nil || len(block.Transactions) == 0 {
+		return AddressHistoryInvalid, errors.New("block for tx was empty")
+	}
+	var foundInBlock bool
+	for _, transaction := range block.Transactions {
+		if !bytes.Equal(transaction.Transaction.ID, txidBytes) {
+			continue
+		}
+		fmt.Println("found matching tx")
+		stx, err := transaction.Transaction.Packed.UnpackBare()
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		// use chain id and tx signature to derived the signer's public key, if it matches our result is trustworthy
+		signers, err := stx.SignedByKeys(cid)
+		if err != nil {
+			continue
+		}
+		for _, signer := range signers {
+			// strip EOS and FIO to compare
+			if signer.String()[3:] == v.Pubkey.String()[3:] {
+				fmt.Println("found matching signature")
+				foundInBlock = true
+			}
+		}
+	}
+	if !foundInBlock {
+		return AddressHistoryInvalid, errors.New("txid did not match block data")
+	}
+
+	return status, nil
+}
+
+// findAddress searches the trace history for the action, and provides whether it was added, and in what txid.
+// an AddressHistoryInvalid or error here requires no further verification, otherwise the tx signatures should
+// be checked. There are three ways an address mapping is created: addaddress, regaddress, and xferaddress,
+// the latter two are mapped as an internal action in the contract, and the former-most is under user control.
+// All three can be changed at a later time (via a new addaddress, or via xferaddress), likewise there are
+// three possible outcomes: current, outdated, and invalid.
+func (api *API) findAddress(v VerifyAddressHistoryRequest) (status AddressHistoryStatus, txid string, err error) {
+	found := AddressHistoryInvalid
+	account, err := ActorFromPub(v.Pubkey.String())
+	if err != nil {
+		return found, txid, err
+	}
+	highest, err := api.getMaxActions(account)
+	if err != nil {
+		return found, txid, err
+	}
+	if highest == 0 {
+		return found, txid, nil
+	}
+	// search from the most recent, page at up to 100 records per request
+	var alreadySeen bool
+	a := eos.ActionResp{}
+
+	// closure for searching addaddress action. This applies to address lookups for non-FIO chains, such as BTC, EOS, ETH
+	searchAddAddress := func(addAddress *AddAddress) (hit bool, s AddressHistoryStatus, t string, e error) {
+		for _, added := range addAddress.PublicAddresses {
+			if addAddress.FioAddress == string(v.FioAddress) && added.TokenCode == v.Token && added.ChainCode == v.Chain {
+				if added.PublicAddress == v.PubAddress {
+					switch alreadySeen {
+					case false:
+						return true, AddressHistoryCurrent, a.Trace.TransactionID.String(), nil
+					case true:
+						return true, AddressHistoryOutdated, a.Trace.TransactionID.String(), nil
+					}
+				}
+				alreadySeen = true
+				hit = true
+			}
+		}
+		return hit, AddressHistoryInvalid, "", nil
+	}
+
+	// closure for searching regaddress action. This *only* applies to validating FIO public key, the mapping
+	// is created when any address is registered as part of the regaddress action.
+	// two cases here, a new registration, or the address was transferred
+	searchRegAddress := func(regAddress *RegAddress, transferAddress *TransferAddress) (hit bool, s AddressHistoryStatus, t string, e error) {
+		if transferAddress != nil {
+			switch transferAddress.NewOwnerFioPublicKey {
+			case v.Pubkey.String():
+				// if the first match is an incoming address transfer, we are done.
+				return true, AddressHistoryCurrent, a.Trace.TransactionID.String(), nil
+			default:
+				alreadySeen = true
+				return true, AddressHistoryOutdated, a.Trace.TransactionID.String(), nil
+			}
+		}
+		if regAddress.FioAddress == string(v.FioAddress) && regAddress.OwnerFioPublicKey == v.Pubkey.String() {
+			return true, AddressHistoryCurrent, a.Trace.TransactionID.String(), nil
+		}
+		return false, AddressHistoryInvalid, "", nil
+	}
+
+	for i := int64(highest); i > 0; i -= 100 {
+		lower := i - 100
+		if lower <= 0 {
+			lower = 1
+		}
+		ar := &eos.ActionsResp{}
+		ar, err = api.GetActions(eos.GetActionsRequest{
+			AccountName: account,
+			Pos:         lower,
+			Offset:      i - lower,
+		})
+		if ar == nil || err != nil {
+			break
+		}
+		var fioPub bool
+		if strings.ToLower(v.Token) == "fio" && strings.ToLower(v.Chain) == "fio" {
+			fioPub = true
+		}
+		if fioPub && v.PubAddress != v.Pubkey.String() {
+			return AddressHistoryInvalid, "", errors.New("pub address must match FIO pub key when chain is FIO, and token is FIO")
+		}
+
+		// FIXME: use decrement to search most recent first!
+		for _, a = range ar.Actions {
+			if a.Trace.Action == nil {
+				continue
+			}
+			switch fioPub {
+			case true:
+				if a.Trace.Action.Account == "fio.address" && ( a.Trace.Action.Name == "regaddress" || a.Trace.Action.Name == "xferaddress") {
+					switch a.Trace.Action.Name {
+					case "regaddress":
+						regAddress := &RegAddress{}
+						err = eos.UnmarshalBinary(a.Trace.Action.HexData, regAddress)
+						if err != nil {
+							break
+						}
+						var hit bool
+						hit, status, txid, err = searchRegAddress(regAddress, nil)
+						if !hit {
+							break
+						}
+						if status == AddressHistoryCurrent {
+							return
+						}
+					case "xferaddress":
+						xferaddress := &TransferAddress{}
+						err = eos.UnmarshalBinary(a.Trace.Action.HexData, xferaddress)
+						if err != nil {
+							break
+						}
+						var hit bool
+						hit, status, txid, err = searchRegAddress(nil, xferaddress)
+						if !hit {
+							break
+						}
+						if status == AddressHistoryCurrent {
+							return
+						}
+					}
+				}
+			default:
+				if a.Trace.Action.Account == "fio.address" && a.Trace.Action.Name == "addpubaddress" {
+					addAddress := &AddAddress{}
+					err = eos.UnmarshalBinary(a.Trace.Action.HexData, addAddress)
+					if err != nil {
+						break
+					}
+					var hit bool
+					hit, status, txid, err = searchAddAddress(addAddress)
+					if !hit {
+						break
+					}
+					if status == AddressHistoryCurrent {
+						return
+					}
+				}
+			}
+		}
+	}
+	return found, txid, nil
+}
+
+// TODO: merge this into v1history branch, and out of address.go, this only exists for PoC
+
+// accountActionSequence is a truncated action trace used only for finding the highest sequence number
+type accountActionSequence struct {
+	AccountActionSequence uint32 `json:"account_action_seq"`
+}
+
+type accountActions struct {
+	Actions []accountActionSequence `json:"actions"`
+}
+
+// getMaxActions returns the highest account_action_sequence from the get_actions endpoint.
+// This is needed because paging only works with positive offsets.
+func (api *API) getMaxActions(account eos.AccountName) (highest uint32, err error) {
+	resp, err := api.HttpClient.Post(
+		api.BaseURL+"/v1/history/get_actions",
+		"application/json",
+		bytes.NewReader([]byte(fmt.Sprintf(`{"account_name":"%s","pos":-1}`, account))),
+	)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+	if len(body) == 0 {
+		return 0, errors.New("received empty response")
+	}
+
+	aa := &accountActions{}
+	err = json.Unmarshal(body, &aa)
+	if err != nil {
+		return 0, err
+	}
+	if aa.Actions == nil || len(aa.Actions) == 0 {
+		return 0, nil
+	}
+	return aa.Actions[len(aa.Actions)-1].AccountActionSequence, nil
+}
+
+// HasHistory looks at available APIs and returns true if /v1/history/* exists.
+func (api *API) HasHistory() bool {
+	_, apis, err := api.GetSupportedApis()
+	if err != nil {
+		return false
+	}
+	for _, a := range apis {
+		if strings.HasPrefix(a, `/v1/history/`) {
+			return true
+		}
+	}
+	return false
 }
