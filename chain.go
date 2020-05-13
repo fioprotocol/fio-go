@@ -15,6 +15,12 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
+)
+
+const (
+	ChainIdMainnet = `21dcae42c0182200e93f954a074011f9048a7624c6fe81d3c9541a614a88bd1c`
+	ChainIdTestnet = `b20901380af44ef59c5918439a1f9a41d83669020319a80574b804a5f95cbd7e`
 )
 
 // API struct allows extending the eos.API with FIO-specific functions
@@ -487,3 +493,40 @@ func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool
 	}
 	return
 }
+
+
+type getSupportedApisResp struct {
+	Apis []string `json:"apis"`
+}
+
+// GetSupportedApis queries the /v1/chain/get_supported_apis endpoint for available API calls, which
+// can assist in determining what api plugins are enabled. The onlySafe bool returned will be false
+// if either the producer or network plugins are enabled, which can lead to denial of service attacks.
+func (api *API) GetSupportedApis() (onlySafe bool, apis []string, err error) {
+	resp, err := api.HttpClient.Get(api.BaseURL+"/v1/node/get_supported_apis")
+	if err != nil {
+		return false, nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false, nil, err
+	}
+	supported := &getSupportedApisResp{}
+	err = json.Unmarshal(body, supported)
+	if err != nil {
+		return false, nil, err
+	}
+	if supported.Apis == nil || len(supported.Apis) == 0 {
+		return false, nil, errors.New("did not get a response")
+	}
+	// look for dangerous APIs: producer_plugin and network_plugin
+	onlySafe = true
+	for _, a := range supported.Apis {
+		if strings.HasPrefix(a, `/v1/network/`) || strings.HasPrefix(a, `/v1/producer/`) {
+			onlySafe = false
+		}
+	}
+	return onlySafe, supported.Apis, nil
+}
+
