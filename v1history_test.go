@@ -21,13 +21,33 @@ func TestAPI_HistGetBlockTxids(t *testing.T) {
 		fmt.Println(blocks)
 	}
 
-	trace, err := api.HistGetTransaction(blocks.Ids[0])
+	trace, err := api.GetTransaction(blocks.Ids[0])
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if trace == nil || trace.Receipt.GlobalSequence == 0 {
+	if trace == nil || trace.Receipt.Status != 0 {
 		t.Error("got empty tx")
 	}
 	fmt.Printf("%+v\n", trace)
+}
+
+func TestApi_getMaxActions(t *testing.T) {
+	_, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !api.HasHistory() {
+		fmt.Println("history api not available, skipping GetMaxActions test")
+		return
+	}
+	h, err := api.GetMaxActions("eosio")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if h < 1000 {
+		t.Errorf("eosio did not have enough action traces expected > 1000, got %d", h)
+	}
 }

@@ -2,9 +2,7 @@ package fio
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/eoscanada/eos-go"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"os"
 	"testing"
 )
@@ -80,25 +78,5 @@ func TestAccount_GetNames(t *testing.T) {
 	}
 	if account.Addresses[0].FioAddress != "bp1@dapixdev" {
 		t.Error("did not have correct address")
-	}
-}
-
-func TestApi_getMaxActions(t *testing.T) {
-	_, api, _, err := newApi()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if !api.HasHistory() {
-		fmt.Println("history api not available, skipping getMaxActions test")
-		return
-	}
-	h, err := api.getMaxActions("eosio")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if h < 1000 {
-		t.Errorf("eosio did not have enough action traces expected > 1000, got %d", h)
 	}
 }

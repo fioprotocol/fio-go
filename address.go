@@ -8,12 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eoscanada/eos-go"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	"io/ioutil"
 	"math"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 // Address is a FIO address, which should be formatted as 'name@domain'
@@ -604,58 +602,3 @@ func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
 	return false, nil
 }
 
-// TODO: merge this into v1history branch, and out of address.go, this only exists for PoC
-
-// accountActionSequence is a truncated action trace used only for finding the highest sequence number
-type accountActionSequence struct {
-	AccountActionSequence uint32 `json:"account_action_seq"`
-}
-
-type accountActions struct {
-	Actions []accountActionSequence `json:"actions"`
-}
-
-// getMaxActions returns the highest account_action_sequence from the get_actions endpoint.
-// This is needed because paging only works with positive offsets.
-func (api *API) getMaxActions(account eos.AccountName) (highest uint32, err error) {
-	resp, err := api.HttpClient.Post(
-		api.BaseURL+"/v1/history/get_actions",
-		"application/json",
-		bytes.NewReader([]byte(fmt.Sprintf(`{"account_name":"%s","pos":-1}`, account))),
-	)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return 0, err
-	}
-	if len(body) == 0 {
-		return 0, errors.New("received empty response")
-	}
-
-	aa := &accountActions{}
-	err = json.Unmarshal(body, &aa)
-	if err != nil {
-		return 0, err
-	}
-	if aa.Actions == nil || len(aa.Actions) == 0 {
-		return 0, nil
-	}
-	return aa.Actions[len(aa.Actions)-1].AccountActionSequence, nil
-}
-
-// HasHistory looks at available APIs and returns true if /v1/history/* exists.
-func (api *API) HasHistory() bool {
-	_, apis, err := api.GetSupportedApis()
-	if err != nil {
-		return false
-	}
-	for _, a := range apis {
-		if strings.HasPrefix(a, `/v1/history/`) {
-			return true
-		}
-	}
-	return false
-}
