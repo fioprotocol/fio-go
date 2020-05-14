@@ -32,6 +32,8 @@ const (
 	FeeRegisterProxy        = "register_proxy"
 	FeeRejectFundsRequest   = "reject_funds_request"
 	FeeRemoveFromWhitelist  = "remove_from_whitelist"
+	FeeRemoveAllAddresses   = "remove_pub_addresses"
+	FeeRemovePubAddress     = "remove_pub_address"
 	FeeRenewFioAddress      = "renew_fio_address"
 	FeeRenewFioDomain       = "renew_fio_domain"
 	FeeSetDomainPub         = "set_fio_domain_public"
@@ -75,6 +77,8 @@ var (
 		"register_proxy":              0.4,
 		"reject_funds_request":        0.4,
 		"remove_from_whitelist":       0.0,
+		"remove_pub_address":          0.6,
+		"remove_pub_addresses":        0.6,
 		"renew_fio_address":           40.0,
 		"renew_fio_domain":            800.0,
 		"set_fio_domain_public":       0.4,
@@ -111,6 +115,8 @@ var (
 		"addaddress":   FeeAddPubAddress,
 		"regaddress":   FeeRegisterFioAddress,
 		"regdomain":    FeeRegisterFioDomain,
+		"remalladdr":   FeeRemoveAllAddresses,
+		"remaddress":   FeeRemovePubAddress,
 		"renewaddress": FeeRenewFioAddress,
 		"renewdomain":  FeeRenewFioDomain,
 		"setdomainpub": FeeSetDomainPub,
