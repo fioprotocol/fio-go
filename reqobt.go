@@ -281,7 +281,7 @@ func NewCancelFndReq(actor eos.AccountName, requestId uint64) *Action {
 		"fio.reqobt", "cancelfndreq", actor,
 		CancelFndReq{
 			FioRequestId: fmt.Sprintf("%d", requestId),
-			MaxFee:       Tokens(GetMaxFee(FeeRejectFundsRequest)),
+			MaxFee:       Tokens(GetMaxFee(FeeCancelFundsRequest)),
 			Actor:        string(actor),
 			Tpid:         CurrentTpid(),
 		},
