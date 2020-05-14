@@ -15,6 +15,7 @@ const (
 	FeeAuthLink             = "auth_link"
 	FeeAuthUpdate           = "auth_update"
 	FeeBurnExpired          = "burnexpired"
+	FeeCancelFundsRequest   = "cancel_funds_request"
 	FeeMsigApprove          = "msig_approve"
 	FeeMsigCancel           = "msig_cancel"
 	FeeMsigExec             = "msig_exec"
@@ -57,6 +58,7 @@ var (
 		"auth_link":                   0.4,
 		"auth_update":                 0.4,
 		"burnexpired":                 0.1,
+		"cancel_funds_request":        0.4,
 		"msig_approve":                0.4,
 		"msig_cancel":                 0.4,
 		"msig_exec":                   0.4,
@@ -101,6 +103,7 @@ var (
 		"voteproxy":    FeeProxyVote,
 		"approve":      FeeMsigApprove,
 		"cancel":       FeeMsigCancel,
+		"cancelfndreq": FeeCancelFundsRequest,
 		"exec":         FeeMsigExec,
 		"invalidate":   FeeMsigInvalidate,
 		"propose":      FeeMsigPropose,
