@@ -475,7 +475,7 @@ func (api *API) GetFioDomains(pubKey string, offset uint32, limit uint32) (domai
 // GetFioAddresses queries for the FIO Addresses owned by a Public Key. It offers paging which makes it preferable to GetFioNames
 // which may not provide the full set of results because of (silent, without error) database query timeout issues.
 // offset and limit must both be positive numbers. The returned uint32 specifies how many more results are available.
-func (api *API) GetFioAddresses(pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
+func (api *API) GetFioAddresses(pubKey string, offset uint32, limit uint32) (addresses *FioNames, err error) {
 	return api.getFioDomainsOrNames("get_fio_addresses", pubKey, offset, limit)
 }
 
