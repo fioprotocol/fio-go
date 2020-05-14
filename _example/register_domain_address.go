@@ -24,10 +24,8 @@ func main() {
 		}
 	}
 
-	account, err := fio.NewAccountFromWif(wif)
-	fatal(err)
-
-	api, _, err := fio.NewConnection(account.KeyBag, url)
+	// open a new connection to nodeos with credentials
+	account, api, _, err := fio.NewWifConnect(wif, url)
 	fatal(err)
 
 	// register a new domain

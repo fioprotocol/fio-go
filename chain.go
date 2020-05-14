@@ -107,6 +107,16 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	return a, txOpts, nil
 }
 
+// NewWifConnect adds convenience by setting everything up, given a WIF and URL
+func NewWifConnect(wif string, url string) (account *Account, api *API, opts *TxOptions, err error) {
+	account, err = NewAccountFromWif(wif)
+	if err != nil {
+		return
+	}
+	api, opts, err = NewConnection(account.KeyBag, url)
+	return
+}
+
 // NewAction creates an Action for FIO contract calls, assumes the permission is "active"
 func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
 	return &Action{

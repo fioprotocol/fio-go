@@ -21,17 +21,16 @@ import (
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/fioprotocol/fio-go"
-	"log"
+"encoding/json"
+"fmt"
+"github.com/fioprotocol/fio-go"
+"log"
 )
 
 func main() {
 	const (
 		url = `https://testnet.fioprotocol.io`
 		wif = `5JP1fUXwPxuKuNryh5BEsFhZqnh59yVtpHqHxMMTmtjcni48bqC`
-
 		to = `FIO6G9pXXM92Gy5eMwNquGULoCj3ZStwPLPdEb9mVXyEHqWN7HSuA`
 	)
 
@@ -41,12 +40,8 @@ func main() {
 		}
 	}
 
-	// import the private key
-	account, err := fio.NewAccountFromWif(wif)
-	fatal(err)
-
-	// connect to the network
-	api, _, err := fio.NewConnection(account.KeyBag, url)
+	// connect to the network, using credentials
+	account, api, _, err := fio.NewWifConnect(wif, url)
 	fatal(err)
 
 	// send ᵮ1.00

@@ -12,15 +12,7 @@ func newApi() (*Account, *API, *TxOptions, error) {
 	if os.Getenv("NODEOS") != "" {
 		nodeos = os.Getenv("NODEOS")
 	}
-	account, err := NewAccountFromWif("5JBbUG5SDpLWxvBKihMeXLENinUzdNKNeozLas23Mj6ZNhz3hLS")
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	api, opts, err := NewConnection(account.KeyBag, nodeos)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	return account, api, opts, err
+	return NewWifConnect("5JBbUG5SDpLWxvBKihMeXLENinUzdNKNeozLas23Mj6ZNhz3hLS", nodeos)
 }
 
 func TestAPI_GetFioAccount(t *testing.T) {
