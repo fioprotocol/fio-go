@@ -60,7 +60,7 @@ func TestOBT(t *testing.T) {
 	// alice sends them to bob
 	for _, r := range requests {
 		_, err := api.SignPushActions(
-			NewFundsReq(alice.Actor, bobAddresses.FioAddresses[0].FioAddress, aliceAddresses.FioAddresses[0].FioAddress, r).ToEos(),
+			NewFundsReq(alice.Actor, bobAddresses.FioAddresses[0].FioAddress, aliceAddresses.FioAddresses[0].FioAddress, r),
 		)
 		if err != nil {
 			t.Error(err)
@@ -81,7 +81,7 @@ func TestOBT(t *testing.T) {
 	}
 	cnlReq := NewCancelFndReq(alice.Actor, sent.Requests[len(sent.Requests)-1].FioRequestId)
 	_, err = api.SignPushActions(
-		cnlReq.ToEos(),
+		cnlReq,
 	)
 	if err != nil {
 		t.Error(err)
@@ -126,7 +126,7 @@ func TestOBT(t *testing.T) {
 				break
 			}
 			_, err = apiB.SignPushActions(
-				NewRejectFndReq(bob.Actor, fmt.Sprintf("%d", pending.Requests[i].FioRequestId)).ToEos(),
+				NewRejectFndReq(bob.Actor, fmt.Sprintf("%d", pending.Requests[i].FioRequestId)),
 			)
 			if err != nil {
 				t.Error(err)
@@ -184,7 +184,7 @@ func TestOBT(t *testing.T) {
 					bobAddresses.FioAddresses[0].FioAddress,
 					aliceAddresses.FioAddresses[0].FioAddress,
 					content,
-				).ToEos(),
+				),
 			)
 			if err != nil {
 				t.Error(err)

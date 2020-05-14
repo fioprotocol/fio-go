@@ -18,6 +18,15 @@ import (
 	"log"
 )
 
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/fioprotocol/fio-go"
+	"log"
+)
+
 func main() {
 	const (
 		url = `https://testnet.fioprotocol.io`
@@ -37,16 +46,11 @@ func main() {
 	fatal(err)
 
 	// connect to the network
-	api, opts, err := fio.NewConnection(account.KeyBag, url)
+	api, _, err := fio.NewConnection(account.KeyBag, url)
 	fatal(err)
 
 	// send ᵮ1.00
-	xfer := fio.NewTransferTokensPubKey(account.Actor, to, fio.Tokens(1.0))
-	resp, err := api.SignPushTransaction(
-		fio.NewTransaction([]*fio.Action{xfer}, opts),
-		opts.ChainID,
-		fio.CompressionNone,
-	)
+	resp, err := api.SignPushActions(fio.NewTransferTokensPubKey(account.Actor, to, fio.Tokens(1.0)))
 	fatal(err)
 
 	// print the result
@@ -54,4 +58,5 @@ func main() {
 	fatal(err)
 	fmt.Println(string(j))
 }
+
 ```

@@ -30,7 +30,7 @@ func main() {
 	account, err := fio.NewAccountFromWif(wif)
 	fatal(err)
 
-	api, opts, err := fio.NewConnection(nil, url)
+	api, _, err := fio.NewConnection(nil, url)
 	fatal(err)
 
 	// get the FIO public key for the payer, this is used to encrypt the request:
@@ -53,12 +53,7 @@ func main() {
 	fatal(err)
 
 	// send the request:
-	fundsRequest := fio.NewFundsReq(account.Actor, payer, payee, encrypted)
-	resp, err := api.SignPushTransaction(
-		fio.NewTransaction([]*fio.Action{fundsRequest}, opts),
-		opts.ChainID,
-		fio.CompressionNone,
-	)
+	resp, err := api.SignPushActions(fio.NewFundsReq(account.Actor, payer, payee, encrypted))
 	fatal(err)
 
 	// print the result
