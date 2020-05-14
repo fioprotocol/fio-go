@@ -58,7 +58,7 @@ var (
 		"auth_link":                   0.4,
 		"auth_update":                 0.4,
 		"burnexpired":                 0.1,
-		"cancel_funds_request":        0.4,
+		"cancel_funds_request":        0.6,
 		"msig_approve":                0.4,
 		"msig_cancel":                 0.4,
 		"msig_exec":                   0.4,

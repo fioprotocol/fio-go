@@ -69,7 +69,7 @@ func TestOBT(t *testing.T) {
 		time.Sleep(500*time.Millisecond)
 	}
 
-	// check if we have sent requests, and cancel the third to last one
+	// check if we have sent requests, and cancel the last one
 	sent, ok, err := api.GetSentFioRequests(alice.PubKey, 100, 0)
 	if err != nil {
 		t.Error(err)
@@ -79,21 +79,22 @@ func TestOBT(t *testing.T) {
 		t.Error("no sent requests")
 		return
 	}
+	cnlReq := NewCancelFndReq(alice.Actor, sent.Requests[len(sent.Requests)-1].FioRequestId)
 	_, err = api.SignPushActions(
-		NewCancelFndReq(alice.Actor, sent.Requests[len(sent.Requests)-4].FioRequestId).ToEos(),
+		cnlReq.ToEos(),
 	)
 	if err != nil {
 		t.Error(err)
 	}
 	time.Sleep(250*time.Millisecond)
 	// ensure it's on the list of cancelled requests
-	cancelled, err := api.GetCancelledRequests(alice.PubKey, 100, 1)
+	cancelled, err := api.GetCancelledRequests(alice.PubKey, 100, 0)
 	if err != nil {
 		t.Error(err)
 	} else if cancelled.Requests == nil || len(cancelled.Requests) == 0 {
 		t.Error("did not have any cancelled requests")
 	} else {
-		if cancelled.Requests[len(cancelled.Requests)-4].FioRequestId != sent.Requests[len(sent.Requests)-1].FioRequestId {
+		if cancelled.Requests[len(cancelled.Requests)-1].FioRequestId != sent.Requests[len(sent.Requests)-1].FioRequestId {
 			t.Error("did not find cancelled request")
 		}
 	}
@@ -109,7 +110,7 @@ func TestOBT(t *testing.T) {
 		return
 	}
 
-	// find the last one from alice, ensure it's request 3, then reject
+	// find the last one from alice, ensure it's request 2, then reject
 	for i := len(pending.Requests)-1; i >= 0; i-- {
 		if pending.Requests[i].PayeeFioPublicKey == alice.PubKey {
 			fndReq, err := DecryptContent(bob, alice.PubKey, pending.Requests[i].Content, ObtRequestType)
@@ -117,7 +118,7 @@ func TestOBT(t *testing.T) {
 				t.Error(err)
 				break
 			}
-			if fndReq.Request.Amount != "3" || fndReq.Request.Memo != "request 3" {
+			if fndReq.Request.Amount != "2" || fndReq.Request.Memo != "request 2" {
 				t.Error("fund request did not have expected content")
 				if j, err := fndReq.ToJson(); err == nil {
 					fmt.Println(string(j))
@@ -157,7 +158,7 @@ func TestOBT(t *testing.T) {
 				t.Error(err)
 				break
 			}
-			if fndReq.Request.Amount != "2" || fndReq.Request.Memo != "request 2" {
+			if fndReq.Request.Amount != "1" || fndReq.Request.Memo != "request 1" {
 				t.Error("fund request did not have expected content")
 				if j, err := fndReq.ToJson(); err == nil {
 					fmt.Println(string(j))
@@ -167,7 +168,7 @@ func TestOBT(t *testing.T) {
 			content, err := ObtRecordContent{
 				PayerPublicAddress: bob.PubKey,
 				PayeePublicAddress: alice.PubKey,
-				Amount:             "2",
+				Amount:             "1",
 				ChainCode:          "FIO",
 				TokenCode:          "FIO",
 				ObtId:              "here is your money",

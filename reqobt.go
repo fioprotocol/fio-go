@@ -269,24 +269,20 @@ func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, conten
 
 // CancelFndReq allows cancelling a previously sent request
 type CancelFndReq struct {
-	FioRequestId uint64          `json:"fio_request_id"`
+	FioRequestId string          `json:"fio_request_id"`
 	MaxFee       uint64          `json:"max_fee"`
-	Actor        eos.AccountName `json:"actor"`
+	Actor        string          `json:"actor"`
 	Tpid         string          `json:"tpid"`
 }
 
-/*
-Why is this an int, and reject a string?
-*/
-
-// NewRejectFndReq builds the action to reject a request
+// NewCancelFndReq builds the action to cancel a request that is pending by the payee
 func NewCancelFndReq(actor eos.AccountName, requestId uint64) *Action {
 	return NewAction(
 		"fio.reqobt", "cancelfndreq", actor,
 		CancelFndReq{
-			FioRequestId: requestId,
+			FioRequestId: fmt.Sprintf("%d", requestId),
 			MaxFee:       Tokens(GetMaxFee(FeeRejectFundsRequest)),
-			Actor:        actor,
+			Actor:        string(actor),
 			Tpid:         CurrentTpid(),
 		},
 	)
@@ -304,7 +300,7 @@ type CancelledRequest struct {
 
 func (api *API) GetCancelledRequests(pubkey string, limit uint32, offset uint32) (cancelled *CancelledRequests, err error) {
 	resp, err := api.HttpClient.Post(
-		api.BaseURL+"/v1/chain/get_cancelled_requests",
+		api.BaseURL+"/v1/chain/get_cancelled_fio_requests",
 		"application/json",
 		bytes.NewReader([]byte(fmt.Sprintf(`{"fio_public_key": "%s","limit":%d,"offset":%d}`, pubkey, limit, offset))),
 	)
