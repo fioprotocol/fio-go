@@ -601,3 +601,4 @@ func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
 	}
 	return false, nil
 }
+

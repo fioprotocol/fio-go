@@ -14,7 +14,14 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"net/http/httputil"
 	"strconv"
+	"strings"
+)
+
+const (
+	ChainIdMainnet = `21dcae42c0182200e93f954a074011f9048a7624c6fe81d3c9541a614a88bd1c`
+	ChainIdTestnet = `b20901380af44ef59c5918439a1f9a41d83669020319a80574b804a5f95cbd7e`
 )
 
 // API struct allows extending the eos.API with FIO-specific functions
@@ -382,6 +389,33 @@ type BlockHeader struct {
 	HeaderExtensions []*eos.Extension   `json:"header_extensions"`
 }
 
+// SignedBlockHeader duplicates eos.SignedBlockHeader to allow using the modified ecc package
+type SignedBlockHeader struct {
+	BlockHeader
+	ProducerSignature ecc.Signature `json:"producer_signature"`
+}
+
+// BlockResp duplicates eos.BlockResp to allow using the modified ecc package
+type BlockResp struct {
+	SignedBlock
+	ID             eos.Checksum256 `json:"id"`
+	BlockNum       uint32          `json:"block_num"`
+	RefBlockPrefix uint32          `json:"ref_block_prefix"`
+}
+
+// SignedBlock duplicates eos.SignedBlock to allow using the modified ecc package
+type SignedBlock struct {
+	SignedBlockHeader
+	Transactions    []eos.TransactionReceipt `json:"transactions"`
+	BlockExtensions []*eos.Extension         `json:"block_extensions"`
+}
+
+func (api *API) GetBlockByNum(num uint32) (out *BlockResp, err error) {
+	err = api.call("chain", "get_block", eos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
+	//err = api.call("chain", "get_block", M{"block_num_or_id": num}, &out)
+	return
+}
+
 // BlockHeaderState holds information about reversible blocks.
 type BlockHeaderState struct {
 	BlockNum                  uint32            `json:"block_num"`
@@ -395,8 +429,14 @@ type BlockHeaderState struct {
 	ConfirmCount              []int             `json:"confirm_count"`
 	Id                        eos.Checksum256   `json:"id"`
 	Header                    *BlockHeader      `json:"header"`
-	PendingSchedule           *Schedule         `json:"pending_schedule"`
+	PendingSchedule           *PendingSchedule  `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
+}
+
+type PendingSchedule struct {
+	ScheduleLibNum uint32          `json:"schedule_lib_num"`
+	ScheduleHash   eos.Checksum256 `json:"schedule_hash"`
+	Schedule       *Schedule
 }
 
 type BlockHeaderStateReq struct {
@@ -486,4 +526,141 @@ func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool
 		found = true
 	}
 	return
+}
+
+type getSupportedApisResp struct {
+	Apis []string `json:"apis"`
+}
+
+// GetSupportedApis queries the /v1/chain/get_supported_apis endpoint for available API calls, which
+// can assist in determining what api plugins are enabled. The onlySafe bool returned will be false
+// if either the producer or network plugins are enabled, which can lead to denial of service attacks.
+func (api *API) GetSupportedApis() (onlySafe bool, apis []string, err error) {
+	resp, err := api.HttpClient.Get(api.BaseURL + "/v1/node/get_supported_apis")
+	if err != nil {
+		return false, nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false, nil, err
+	}
+	supported := &getSupportedApisResp{}
+	err = json.Unmarshal(body, supported)
+	if err != nil {
+		return false, nil, err
+	}
+	if supported.Apis == nil || len(supported.Apis) == 0 {
+		return false, nil, errors.New("did not get a response")
+	}
+	// look for dangerous APIs: producer_plugin and network_plugin
+	onlySafe = true
+	for _, a := range supported.Apis {
+		if strings.HasPrefix(a, `/v1/network/`) || strings.HasPrefix(a, `/v1/producer/`) {
+			onlySafe = false
+		}
+	}
+	return onlySafe, supported.Apis, nil
+}
+
+func (api *API) call(baseAPI string, endpoint string, body interface{}, out interface{}) error {
+	jsonBody, err := enc(body)
+	if err != nil {
+		return err
+	}
+
+	targetURL := fmt.Sprintf("%s/v1/%s/%s", api.BaseURL, baseAPI, endpoint)
+	req, err := http.NewRequest("POST", targetURL, jsonBody)
+	if err != nil {
+		return fmt.Errorf("NewRequest: %s", err)
+	}
+
+	for k, v := range api.Header {
+		if req.Header == nil {
+			req.Header = http.Header{}
+		}
+		req.Header[k] = append(req.Header[k], v...)
+	}
+
+	if api.Debug {
+		// Useful when debugging API calls
+		requestDump, err := httputil.DumpRequest(req, true)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("-------------------------------")
+		fmt.Println(string(requestDump))
+		fmt.Println("")
+	}
+
+	resp, err := api.HttpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("%s: %s", req.URL.String(), err)
+	}
+	defer resp.Body.Close()
+
+	var cnt bytes.Buffer
+	_, err = io.Copy(&cnt, resp.Body)
+	if err != nil {
+		return fmt.Errorf("Copy: %s", err)
+	}
+
+	if resp.StatusCode == 404 {
+		var apiErr eos.APIError
+		if err := json.Unmarshal(cnt.Bytes(), &apiErr); err != nil {
+			return eos.ErrNotFound
+		}
+		return apiErr
+	}
+
+	if resp.StatusCode > 299 {
+		var apiErr eos.APIError
+		if err := json.Unmarshal(cnt.Bytes(), &apiErr); err != nil {
+			return fmt.Errorf("%s: status code=%d, body=%s", req.URL.String(), resp.StatusCode, cnt.String())
+		}
+
+		// Handle cases where some API calls (/v1/chain/get_account for example) returns a 500
+		// error when retrieving data that does not exist.
+		if apiErr.IsUnknownKeyError() {
+			return eos.ErrNotFound
+		}
+
+		return apiErr
+	}
+
+	if api.Debug {
+		fmt.Println("RESPONSE:")
+		responseDump, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("-------------------------------")
+		fmt.Println(cnt.String())
+		fmt.Println("-------------------------------")
+		fmt.Printf("%q\n", responseDump)
+		fmt.Println("")
+	}
+
+	if err := json.Unmarshal(cnt.Bytes(), &out); err != nil {
+		return fmt.Errorf("Unmarshal: %s", err)
+	}
+
+	return nil
+}
+
+func enc(v interface{}) (io.Reader, error) {
+	if v == nil {
+		return nil, nil
+	}
+
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+
+	err := encoder.Encode(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer, nil
 }

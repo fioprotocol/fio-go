@@ -100,6 +100,7 @@ func TestAPI_GetTableRowsOrder(t *testing.T) {
 	}
 	if prods[0].FioAddress == prodsAsc[0].FioAddress {
 		t.Error("did not get expected result")
+		fmt.Println(prods[0].FioAddress, prodsAsc[0].FioAddress)
 	}
 }
 
