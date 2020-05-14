@@ -66,7 +66,7 @@ func TestOBT(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		time.Sleep(500*time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	// check if we have sent requests, and cancel the last one
@@ -86,7 +86,7 @@ func TestOBT(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	time.Sleep(250*time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 	// ensure it's on the list of cancelled requests
 	cancelled, err := api.GetCancelledRequests(alice.PubKey, 100, 0)
 	if err != nil {
@@ -111,7 +111,7 @@ func TestOBT(t *testing.T) {
 	}
 
 	// find the last one from alice, ensure it's request 2, then reject
-	for i := len(pending.Requests)-1; i >= 0; i-- {
+	for i := len(pending.Requests) - 1; i >= 0; i-- {
 		if pending.Requests[i].PayeeFioPublicKey == alice.PubKey {
 			fndReq, err := DecryptContent(bob, alice.PubKey, pending.Requests[i].Content, ObtRequestType)
 			if err != nil {
@@ -151,7 +151,7 @@ func TestOBT(t *testing.T) {
 	}
 
 	// finally record a response to the remaining request
-	for i := len(afterRej.Requests)-1; i >= 0; i-- {
+	for i := len(afterRej.Requests) - 1; i >= 0; i-- {
 		if pending.Requests[i].PayeeFioPublicKey == alice.PubKey {
 			fndReq, err := DecryptContent(bob, alice.PubKey, pending.Requests[i].Content, ObtRequestType)
 			if err != nil {

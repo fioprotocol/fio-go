@@ -458,7 +458,7 @@ func TestRemoveAddr(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		time.Sleep(500*time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	// make sure it is there

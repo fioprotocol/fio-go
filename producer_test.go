@@ -291,7 +291,7 @@ func servBpJson(listen chan string) {
 	respond := func(resp http.ResponseWriter, req *http.Request) {
 		// alternate so bp.chainid.json gets a 404 on second try
 		hits += 1
-		if hits % 2 == 1 {
+		if hits%2 == 1 {
 			resp.WriteHeader(http.StatusNotFound)
 			resp.Write(nil)
 			return
@@ -322,7 +322,7 @@ func TestIsPrivate(t *testing.T) {
 	}
 	for _, ip := range privs {
 		if !isPrivate(net.ParseIP(ip)) {
-			t.Error(ip+" is not marked as a private ip")
+			t.Error(ip + " is not marked as a private ip")
 		}
 	}
 }

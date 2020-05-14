@@ -269,10 +269,10 @@ func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, conten
 
 // CancelFndReq allows cancelling a previously sent request
 type CancelFndReq struct {
-	FioRequestId string          `json:"fio_request_id"`
-	MaxFee       uint64          `json:"max_fee"`
-	Actor        string          `json:"actor"`
-	Tpid         string          `json:"tpid"`
+	FioRequestId string `json:"fio_request_id"`
+	MaxFee       uint64 `json:"max_fee"`
+	Actor        string `json:"actor"`
+	Tpid         string `json:"tpid"`
 }
 
 // NewCancelFndReq builds the action to cancel a request that is pending by the payee
