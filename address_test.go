@@ -152,6 +152,7 @@ func TestAPI_GetFioNames(t *testing.T) {
 }
 
 func word() string {
+	rand.Seed(time.Now().UnixNano())
 	var w string
 	for i := 0; i < 8; i++ {
 		w = w + string(byte(rand.Intn(26)+97))
@@ -387,6 +388,100 @@ func TestAddress(t *testing.T) {
 	}
 	if accountB.Actor != *newOwner {
 		t.Error("domain transfer failed")
+	}
+
+}
+
+func TestRemoveAddr(t *testing.T) {
+	account, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	i, _, err := account.GetNames(api)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if i == 0 {
+		t.Error("cannot add addresses, account does not have any fio names")
+	}
+
+	junk := word()
+
+	// need something there to remove
+	naa, ok := NewAddAddress(account.Actor, Address(account.Addresses[0].FioAddress), junk, junk, junk)
+	if !ok {
+		t.Error("bad address")
+		return
+	}
+	_, err = api.SignPushActions(naa.ToEos())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// ensure it was added
+	if a, _, err := api.PubAddressLookup(Address(account.Addresses[0].FioAddress), junk, junk); err != nil || a.PublicAddress == "" {
+		t.Error("could not confirm address was added")
+	}
+
+	// remove the address
+	rm, err := NewRemoveAddrReq(Address(account.Addresses[0].FioAddress), []TokenPubAddr{{PublicAddress: junk, TokenCode: junk, ChainCode: junk}}, account.Actor)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = api.SignPushActions(rm.ToEos())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// ensure it's gone
+	if _, _, err := api.PubAddressLookup(Address(account.Addresses[0].FioAddress), junk, junk); err != nil {
+		t.Error("could not confirm address was removed")
+	}
+
+	// add more junk
+	allTheJunk := make([]string, 0)
+	for i := 0; i < 5; i++ {
+		junk = word()
+		allTheJunk = append(allTheJunk, junk)
+		// need something there to remove
+		naa, ok := NewAddAddress(account.Actor, Address(account.Addresses[0].FioAddress), junk, junk, junk)
+		if !ok {
+			t.Error("bad address")
+			return
+		}
+		_, err = api.SignPushActions(naa.ToEos())
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		time.Sleep(500*time.Millisecond)
+	}
+
+	// make sure it is there
+	for _, junk = range allTheJunk {
+		if a, _, err := api.PubAddressLookup(Address(account.Addresses[0].FioAddress), junk, junk); err != nil || a.PublicAddress == "" {
+			t.Error("could not confirm address was added ", junk)
+		}
+	}
+
+	// one call to remove them all
+	rmfr, err := NewRemoveAllAddrReq(Address(account.Addresses[0].FioAddress), account.Actor)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = api.SignPushActions(rmfr.ToEos())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	for _, junk = range allTheJunk {
+		if _, _, err := api.PubAddressLookup(Address(account.Addresses[0].FioAddress), junk, junk); err != nil {
+			t.Error("could not confirm address was removed ", junk)
+		}
 	}
 
 }

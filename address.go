@@ -602,3 +602,53 @@ func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
 	return false, nil
 }
 
+type RemoveAddrReq struct {
+	FioAddress      string          `json:"fio_address"`
+	PublicAddresses []TokenPubAddr  `json:"public_addresses"`
+	MaxFee          uint64          `json:"max_fee"`
+	Actor           eos.AccountName `json:"actor"`
+	Tpid            string          `json:"tpid"`
+}
+
+// NewRemoveAddrReq allows removal of public token/chain addresses
+func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor eos.AccountName) (remove *Action, err error) {
+	if !fioAddress.Valid() {
+		return nil, errors.New("invalid address")
+	}
+	if toRemove == nil || len(toRemove) == 0 {
+		return nil, errors.New("empty address list supplied")
+	}
+	return NewAction(
+		"fio.address", "remaddress", actor,
+		RemoveAddrReq{
+			FioAddress:      string(fioAddress),
+			PublicAddresses: toRemove,
+			MaxFee:          Tokens(GetMaxFee(FeeRemovePubAddress)),
+			Actor:           actor,
+			Tpid:            CurrentTpid(),
+		},
+	), nil
+}
+
+type RemoveAllAddrReq struct {
+	FioAddress      string          `json:"fio_address"`
+	MaxFee          uint64          `json:"max_fee"`
+	Actor           eos.AccountName `json:"actor"`
+	Tpid            string          `json:"tpid"`
+}
+
+// NewRemoveAllAddrReq allows removal of ALL public token/chain addresses
+func NewRemoveAllAddrReq(fioAddress Address, actor eos.AccountName) (remove *Action, err error) {
+	if !fioAddress.Valid() {
+		return nil, errors.New("invalid address")
+	}
+	return NewAction(
+		"fio.address", "remalladdr", actor,
+		RemoveAllAddrReq{
+			FioAddress:      string(fioAddress),
+			MaxFee:          Tokens(GetMaxFee(FeeRemoveAllAddresses)),
+			Actor:           actor,
+			Tpid:            CurrentTpid(),
+		},
+	), nil
+}
