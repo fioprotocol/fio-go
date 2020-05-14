@@ -292,8 +292,8 @@ func servBpJson(listen chan string) {
 		// alternate so bp.chainid.json gets a 404 on second try
 		hits += 1
 		if hits % 2 == 1 {
-			resp.Write(nil)
 			resp.WriteHeader(http.StatusNotFound)
+			resp.Write(nil)
 			return
 		}
 		req.Body.Close()
