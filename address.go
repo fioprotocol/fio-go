@@ -631,10 +631,10 @@ func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor eos.Acc
 }
 
 type RemoveAllAddrReq struct {
-	FioAddress      string          `json:"fio_address"`
-	MaxFee          uint64          `json:"max_fee"`
-	Actor           eos.AccountName `json:"actor"`
-	Tpid            string          `json:"tpid"`
+	FioAddress string          `json:"fio_address"`
+	MaxFee     uint64          `json:"max_fee"`
+	Actor      eos.AccountName `json:"actor"`
+	Tpid       string          `json:"tpid"`
 }
 
 // NewRemoveAllAddrReq allows removal of ALL public token/chain addresses
@@ -645,10 +645,10 @@ func NewRemoveAllAddrReq(fioAddress Address, actor eos.AccountName) (remove *Act
 	return NewAction(
 		"fio.address", "remalladdr", actor,
 		RemoveAllAddrReq{
-			FioAddress:      string(fioAddress),
-			MaxFee:          Tokens(GetMaxFee(FeeRemoveAllAddresses)),
-			Actor:           actor,
-			Tpid:            CurrentTpid(),
+			FioAddress: string(fioAddress),
+			MaxFee:     Tokens(GetMaxFee(FeeRemoveAllAddresses)),
+			Actor:      actor,
+			Tpid:       CurrentTpid(),
 		},
 	), nil
 }

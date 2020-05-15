@@ -187,6 +187,7 @@ func TestAction_ToEos(t *testing.T) {
 	act := NewTransferTokensPubKey(account.Actor, account.PubKey, Tokens(0.0001)).ToEos()
 	if reflect.TypeOf(*act).String() != "eos.Action" {
 		t.Error("ToEos gave wrong type")
+		fmt.Println(reflect.TypeOf(*act).String())
 	}
 }
 

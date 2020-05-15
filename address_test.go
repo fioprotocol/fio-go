@@ -415,7 +415,7 @@ func TestRemoveAddr(t *testing.T) {
 		t.Error("bad address")
 		return
 	}
-	_, err = api.SignPushActions(naa.ToEos())
+	_, err = api.SignPushActions(naa)
 	if err != nil {
 		t.Error(err)
 		return
@@ -431,7 +431,7 @@ func TestRemoveAddr(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = api.SignPushActions(rm.ToEos())
+	_, err = api.SignPushActions(rm)
 	if err != nil {
 		t.Error(err)
 		return
@@ -453,12 +453,12 @@ func TestRemoveAddr(t *testing.T) {
 			t.Error("bad address")
 			return
 		}
-		_, err = api.SignPushActions(naa.ToEos())
+		_, err = api.SignPushActions(naa)
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		time.Sleep(500*time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	// make sure it is there
@@ -473,7 +473,7 @@ func TestRemoveAddr(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = api.SignPushActions(rmfr.ToEos())
+	_, err = api.SignPushActions(rmfr)
 	if err != nil {
 		t.Error(err)
 		return

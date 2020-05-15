@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	"io/ioutil"
+	"sort"
 	"strings"
 )
 
@@ -112,4 +113,41 @@ func (api *API) HasHistory() bool {
 		}
 	}
 	return false
+}
+
+// GetActionsUniq strips the results of GetActions of duplicate traces, this can occur with certain transactions
+// that may have multiple actors involved and the same trace is presented more than once but associated with a
+// different actor. This will give preference to the trace referencing the actor queried if possible.
+func (api *API) GetActionsUniq(actor eos.AccountName, offset int64, pos int64) ([]*eos.ActionTrace, error) {
+	traceUniq := make(map[string]*eos.ActionTrace)
+	resp, err := api.GetActions(eos.GetActionsRequest{AccountName:actor, Offset: offset, Pos: pos})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || len(resp.Actions) == 0 {
+		return nil, errors.New("empty result")
+	}
+	for i := range resp.Actions {
+		// use a closure to dereference
+		func (act *eos.ActionResp) {
+			// have we already seen this act_digest?
+			switch traceUniq[act.Trace.Receipt.ActionDigest] {
+			case nil:
+				traceUniq[act.Trace.Receipt.ActionDigest] = &act.Trace
+			default:
+				// if there is a dup, prefer the correct actor, otherwise just ignore and keep the existing:
+				if act.Trace.Receipt.AuthSequence != nil && len(act.Trace.Receipt.AuthSequence) > 0 && act.Trace.Receipt.AuthSequence[0].Account == actor {
+					traceUniq[act.Trace.Receipt.ActionDigest] = &act.Trace
+				}
+			}
+		}(&resp.Actions[i])
+	}
+	traces := make([]*eos.ActionTrace, 0)
+	for _, v := range traceUniq {
+		traces = append(traces, v)
+	}
+	sort.Slice(traces, func(i, j int) bool {
+		return traces[i].Receipt.GlobalSequence < traces[j].Receipt.GlobalSequence
+	})
+	return traces, nil
 }
