@@ -10,43 +10,86 @@ import (
 	eosecc "github.com/eoscanada/eos-go/ecc"
 	"github.com/fioprotocol/fio-go/eos-go/ecc"
 	hdwallet "github.com/miguelmota/go-ethereum-hdwallet"
-	"math/rand"
+	mrand "math/rand"
 	"strings"
 	"time"
 )
 
-// HDNewKeys uses a BIP39 mnemonic phrase to generate a keybag with the specified number of keys based on a BIP32
-// derivation path. Note: FIO uses m/44'/235'/0
-func HDNewKeys(mnemonic string, keys int) (*eos.KeyBag, error) {
-	if keys < 1 {
-		return nil, errors.New("cannot derive 0 keys")
+// Mnemonic is a BIP39 mnemonic phrase based on a BIP32 derivation path. Note: FIO uses m/44'/235'/0
+type Mnemonic struct {
+	words []string
+	wallet *hdwallet.Wallet
+}
+
+// NewMnemonicFromString verifies a mnemonic string and creates a Mnemonic containing a HD Wallet
+func NewMnemonicFromString(mnemonic string) (*Mnemonic, error) {
+	mn := strings.Split(mnemonic, " ")
+	switch len(mn) {
+	case 12, 15, 18, 21, 24:
+		for _, w := range mn {
+			if w == "" {
+				return nil, errors.New("malformed mnemonic, had empty word")
+			}
+		}
+		break
+	default:
+		return nil, errors.New("mnemonic length should be 12, 15, 18, 21, or 24 words")
 	}
-	wallet, err := hdwallet.NewFromMnemonic(mnemonic)
+	var result Mnemonic
+	var err error
+	result.wallet, err = hdwallet.NewFromMnemonic(mnemonic)
 	if err != nil {
 		return nil, err
+	}
+	result.words = make([]string, len(mn))
+	for i := range mn {
+		result.words[i] = mn[i]
+	}
+	return &result, nil
+}
+
+// NewRandomMnemonic builds a new Mnemonic with a specific word count (12, 15, 18, 21, or 24,) longer is better
+func NewRandomMnemonic(words int) (*Mnemonic, error) {
+	var bits int
+	switch words {
+	case 24:
+		bits = 256
+	case 21:
+		bits = 224
+	case 18:
+		bits = 192
+	case 15:
+		bits = 160
+	case 12:
+		bits = 128
+	default:
+		return nil, errors.New("word count must be 12, 15, 18, 21, or 24")
+	}
+	// confirmed as using crypto/rand not math:
+	phrase, err := hdwallet.NewMnemonic(bits)
+	if err != nil {
+		return nil, err
+	}
+	return NewMnemonicFromString(phrase)
+}
+
+func (m Mnemonic) Len() int {
+	return len(m.words)
+}
+
+func (m Mnemonic) String() string {
+	return strings.Join(m.words[:], " ")
+}
+
+// Keys provides a keybag with the requested number of keys, use KeyAt for a single key
+func (m Mnemonic) Keys(keys int) (*eos.KeyBag, error) {
+	if keys < 1 {
+		return nil, errors.New("cannot derive 0 keys")
 	}
 	keybag := &eos.KeyBag{}
 	keybag.Keys = make([]*eosecc.PrivateKey, 0)
 	for i := 0; i < keys; i++ {
-		path, err := hdwallet.ParseDerivationPath(fmt.Sprintf("m/44'/235'/0'/0/%d", i))
-		if err != nil {
-			return nil, err
-		}
-		account, err := wallet.Derive(path, false)
-		if err != nil {
-			return nil, err
-		}
-		priv, err := wallet.PrivateKey(account)
-		if err != nil {
-			return nil, err
-		}
-
-		btcPriv := btcec.PrivateKey(*priv)
-		wif, err := btcutil.NewWIF(&btcPriv, &chaincfg.MainNetParams, false)
-		if err != nil {
-			return nil, err
-		}
-		k, err := eosecc.NewPrivateKey(wif.String())
+		k, err := keyAt(m.wallet, i)
 		if err != nil {
 			return nil, err
 		}
@@ -55,84 +98,109 @@ func HDNewKeys(mnemonic string, keys int) (*eos.KeyBag, error) {
 	return keybag, nil
 }
 
-// HDGetPubKeys uses a BIP39 mnemonic phrase to generate a slice of public keys for the specified number of keys
-// based on a BIP32 derivation path.
-func HDGetPubKeys(mnemonic string, count int) ([]ecc.PublicKey, error) {
-	if count < 1 {
-		return nil, errors.New("cannot derive 0 public keys")
-	}
-	privs, err := HDNewKeys(mnemonic, count)
+// KeyAt creates a keybag holding a single key at m/44'/235'/0'/0/index
+func (m Mnemonic) KeyAt(index int) (*eos.KeyBag, error) {
+	keybag := &eos.KeyBag{}
+	keybag.Keys = make([]*eosecc.PrivateKey, 1)
+	var err error
+	keybag.Keys[0], err = keyAt(m.wallet, index)
 	if err != nil {
 		return nil, err
 	}
-	pks := make([]ecc.PublicKey, 0)
+	return keybag, nil
+}
+
+// PubKeys derives a number of public keys for the Mnemonic
+func (m Mnemonic) PubKeys(count int) ([]*ecc.PublicKey, error) {
+	if count < 1 {
+		return nil, errors.New("cannot derive 0 public keys")
+	}
+	privs, err := m.Keys(count)
+	if err != nil {
+		return nil, err
+	}
+	pks := make([]*ecc.PublicKey, 0)
 	for _, priv := range privs.Keys {
 		pk, err := ecc.NewPublicKey("FIO" + priv.PublicKey().String()[3:])
 		if err != nil {
 			return nil, err
 		}
-		pks = append(pks, pk)
+		pks = append(pks, &pk)
 	}
 	return pks, nil
 }
 
-type Mnemonic []string
-
-func MnemonicFromString(mnemonic string) (*Mnemonic, error) {
-	mn := strings.Split(mnemonic, " ")
-	switch len(mnemonic) {
-	case 12, 15, 18, 21, 24:
-		break
-	default:
-		return nil, errors.New("mnemonic length should be 12, 15, 18, 21, or 24 words")
+// PubKeyAt derives a public key at a specific location - m/44'/235'/0'/0/index
+func (m Mnemonic) PubKeyAt(index int) (*ecc.PublicKey, error) {
+	if index < 0 {
+		return nil, errors.New("index must not be negative")
 	}
-	_, err := hdwallet.NewFromMnemonic(mnemonic)
+	priv, err := m.KeyAt(index)
 	if err != nil {
 		return nil, err
 	}
-	var result Mnemonic
-	for i := range mn {
-		result[i] = mn[i]
+	pk, err := ecc.NewPublicKey("FIO" + priv.Keys[0].PublicKey().String()[3:])
+	if err != nil {
+		return nil, err
 	}
-	return &result, nil
+	return &pk, nil
 }
 
-func (m Mnemonic) Len() int {
-	return len(m)
+func keyAt(wallet *hdwallet.Wallet, index int) (*eosecc.PrivateKey, error) {
+	path, err := hdwallet.ParseDerivationPath(fmt.Sprintf("m/44'/235'/0'/0/%d", index))
+	if err != nil {
+		return nil, err
+	}
+	account, err := wallet.Derive(path, false)
+	if err != nil {
+		return nil, err
+	}
+	priv, err := wallet.PrivateKey(account)
+	if err != nil {
+		return nil, err
+	}
+
+	btcPriv := btcec.PrivateKey(*priv)
+	wif, err := btcutil.NewWIF(&btcPriv, &chaincfg.MainNetParams, false)
+	if err != nil {
+		return nil, err
+	}
+	k, err := eosecc.NewPrivateKey(wif.String())
+	if err != nil {
+		return nil, err
+	}
+	return k, nil
 }
 
-func (m Mnemonic) String() string {
-	return strings.Join(m[:], " ")
-}
-
-func (m Mnemonic) Keys(count int) (*eos.KeyBag, error) {
-	return HDNewKeys(m.String(), count)
-}
-
-func (m Mnemonic) PubKeys(count int) ([]ecc.PublicKey, error) {
-	return HDGetPubKeys(m.String(), count)
-}
-
-// MnemonicQuiz is used for prompting a user to confirm the mnemonic phrase by providing a partial description,
-// the word, and a function to validate their answer
+// MnemonicQuiz is used for prompting a user to confirm the mnemonic phrase by providing
+// a description of which word to provide and a function to validate their answer
 type MnemonicQuiz struct {
 	Description string
-	Word        string
-	Correct     func(s string) bool
+	Check       func(s string) bool // function confirming correct answer
+
+	index       int // for tests
+	word        string
 }
 
-func (m Mnemonic) Quiz() (questions []MnemonicQuiz, err error) {
-	for _, n := range m {
+// Quiz generates a number of quiz questions, if less than one is provided, it uses m.Len()/3
+func (m Mnemonic) Quiz(count int) (questions []MnemonicQuiz, err error) {
+	if count > m.Len() {
+		return nil, errors.New("invalid count requested, exceeds number of words")
+	}
+	if count < 1 {
+		count = len(m.words)/3
+	}
+	for _, n := range m.words {
 		if n == "" {
 			return nil, errors.New("invalid mnemonic, got an empty word")
 		}
 	}
-	rand.Seed(time.Now().UnixNano())
+	mrand.Seed(time.Now().UnixNano())
 	chosen := make(map[int]bool)
 	i := 0
-	questions = make([]MnemonicQuiz, len(m)/3)
-	for i < len(m)/3 {
-		r := rand.Intn(len(m))
+	questions = make([]MnemonicQuiz, count)
+	for i < count {
+		r := mrand.Intn(len(m.words))
 		if chosen[r] {
 			continue
 		}
@@ -187,10 +255,12 @@ func (m Mnemonic) Quiz() (questions []MnemonicQuiz, err error) {
 		case 23:
 			questions[i].Description = "twenty-fourth"
 		}
-		questions[i].Word = m[i]
+		// closure ensures dereference of iterator
 		func (i int, r int) {
-			questions[i].Correct = func(s string) bool {
-				return strings.TrimSpace(s) == m[r]
+			questions[i].word = m.words[r]
+			questions[i].index = r
+			questions[i].Check = func(s string) bool {
+				return strings.TrimSpace(s) == m.words[r]
 			}
 		}(i, r)
 		i += 1
