@@ -153,7 +153,7 @@ func TestMnemonic_Quiz(t *testing.T) {
 	if _, err = mnemonic.Quiz(22); err == nil {
 		t.Error("quiz allowed too many questions")
 	}
-	if n, _ := mnemonic.Quiz(3); n == nil || len(n) != 3{
+	if n, _ := mnemonic.Quiz(3); n == nil || len(n) != 3 {
 		t.Error("didn't get expect count of quiz items")
 	}
 }

@@ -686,4 +686,3 @@ func (api *API) SignPushActions(a ...*Action) (out *eos.PushTransactionFullResp,
 	}
 	return api.SignPushActionsWithOpts(b, nil)
 }
-

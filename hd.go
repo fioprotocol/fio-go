@@ -17,7 +17,7 @@ import (
 
 // Mnemonic is a BIP39 mnemonic phrase based on a BIP32 derivation path. Note: FIO uses m/44'/235'/0
 type Mnemonic struct {
-	words []string
+	words  []string
 	wallet *hdwallet.Wallet
 }
 
@@ -178,17 +178,17 @@ type MnemonicQuiz struct {
 	Description string
 	Check       func(s string) bool // function confirming correct answer
 
-	index       int // for tests
-	word        string
+	index int // for tests
+	word  string
 }
 
-// Quiz generates a number of quiz questions, if less than one is provided, it uses m.Len()/3
+// Quiz generates a number of randomized quiz questions, if less than one is provided, it uses m.Len()/3
 func (m Mnemonic) Quiz(count int) (questions []MnemonicQuiz, err error) {
 	if count > m.Len() {
 		return nil, errors.New("invalid count requested, exceeds number of words")
 	}
 	if count < 1 {
-		count = len(m.words)/3
+		count = len(m.words) / 3
 	}
 	for _, n := range m.words {
 		if n == "" {
@@ -256,7 +256,7 @@ func (m Mnemonic) Quiz(count int) (questions []MnemonicQuiz, err error) {
 			questions[i].Description = "twenty-fourth"
 		}
 		// closure ensures dereference of iterator
-		func (i int, r int) {
+		func(i int, r int) {
 			questions[i].word = m.words[r]
 			questions[i].index = r
 			questions[i].Check = func(s string) bool {
@@ -267,4 +267,3 @@ func (m Mnemonic) Quiz(count int) (questions []MnemonicQuiz, err error) {
 	}
 	return
 }
-

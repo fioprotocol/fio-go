@@ -120,7 +120,7 @@ func (api *API) HasHistory() bool {
 // different actor. This will give preference to the trace referencing the actor queried if possible.
 func (api *API) GetActionsUniq(actor eos.AccountName, offset int64, pos int64) ([]*eos.ActionTrace, error) {
 	traceUniq := make(map[string]*eos.ActionTrace)
-	resp, err := api.GetActions(eos.GetActionsRequest{AccountName:actor, Offset: eos.Int64(offset), Pos: eos.Int64(pos)})
+	resp, err := api.GetActions(eos.GetActionsRequest{AccountName: actor, Offset: eos.Int64(offset), Pos: eos.Int64(pos)})
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (api *API) GetActionsUniq(actor eos.AccountName, offset int64, pos int64) (
 	}
 	for i := range resp.Actions {
 		// use a closure to dereference
-		func (act *eos.ActionResp) {
+		func(act *eos.ActionResp) {
 			// have we already seen this act_digest?
 			switch traceUniq[act.Trace.Receipt.ActionDigest] {
 			case nil:
