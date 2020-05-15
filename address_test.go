@@ -356,7 +356,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: " + err.Error())
+		t.Error("transfer address: " + err.Error())
 	}
 	time.Sleep(500 * time.Millisecond)
 
@@ -378,7 +378,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: " + err.Error())
+		t.Error("transfer domain: " + err.Error())
 	}
 
 	// verify
