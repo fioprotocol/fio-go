@@ -1,6 +1,7 @@
 package fio
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -44,5 +45,49 @@ func TestHDGetPubKeys(t *testing.T) {
 	}
 	if pubs[17].String() != pk17 {
 		t.Error("public key 17 mismatch")
+	}
+	// now with 24 words
+	mnemonic = "cruise village reflect chunk local dynamic surge verb wave water manage patient clarify speak trick alert throw blood tail between leave special virus donate"
+	pk3 = "FIO7TBBvXU2QWp5Q3h8T5T7bFhvn1rZUhjtb4g1hw4heHKg5DQUbd"
+	pk8 = "FIO5u4s5ddHinq9UhibJ1mL1EzG32855BxEpD48FetKYzFyQc9VSN"
+	pk17 = "FIO5bmwWdWooJKzghQkj59R45xLLbPoPPmYGhyk7oujvhcRyjfUFX"
+	pubs, err = HDGetPubKeys(mnemonic, 18)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if pubs[3].String() != pk3 {
+		t.Error("public key 3 mismatch")
+	}
+	if pubs[8].String() != pk8 {
+		t.Error("public key 8 mismatch")
+	}
+	if pubs[17].String() != pk17 {
+		t.Error("public key 17 mismatch")
+	}
+}
+
+func TestMnemonic(t *testing.T) {
+	shortMnemonic := "life is too short for debugging javascript"
+	longMnemonic := "blah blah blah yah its really long ok get over it we already know this is too long earth dust patient fashion begin behave two brisk solar fetch flash impulse paper around endless"
+	mnemonic := "dream knife language movie cannon remove width like wedding gate help patient ocean usage system steak screen summer subway field venture"
+	_, err := MnemonicFromString(shortMnemonic)
+	if err == nil {
+		t.Error("allowed too short mnemoic phrase")
+	}
+	_, err = MnemonicFromString(longMnemonic)
+	if err == nil {
+		t.Error("allowed too long mnemonic phrase")
+	}
+	mn, err := MnemonicFromString(mnemonic)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if mn.Len() != 21 {
+		t.Error(errors.New("mnemonic phrase had incorrect length"))
+	}
+	if mnemonic != mn.String() {
+		t.Error("mnemonic did not serialize to string")
 	}
 }
