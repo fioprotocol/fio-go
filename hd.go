@@ -16,14 +16,14 @@ import (
 	"time"
 )
 
-// Mnemonic is an HD Wallet with BIP39 mnemonic phrase based on a BIP32 derivation path. Note: FIO uses m/44'/235'/0
-type Mnemonic struct {
+// Hd is an HD Wallet with BIP39 mnemonic phrase based on a BIP32 derivation path. Note: FIO uses m/44'/235'/0
+type Hd struct {
 	words  []string
 	wallet *hdwallet.Wallet
 }
 
-// NewMnemonicFromString verifies a mnemonic string and creates a Mnemonic containing a HD Wallet
-func NewMnemonicFromString(mnemonic string) (*Mnemonic, error) {
+// NewHdFromString verifies a mnemonic string and creates a Hd containing a HD Wallet
+func NewHdFromString(mnemonic string) (*Hd, error) {
 	mn := strings.Split(mnemonic, " ")
 	switch len(mn) {
 	case 12, 15, 18, 21, 24:
@@ -36,7 +36,7 @@ func NewMnemonicFromString(mnemonic string) (*Mnemonic, error) {
 	default:
 		return nil, errors.New("mnemonic length should be 12, 15, 18, 21, or 24 words")
 	}
-	var result Mnemonic
+	var result Hd
 	var err error
 	result.wallet, err = hdwallet.NewFromMnemonic(mnemonic)
 	if err != nil {
@@ -49,8 +49,8 @@ func NewMnemonicFromString(mnemonic string) (*Mnemonic, error) {
 	return &result, nil
 }
 
-// NewRandomMnemonic builds a new Mnemonic with a specific word count (12, 15, 18, 21, or 24,) longer is better
-func NewRandomMnemonic(words int) (*Mnemonic, error) {
+// NewRandomHd builds a new Hd with a specific word count (12, 15, 18, 21, or 24,) longer is better
+func NewRandomHd(words int) (*Hd, error) {
 	var bits int
 	switch words {
 	case 24:
@@ -71,13 +71,13 @@ func NewRandomMnemonic(words int) (*Mnemonic, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewMnemonicFromString(phrase)
+	return NewHdFromString(phrase)
 }
 
 // Xpriv is the bip32 root key as a string, this may not import for bip44 compatible wallets,
 // that is a planned addition.
-func (m Mnemonic) Xpriv() (string, error) {
-	key, err := bip32.NewMasterKey(m.wallet.Seed)
+func (hd Hd) Xpriv() (string, error) {
+	key, err := bip32.NewMasterKey(hd.wallet.Seed)
 	if err != nil {
 		return "", err
 	}
@@ -86,31 +86,31 @@ func (m Mnemonic) Xpriv() (string, error) {
 
 // Xpub is the bip32 root public key as a string, some wallets will expect a bip44 xpub or the
 // bip32 derivation xpub key, these are planned additions.
-func (m Mnemonic) Xpub() (string, error) {
-	key, err := bip32.NewMasterKey(m.wallet.Seed)
+func (hd Hd) Xpub() (string, error) {
+	key, err := bip32.NewMasterKey(hd.wallet.Seed)
 	if err != nil {
 		return "", err
 	}
 	return key.PublicKey().String(), nil
 }
 
-func (m Mnemonic) Len() int {
-	return len(m.words)
+func (hd Hd) Len() int {
+	return len(hd.words)
 }
 
-func (m Mnemonic) String() string {
-	return strings.Join(m.words[:], " ")
+func (hd Hd) String() string {
+	return strings.Join(hd.words[:], " ")
 }
 
 // Keys provides a keybag with the requested number of keys, use KeyAt for a single key
-func (m Mnemonic) Keys(keys int) (*eos.KeyBag, error) {
+func (hd Hd) Keys(keys int) (*eos.KeyBag, error) {
 	if keys < 1 {
 		return nil, errors.New("cannot derive 0 keys")
 	}
 	keybag := &eos.KeyBag{}
 	keybag.Keys = make([]*eosecc.PrivateKey, 0)
 	for i := 0; i < keys; i++ {
-		k, err := keyAt(m.wallet, i)
+		k, err := keyAt(hd.wallet, i)
 		if err != nil {
 			return nil, err
 		}
@@ -120,23 +120,23 @@ func (m Mnemonic) Keys(keys int) (*eos.KeyBag, error) {
 }
 
 // KeyAt creates a keybag holding a single key at m/44'/235'/0'/0/index
-func (m Mnemonic) KeyAt(index int) (*eos.KeyBag, error) {
+func (hd Hd) KeyAt(index int) (*eos.KeyBag, error) {
 	keybag := &eos.KeyBag{}
 	keybag.Keys = make([]*eosecc.PrivateKey, 1)
 	var err error
-	keybag.Keys[0], err = keyAt(m.wallet, index)
+	keybag.Keys[0], err = keyAt(hd.wallet, index)
 	if err != nil {
 		return nil, err
 	}
 	return keybag, nil
 }
 
-// PubKeys derives a number of public keys for the Mnemonic
-func (m Mnemonic) PubKeys(count int) ([]*ecc.PublicKey, error) {
+// PubKeys derives a number of public keys for the Hd
+func (hd Hd) PubKeys(count int) ([]*ecc.PublicKey, error) {
 	if count < 1 {
 		return nil, errors.New("cannot derive 0 public keys")
 	}
-	privs, err := m.Keys(count)
+	privs, err := hd.Keys(count)
 	if err != nil {
 		return nil, err
 	}
@@ -152,11 +152,11 @@ func (m Mnemonic) PubKeys(count int) ([]*ecc.PublicKey, error) {
 }
 
 // PubKeyAt derives a public key at a specific location - m/44'/235'/0'/0/index
-func (m Mnemonic) PubKeyAt(index int) (*ecc.PublicKey, error) {
+func (hd Hd) PubKeyAt(index int) (*ecc.PublicKey, error) {
 	if index < 0 {
 		return nil, errors.New("index must not be negative")
 	}
-	priv, err := m.KeyAt(index)
+	priv, err := hd.KeyAt(index)
 	if err != nil {
 		return nil, err
 	}
@@ -193,9 +193,9 @@ func keyAt(wallet *hdwallet.Wallet, index int) (*eosecc.PrivateKey, error) {
 	return k, nil
 }
 
-// MnemonicQuiz is used for prompting a user to confirm the mnemonic phrase by providing
+// HdQuiz is used for prompting a user to confirm the mnemonic phrase by providing
 // a description of which word to provide and a function to validate their answer
-type MnemonicQuiz struct {
+type HdQuiz struct {
 	Description string
 	Check       func(s string) bool // function confirming correct answer
 
@@ -203,15 +203,15 @@ type MnemonicQuiz struct {
 	word  string
 }
 
-// Quiz generates a number of randomized quiz questions, if less than one is provided, it uses m.Len()/3
-func (m Mnemonic) Quiz(count int) (questions []MnemonicQuiz, err error) {
-	if count > m.Len() {
+// Quiz generates a number of randomized quiz questions, if less than one is provided, it uses hd.Len()/3
+func (hd Hd) Quiz(count int) (questions []HdQuiz, err error) {
+	if count > hd.Len() {
 		return nil, errors.New("invalid count requested, exceeds number of words")
 	}
 	if count < 1 {
-		count = len(m.words) / 3
+		count = len(hd.words) / 3
 	}
-	for _, n := range m.words {
+	for _, n := range hd.words {
 		if n == "" {
 			return nil, errors.New("invalid mnemonic, got an empty word")
 		}
@@ -219,9 +219,9 @@ func (m Mnemonic) Quiz(count int) (questions []MnemonicQuiz, err error) {
 	mrand.Seed(time.Now().UnixNano())
 	chosen := make(map[int]bool)
 	i := 0
-	questions = make([]MnemonicQuiz, count)
+	questions = make([]HdQuiz, count)
 	for i < count {
-		r := mrand.Intn(len(m.words))
+		r := mrand.Intn(len(hd.words))
 		if chosen[r] {
 			continue
 		}
@@ -278,10 +278,10 @@ func (m Mnemonic) Quiz(count int) (questions []MnemonicQuiz, err error) {
 		}
 		// closure ensures dereference of iterator
 		func(i int, r int) {
-			questions[i].word = m.words[r]
+			questions[i].word = hd.words[r]
 			questions[i].index = r
 			questions[i].Check = func(s string) bool {
-				return strings.TrimSpace(s) == m.words[r]
+				return strings.TrimSpace(s) == hd.words[r]
 			}
 		}(i, r)
 		i += 1
