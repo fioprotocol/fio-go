@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eoscanada/eos-go"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/ecc"
 	"io/ioutil"
 	"net"
 	"net/http"

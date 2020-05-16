@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	eosecc "github.com/eoscanada/eos-go/ecc"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/ecc"
 	"io"
 	"io/ioutil"
 	"math"

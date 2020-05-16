@@ -16,7 +16,7 @@ import (
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/ecc"
 	"io/ioutil"
 	"net/http"
 	"time"

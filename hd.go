@@ -8,14 +8,15 @@ import (
 	"github.com/btcsuite/btcutil"
 	"github.com/eoscanada/eos-go"
 	eosecc "github.com/eoscanada/eos-go/ecc"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
-	hdwallet "github.com/miguelmota/go-ethereum-hdwallet"
+	"github.com/fioprotocol/fio-go/imports/ecc"
+	hdwallet "github.com/fioprotocol/fio-go/imports/go-ethereum-hdwallet"
+	"github.com/tyler-smith/go-bip32"
 	mrand "math/rand"
 	"strings"
 	"time"
 )
 
-// Mnemonic is a BIP39 mnemonic phrase based on a BIP32 derivation path. Note: FIO uses m/44'/235'/0
+// Mnemonic is an HD Wallet with BIP39 mnemonic phrase based on a BIP32 derivation path. Note: FIO uses m/44'/235'/0
 type Mnemonic struct {
 	words  []string
 	wallet *hdwallet.Wallet
@@ -71,6 +72,26 @@ func NewRandomMnemonic(words int) (*Mnemonic, error) {
 		return nil, err
 	}
 	return NewMnemonicFromString(phrase)
+}
+
+// Xpriv is the bip32 root key as a string, this may not import for bip44 compatible wallets,
+// that is a planned addition.
+func (m Mnemonic) Xpriv() (string, error) {
+	key, err := bip32.NewMasterKey(m.wallet.Seed)
+	if err != nil {
+		return "", err
+	}
+	return key.String(), nil
+}
+
+// Xpub is the bip32 root public key as a string, some wallets will expect a bip44 xpub or the
+// bip32 derivation xpub key, these are planned additions.
+func (m Mnemonic) Xpub() (string, error) {
+	key, err := bip32.NewMasterKey(m.wallet.Seed)
+	if err != nil {
+		return "", err
+	}
+	return key.PublicKey().String(), nil
 }
 
 func (m Mnemonic) Len() int {

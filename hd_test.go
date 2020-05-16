@@ -2,6 +2,7 @@ package fio
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 )
 
@@ -155,5 +156,39 @@ func TestMnemonic_Quiz(t *testing.T) {
 	}
 	if n, _ := mnemonic.Quiz(3); n == nil || len(n) != 3 {
 		t.Error("didn't get expect count of quiz items")
+	}
+}
+
+func TestMnemonic_Xpriv(t *testing.T) {
+	mnemonic, err := NewMnemonicFromString("struggle dream fetch aunt marriage adult merry machine vessel help slogan bright balcony extend stomach sun father essay surface call song bitter economy approve")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	xp, err := mnemonic.Xpriv()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if xp != "xprv9s21ZrQH143K33XDJwNLgRmKTgKXHJuWgq33UMBbrz51vqToDKhysgY6k7SmmmTRkpTjAPpGSb6gKTDZ43WGW3ogozKq4qeENED3pPMcrAr" {
+		t.Error("Xpriv did not match")
+		fmt.Println(xp)
+	}
+}
+
+func TestMnemonic_Xpub(t *testing.T) {
+	mnemonic, err := NewMnemonicFromString("struggle dream fetch aunt marriage adult merry machine vessel help slogan bright balcony extend stomach sun father essay surface call song bitter economy approve")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	xp, err := mnemonic.Xpub()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if xp != "xpub661MyMwAqRbcFXbgQxuM3Zi41iA1gmdN43xeGjbDRKbzodnwks2ERUrabQqhPKag9vHNcZzTz9vYQGLQUubHrtuNmb9faBM7eJQSSGYX7na" {
+		t.Error("Xpub did not match")
+		fmt.Println(xp)
 	}
 }
