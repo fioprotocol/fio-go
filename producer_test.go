@@ -24,7 +24,7 @@ func TestNewVoteProducer(t *testing.T) {
 			account.Actor,
 			voter.PubKey,
 			Tokens(GetMaxFee(FeeRegisterProxy)+10.0),
-		).ToEos(),
+		),
 	)
 	if err != nil {
 		t.Error(err)
@@ -33,7 +33,7 @@ func TestNewVoteProducer(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	fioAddr := "vote-" + word() + "@dapixdev"
 	_, err = api.SignPushActions(MustNewRegAddress(
-		account.Actor, Address(fioAddr), voter.PubKey).ToEos(),
+		account.Actor, Address(fioAddr), voter.PubKey),
 	)
 	if err != nil {
 		t.Error(err)
@@ -66,7 +66,7 @@ func TestNewVoteProducer(t *testing.T) {
 	}
 
 	_, err = voterApi.SignPushActions(
-		NewVoteProducer(newVotes, voter.Actor, fioAddr).ToEos(),
+		NewVoteProducer(newVotes, voter.Actor, fioAddr),
 	)
 	if err != nil {
 		t.Error(err)
@@ -84,7 +84,7 @@ func TestNewVoteProducer(t *testing.T) {
 		t.Error("votes not updated")
 	}
 
-	_, err = voterApi.SignPushActions(NewRegProxy(fioAddr, voter.Actor).ToEos())
+	_, err = voterApi.SignPushActions(NewRegProxy(fioAddr, voter.Actor))
 	if err != nil {
 		t.Error(err)
 		return
@@ -96,7 +96,7 @@ func TestNewVoteProducer(t *testing.T) {
 			account.Actor,
 			pVoter.PubKey,
 			Tokens(1.0),
-		).ToEos(),
+		),
 	)
 	if err != nil {
 		t.Error(err)
@@ -105,7 +105,7 @@ func TestNewVoteProducer(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	pFioAddr := "proxyvote-" + word() + "@dapixdev"
 	_, err = api.SignPushActions(MustNewRegAddress(
-		account.Actor, Address(pFioAddr), pVoter.PubKey).ToEos(),
+		account.Actor, Address(pFioAddr), pVoter.PubKey),
 	)
 	if err != nil {
 		t.Error(err)
@@ -117,7 +117,7 @@ func TestNewVoteProducer(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, err = pApi.SignPushActions(NewVoteProxy(fioAddr, pFioAddr, pVoter.Actor).ToEos())
+	_, err = pApi.SignPushActions(NewVoteProxy(fioAddr, pFioAddr, pVoter.Actor))
 	if err != nil {
 		t.Error(err)
 		return
@@ -154,7 +154,7 @@ func TestAPI_Register_GetBpJson(t *testing.T) {
 			account.Actor,
 			prod.PubKey,
 			Tokens(GetMaxFee(FeeRegisterProducer)+GetMaxFee(FeeUnregisterProducer)+10.0),
-		).ToEos(),
+		),
 	)
 	if err != nil {
 		t.Error(err)
@@ -163,7 +163,7 @@ func TestAPI_Register_GetBpJson(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	fioAddr := "producer-" + word() + "@dapixdev"
 	_, err = api.SignPushActions(MustNewRegAddress(
-		account.Actor, Address(fioAddr), prod.PubKey).ToEos(),
+		account.Actor, Address(fioAddr), prod.PubKey),
 	)
 	if err != nil {
 		t.Error(err)
@@ -193,7 +193,7 @@ func TestAPI_Register_GetBpJson(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, err = prodApi.SignPushActions(nrp.ToEos())
+	_, err = prodApi.SignPushActions(nrp)
 	if err != nil {
 		t.Error(err)
 		return
@@ -202,7 +202,7 @@ func TestAPI_Register_GetBpJson(t *testing.T) {
 	// try to unreg on exit, no matter what, so a dev node doesn't end up with an insufficient
 	// number of working producers to maintain quorum
 	defer func() {
-		_, _ = prodApi.SignPushActions(NewUnRegProducer(fioAddr, prod.Actor).ToEos())
+		_, _ = prodApi.SignPushActions(NewUnRegProducer(fioAddr, prod.Actor))
 	}()
 
 	_, err = api.GetBpJson(prod.Actor)
@@ -291,7 +291,7 @@ func servBpJson(listen chan string) {
 	respond := func(resp http.ResponseWriter, req *http.Request) {
 		// alternate so bp.chainid.json gets a 404 on second try
 		hits += 1
-		if hits % 2 == 1 {
+		if hits%2 == 1 {
 			resp.WriteHeader(http.StatusNotFound)
 			resp.Write(nil)
 			return
@@ -322,7 +322,7 @@ func TestIsPrivate(t *testing.T) {
 	}
 	for _, ip := range privs {
 		if !isPrivate(net.ParseIP(ip)) {
-			t.Error(ip+" is not marked as a private ip")
+			t.Error(ip + " is not marked as a private ip")
 		}
 	}
 }

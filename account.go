@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/eoscanada/eos-go"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/ecc"
 	"github.com/mr-tron/base58"
 	"io/ioutil"
 )

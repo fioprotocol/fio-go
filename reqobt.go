@@ -16,7 +16,7 @@ import (
 	"github.com/eoscanada/eos-go"
 	"github.com/eoscanada/eos-go/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/ecc"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -269,10 +269,10 @@ func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, conten
 
 // CancelFndReq allows cancelling a previously sent request
 type CancelFndReq struct {
-	FioRequestId string          `json:"fio_request_id"`
-	MaxFee       uint64          `json:"max_fee"`
-	Actor        string          `json:"actor"`
-	Tpid         string          `json:"tpid"`
+	FioRequestId string `json:"fio_request_id"`
+	MaxFee       uint64 `json:"max_fee"`
+	Actor        string `json:"actor"`
+	Tpid         string `json:"tpid"`
 }
 
 // NewCancelFndReq builds the action to cancel a request that is pending by the payee

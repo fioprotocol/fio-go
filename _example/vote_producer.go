@@ -33,12 +33,7 @@ func main() {
 	api, opts, err := fio.NewConnection(nil, url)
 	fatal(err)
 
-	vote := fio.NewVoteProducer(producers, account.Actor, voter)
-	resp, err := api.SignPushTransaction(
-		fio.NewTransaction([]*fio.Action{vote}, opts),
-		opts.ChainID,
-		fio.CompressionNone,
-	)
+	resp, err := api.SignPushActions(fio.NewVoteProducer(producers, account.Actor, voter))
 	fatal(err)
 
 	j, err := json.MarshalIndent(resp, "", "  ")

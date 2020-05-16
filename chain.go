@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/eoscanada/eos-go"
 	eosecc "github.com/eoscanada/eos-go/ecc"
-	"github.com/fioprotocol/fio-go/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/ecc"
 	"io"
 	"io/ioutil"
 	"math"
@@ -105,6 +105,16 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 		_ = UpdateMaxFees(a)
 	}
 	return a, txOpts, nil
+}
+
+// NewWifConnect adds convenience by setting everything up, given a WIF and URL
+func NewWifConnect(wif string, url string) (account *Account, api *API, opts *TxOptions, err error) {
+	account, err = NewAccountFromWif(wif)
+	if err != nil {
+		return
+	}
+	api, opts, err = NewConnection(account.KeyBag, url)
+	return
 }
 
 // NewAction creates an Action for FIO contract calls, assumes the permission is "active"
@@ -663,4 +673,16 @@ func enc(v interface{}) (io.Reader, error) {
 	}
 
 	return buffer, nil
+}
+
+// SignPushActions will create a transaction, fill it with default
+// values, sign it and submit it to the chain.  It is the highest
+// level function on top of the `/v1/chain/push_transaction` endpoint.
+// Overridden from eos-go to make it unnecessary to use .ToEos() casting on actions.
+func (api *API) SignPushActions(a ...*Action) (out *eos.PushTransactionFullResp, err error) {
+	b := make([]*eos.Action, len(a))
+	for i, act := range a {
+		b[i] = act.ToEos()
+	}
+	return api.SignPushActionsWithOpts(b, nil)
 }
