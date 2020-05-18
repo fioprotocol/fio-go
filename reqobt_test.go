@@ -3,13 +3,198 @@ package fio
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"github.com/eoscanada/eos-go"
 	"math/rand"
 	"testing"
 	"time"
 )
+
+func TestOBT(t *testing.T) {
+	alice, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	bob, err := NewAccountFromWif(`5KQ6f9ZgUtagD3LZ4wcMKhhvK9qy4BuwL3L1pkm6E2v62HCne2R`)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	apiB, _, err := NewConnection(bob.KeyBag, api.BaseURL)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	aliceAddresses, err := api.GetFioAddresses(alice.PubKey, 0, 100)
+	if err != nil {
+		t.Error(err)
+	}
+	bobAddresses, err := api.GetFioAddresses(bob.PubKey, 0, 100)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// already have it, but be thorough and walk through entire process
+	bobPub, found, err := api.PubAddressLookup(Address(bobAddresses.FioAddresses[0].FioAddress), "FIO", "FIO")
+	if err != nil || !found {
+		t.Error("can't get pubaddress, giving up ", err)
+		return
+	}
+
+	// encrypt 3 requests
+	requests := make([]string, 3)
+	for i := 1; i <= 3; i++ {
+		requests[i-1], err = ObtRequestContent{
+			PayeePublicAddress: alice.PubKey,
+			Amount:             fmt.Sprintf("%d", i),
+			ChainCode:          "FIO",
+			TokenCode:          "FIO",
+			Memo:               fmt.Sprintf("request %d", i),
+		}.Encrypt(alice, bobPub.PublicAddress)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+
+	// alice sends them to bob
+	for _, r := range requests {
+		_, err := api.SignPushActions(
+			NewFundsReq(alice.Actor, bobAddresses.FioAddresses[0].FioAddress, aliceAddresses.FioAddresses[0].FioAddress, r),
+		)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	// check if we have sent requests, and cancel the last one
+	sent, ok, err := api.GetSentFioRequests(alice.PubKey, 100, 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !ok {
+		t.Error("no sent requests")
+		return
+	}
+	cnlReq := NewCancelFndReq(alice.Actor, sent.Requests[len(sent.Requests)-1].FioRequestId)
+	_, err = api.SignPushActions(
+		cnlReq,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	time.Sleep(250 * time.Millisecond)
+	// ensure it's on the list of cancelled requests
+	cancelled, err := api.GetCancelledRequests(alice.PubKey, 100, 0)
+	if err != nil {
+		t.Error(err)
+	} else if cancelled.Requests == nil || len(cancelled.Requests) == 0 {
+		t.Error("did not have any cancelled requests")
+	} else {
+		if cancelled.Requests[len(cancelled.Requests)-1].FioRequestId != sent.Requests[len(sent.Requests)-1].FioRequestId {
+			t.Error("did not find cancelled request")
+		}
+	}
+
+	// now bob's turn, get pending requests
+	pending, ok, err := apiB.GetPendingFioRequests(bob.PubKey, 100, 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !ok {
+		t.Error("no pending requests")
+		return
+	}
+
+	// find the last one from alice, ensure it's request 2, then reject
+	for i := len(pending.Requests) - 1; i >= 0; i-- {
+		if pending.Requests[i].PayeeFioPublicKey == alice.PubKey {
+			fndReq, err := DecryptContent(bob, alice.PubKey, pending.Requests[i].Content, ObtRequestType)
+			if err != nil {
+				t.Error(err)
+				break
+			}
+			if fndReq.Request.Amount != "2" || fndReq.Request.Memo != "request 2" {
+				t.Error("fund request did not have expected content")
+				if j, err := fndReq.ToJson(); err == nil {
+					fmt.Println(string(j))
+				}
+				break
+			}
+			_, err = apiB.SignPushActions(
+				NewRejectFndReq(bob.Actor, fmt.Sprintf("%d", pending.Requests[i].FioRequestId)),
+			)
+			if err != nil {
+				t.Error(err)
+				break
+			}
+			break
+		}
+	}
+
+	// ensure we have one less pending request
+	afterRej, ok, err := apiB.GetPendingFioRequests(bob.PubKey, 100, 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !ok {
+		t.Error("no pending requests")
+		return
+	}
+	if len(pending.Requests)-1 != len(afterRej.Requests) {
+		t.Error("rejecting fund request did not remove from pending list")
+	}
+
+	// finally record a response to the remaining request
+	for i := len(afterRej.Requests) - 1; i >= 0; i-- {
+		if pending.Requests[i].PayeeFioPublicKey == alice.PubKey {
+			fndReq, err := DecryptContent(bob, alice.PubKey, pending.Requests[i].Content, ObtRequestType)
+			if err != nil {
+				t.Error(err)
+				break
+			}
+			if fndReq.Request.Amount != "1" || fndReq.Request.Memo != "request 1" {
+				t.Error("fund request did not have expected content")
+				if j, err := fndReq.ToJson(); err == nil {
+					fmt.Println(string(j))
+				}
+				break
+			}
+			content, err := ObtRecordContent{
+				PayerPublicAddress: bob.PubKey,
+				PayeePublicAddress: alice.PubKey,
+				Amount:             "1",
+				ChainCode:          "FIO",
+				TokenCode:          "FIO",
+				ObtId:              "here is your money",
+			}.Encrypt(bob, alice.PubKey)
+			if err != nil {
+				t.Error(err)
+				break
+			}
+			_, err = apiB.SignPushActions(
+				NewRecordSend(
+					bob.Actor,
+					fmt.Sprintf("%d", afterRej.Requests[i].FioRequestId),
+					bobAddresses.FioAddresses[0].FioAddress,
+					aliceAddresses.FioAddresses[0].FioAddress,
+					content,
+				),
+			)
+			if err != nil {
+				t.Error(err)
+				break
+			}
+			break
+		}
+	}
+
+}
 
 func TestEciesSecret(t *testing.T) {
 	// test is based on the example in the fiojs package, and ensures we get the same secret ...
@@ -62,6 +247,7 @@ func TestEciesSecret2(t *testing.T) {
 	}
 }
 
+/*
 func TestDecode(t *testing.T) {
 	obt := ObtRequestContent{
 		PayeePublicAddress: "purse.alice",
@@ -92,6 +278,8 @@ func TestDecode(t *testing.T) {
 
 	//iv, _ := hex.DecodeString("f300888ca4f512cebdc0020ff0f7224c")
 }
+
+*/
 
 func TestEncryptDecrypt(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
@@ -169,6 +357,7 @@ func TestEncryptDecrypt(t *testing.T) {
 	}
 }
 
+/*
 func TestEciesDecrypt(t *testing.T) {
 	iv, _ := hex.DecodeString("f300888ca4f512cebdc0020ff0f7224c")
 	alice, _ := NewAccountFromWif("5J9bWm2ThenDm3tjvmUgHtWCVMUdjRR1pxnRtnJjvKA4b2ut5WK")
@@ -238,3 +427,5 @@ func TestEciesDecrypt(t *testing.T) {
 	}
 
 }
+
+*/

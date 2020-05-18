@@ -47,7 +47,7 @@ func TestK1PrivateToPublic(t *testing.T) {
 	pubKey := privKey.PublicKey()
 
 	pubKeyString := pubKey.String()
-	assert.Equal(t, "EOS859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhToVM", pubKeyString)
+	assert.Equal(t, "FIO859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhToVM", pubKeyString)
 }
 
 func TestR1PrivateToPublic(t *testing.T) {
@@ -64,7 +64,7 @@ func TestR1PrivateToPublic(t *testing.T) {
 
 func TestNewPublicKeyAndSerializeCompress(t *testing.T) {
 	// Copied test from eosjs(-.*)?
-	key, err := NewPublicKey("EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV")
+	key, err := NewPublicKey("FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV")
 	require.NoError(t, err)
 	assert.Equal(t, "02c0ded2bc1f1305fb0faac5e6c03ee3a1924234985427b6167ca569d13df435cf", hex.EncodeToString(key.Content))
 }
@@ -101,9 +101,9 @@ func TestPublicKeyValidity(t *testing.T) {
 		in  string
 		err error
 	}{
-		{"EOS859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhToVM", nil},
-		{"MMM859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhToVM", fmt.Errorf("public key should start with [\"PUB_K1_\" | \"PUB_R1_\"] (or the old \"EOS\")")},
-		{"EOS859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhTo", fmt.Errorf("checkDecode: invalid checksum")},
+		{"FIO859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhToVM", nil},
+		{"MMM859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhToVM", fmt.Errorf("public key should start with [\"PUB_K1_\" | \"PUB_R1_\" | \"FIO\"]")},
+		{"FIO859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhTo", fmt.Errorf("checkDecode: invalid checksum")},
 	}
 
 	for idx, test := range tests {

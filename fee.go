@@ -15,6 +15,7 @@ const (
 	FeeAuthLink             = "auth_link"
 	FeeAuthUpdate           = "auth_update"
 	FeeBurnExpired          = "burnexpired"
+	FeeCancelFundsRequest   = "cancel_funds_request"
 	FeeMsigApprove          = "msig_approve"
 	FeeMsigCancel           = "msig_cancel"
 	FeeMsigExec             = "msig_exec"
@@ -31,6 +32,8 @@ const (
 	FeeRegisterProxy        = "register_proxy"
 	FeeRejectFundsRequest   = "reject_funds_request"
 	FeeRemoveFromWhitelist  = "remove_from_whitelist"
+	FeeRemoveAllAddresses   = "remove_pub_addresses"
+	FeeRemovePubAddress     = "remove_pub_address"
 	FeeRenewFioAddress      = "renew_fio_address"
 	FeeRenewFioDomain       = "renew_fio_domain"
 	FeeSetDomainPub         = "set_fio_domain_public"
@@ -57,6 +60,7 @@ var (
 		"auth_link":                   0.4,
 		"auth_update":                 0.4,
 		"burnexpired":                 0.1,
+		"cancel_funds_request":        0.6,
 		"msig_approve":                0.4,
 		"msig_cancel":                 0.4,
 		"msig_exec":                   0.4,
@@ -73,6 +77,8 @@ var (
 		"register_proxy":              0.4,
 		"reject_funds_request":        0.4,
 		"remove_from_whitelist":       0.0,
+		"remove_pub_address":          0.6,
+		"remove_pub_addresses":        0.6,
 		"renew_fio_address":           40.0,
 		"renew_fio_domain":            800.0,
 		"set_fio_domain_public":       0.4,
@@ -101,6 +107,7 @@ var (
 		"voteproxy":    FeeProxyVote,
 		"approve":      FeeMsigApprove,
 		"cancel":       FeeMsigCancel,
+		"cancelfndreq": FeeCancelFundsRequest,
 		"exec":         FeeMsigExec,
 		"invalidate":   FeeMsigInvalidate,
 		"propose":      FeeMsigPropose,
@@ -108,6 +115,8 @@ var (
 		"addaddress":   FeeAddPubAddress,
 		"regaddress":   FeeRegisterFioAddress,
 		"regdomain":    FeeRegisterFioDomain,
+		"remalladdr":   FeeRemoveAllAddresses,
+		"remaddress":   FeeRemovePubAddress,
 		"renewaddress": FeeRenewFioAddress,
 		"renewdomain":  FeeRenewFioDomain,
 		"setdomainpub": FeeSetDomainPub,

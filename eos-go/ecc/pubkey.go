@@ -92,7 +92,7 @@ func NewPublicKey(pubKey string) (out PublicKey, err error) {
 		}
 		inner = &innerK1PublicKey{}
 	} else {
-		return out, fmt.Errorf("public key should start with [%q | %q] (or the old %q)", PublicKeyK1Prefix, PublicKeyR1Prefix, PublicKeyPrefixCompat)
+		return out, fmt.Errorf("public key should start with [%q | %q | %q]", PublicKeyK1Prefix, PublicKeyR1Prefix, PublicKeyPrefixCompat)
 	}
 
 	return PublicKey{Curve: curveID, Content: decodedPubKey, inner: inner}, nil

@@ -24,28 +24,20 @@ func main() {
 		}
 	}
 
-	account, err := fio.NewAccountFromWif(wif)
-	fatal(err)
-
-	api, opts, err := fio.NewConnection(account.KeyBag, url)
+	// open a new connection to nodeos with credentials
+	account, api, _, err := fio.NewWifConnect(wif, url)
 	fatal(err)
 
 	// register a new domain
-	dom := fio.NewRegDomain(account.Actor, domain, account.PubKey)
-	_, err = api.SignPushTransaction(
-		fio.NewTransaction([]*fio.Action{dom}, opts),
-		opts.ChainID,
-		fio.CompressionNone,
-	)
+	_, err = api.SignPushActions(fio.NewRegDomain(account.Actor, domain, account.PubKey))
 	fatal(err)
 
 	// register an address
-	addr := fio.MustNewRegAddress(account.Actor, address, account.PubKey)
-	resp, err := api.SignPushTransaction(
-		fio.NewTransaction([]*fio.Action{addr}, opts),
-		opts.ChainID,
-		fio.CompressionNone,
-	)
+	addr, ok := fio.NewRegAddress(account.Actor, address, account.PubKey)
+	if !ok {
+		log.Fatal("invalid address")
+	}
+	resp, err := api.SignPushActions(addr)
 	fatal(err)
 
 	j, err := json.MarshalIndent(resp, "", "")

@@ -37,6 +37,22 @@ func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress strin
 	)
 }
 
+// BpClaim requests payout for a block producer
+type BpClaim struct {
+	FioAddress string          `json:"fio_address"`
+	Actor      eos.AccountName `json:"actor"`
+}
+
+func NewBpClaim(fioAddress string, actor eos.AccountName) *Action {
+	return NewAction(
+		eos.AccountName("fio.treasury"), "bpclaim", actor,
+		BpClaim{
+			FioAddress: fioAddress,
+			Actor:      actor,
+		},
+	)
+}
+
 // ProducerLocation valid values are 10-80 in increments of 10
 type ProducerLocation uint16
 
@@ -263,7 +279,15 @@ type BpJson struct {
 	BpJsonUrl           string       `json:"bp_json_url"`
 }
 
+// GetBpJson attempts to retrieve the bp.json file for a producer based on the URL in the eosio.producers table.
+// It intentionally rejects URLs that are an IP address, or resolve to a private IP address to reduce the risk of
+// SSRF attacks, note however this check is not comprehensive, and is not risk free.
 func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
+	return api.getBpJson(producer, false)
+}
+
+// allows override of private ip check for tests
+func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, error) {
 	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:       "eosio",
 		Scope:      "eosio",
@@ -290,20 +314,22 @@ func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
 		return nil, err
 	}
 	// ensure this is 1) a hostname, and 2) does not resolve to a private IP range:
-	ip := net.ParseIP(u.Host)
-	if ip != nil {
-		return nil, errors.New("URL is an IP address, refusing to fetch")
-	}
-	addrs, err := net.LookupHost(u.Host)
-	if err != nil {
-		return nil, err
-	}
-	if len(addrs) == 0 {
-		return nil, errors.New("could not resolve DNS for url")
-	}
-	for _, ip := range addrs {
-		if isPrivate(net.ParseIP(ip)) {
-			return nil, errors.New("url points to a private IP address, refusing to continue")
+	if !allowIp {
+		ip := net.ParseIP(u.Host)
+		if ip != nil {
+			return nil, errors.New("URL is an IP address, refusing to fetch")
+		}
+		addrs, err := net.LookupHost(u.Host)
+		if err != nil {
+			return nil, err
+		}
+		if len(addrs) == 0 {
+			return nil, errors.New("could not resolve DNS for url")
+		}
+		for _, ip := range addrs {
+			if isPrivate(net.ParseIP(ip)) {
+				return nil, errors.New("url points to a private IP address, refusing to continue")
+			}
 		}
 	}
 
@@ -358,7 +384,7 @@ func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
 
 // adapted from https://github.com/emitter-io/address/blob/master/ipaddr.go
 // Copyright (c) 2018 Roman Atachiants
-var privateBlocks = []*net.IPNet{
+var privateBlocks = [...]*net.IPNet{
 	parseCIDR("10.0.0.0/8"),     // RFC 1918 IPv4 private network address
 	parseCIDR("100.64.0.0/10"),  // RFC 6598 IPv4 shared address space
 	parseCIDR("127.0.0.0/8"),    // RFC 1122 IPv4 loopback address
@@ -384,7 +410,7 @@ func parseCIDR(s string) *net.IPNet {
 
 func isPrivate(ip net.IP) bool {
 	if ip == nil {
-		return false
+		return true // presumes a true result gets rejected
 	}
 	for _, priv := range privateBlocks {
 		if priv.Contains(ip) {
@@ -392,4 +418,67 @@ func isPrivate(ip net.IP) bool {
 		}
 	}
 	return false
+}
+
+type existVotes struct {
+	Producers []string `json:"producers"`
+}
+
+type prodRow struct {
+	FioAddress string `json:"fio_address"`
+}
+
+// GetVotes returns a slice of an account's current votes
+func (api *API) GetVotes(account string) (votedFor []string, err error) {
+	getVote, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:  "eosio",
+		Scope: "eosio",
+		Table: "voters",
+
+		Index:      "3",
+		LowerBound: account,
+		UpperBound: account,
+		Limit:      1,
+		KeyType:    "name",
+		JSON:       true,
+	})
+	if err != nil {
+		return
+	}
+	v := make([]*existVotes, 0)
+	err = json.Unmarshal(getVote.Rows, &v)
+	if err != nil {
+		return
+	}
+	if len(v) == 0 {
+		return
+	}
+	votedFor = make([]string, 0)
+	for _, row := range v[0].Producers {
+		if row == "" {
+			continue
+		}
+		gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+			Code:       "eosio",
+			Scope:      "eosio",
+			Table:      "producers",
+			LowerBound: row,
+			UpperBound: row,
+			KeyType:    "name",
+			Index:      "4",
+			JSON:       true,
+		})
+		if err != nil {
+			continue
+		}
+		p := make([]*prodRow, 0)
+		err = json.Unmarshal(gtr.Rows, &p)
+		if err != nil {
+			continue
+		}
+		if len(p) == 1 && p[0].FioAddress != "" {
+			votedFor = append(votedFor, p[0].FioAddress)
+		}
+	}
+	return
 }

@@ -30,6 +30,18 @@ func CurrentTpid() string {
 	return a
 }
 
+// PayTpidRewards is used for wallets "technology provided id" to claim incentive rewards
+type PayTpidRewards struct {
+	Actor eos.AccountName `json:"actor"`
+}
+
+func NewPayTpidRewards(actor eos.AccountName) *Action {
+	return NewAction(
+		eos.AccountName("fio.treasury"), "tpidclaim", actor,
+		PayTpidRewards{Actor: actor},
+	)
+}
+
 // UpdateTpid is a privileged call
 type UpdateTpid struct {
 	Tpid   string          `json:"tpid"`
