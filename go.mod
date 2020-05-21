@@ -9,7 +9,6 @@ require (
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/cmars/basen v0.0.0-20150613233007-fe3947df716e // indirect
 	github.com/davecgh/go-spew v1.1.1
-	github.com/eoscanada/eos-go v0.9.0
 	github.com/ethereum/go-ethereum v1.9.9
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/miguelmota/go-ethereum-hdwallet v0.0.0-20200123000308-a60dcd172b4c
@@ -21,6 +20,7 @@ require (
 	github.com/tidwall/sjson v1.0.4
 	github.com/tyler-smith/go-bip32 v0.0.0-20170922074101-2c9cfd177564
 	github.com/tyler-smith/go-bip39 v1.0.1-0.20181017060643-dbb3b84ba2ef
+	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	golang.org/x/text v0.3.2
