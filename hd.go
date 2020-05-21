@@ -6,9 +6,8 @@ import (
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
-	"github.com/eoscanada/eos-go"
-	eosecc "github.com/eoscanada/eos-go/ecc"
-	"github.com/fioprotocol/fio-go/imports/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
 	hdwallet "github.com/fioprotocol/fio-go/imports/go-ethereum-hdwallet"
 	"github.com/tyler-smith/go-bip32"
 	mrand "math/rand"
@@ -108,7 +107,7 @@ func (hd Hd) Keys(keys int) (*eos.KeyBag, error) {
 		return nil, errors.New("cannot derive 0 keys")
 	}
 	keybag := &eos.KeyBag{}
-	keybag.Keys = make([]*eosecc.PrivateKey, 0)
+	keybag.Keys = make([]*ecc.PrivateKey, 0)
 	for i := 0; i < keys; i++ {
 		k, err := keyAt(hd.wallet, i)
 		if err != nil {
@@ -122,7 +121,7 @@ func (hd Hd) Keys(keys int) (*eos.KeyBag, error) {
 // KeyAt creates a keybag holding a single key at m/44'/235'/0'/0/index
 func (hd Hd) KeyAt(index int) (*eos.KeyBag, error) {
 	keybag := &eos.KeyBag{}
-	keybag.Keys = make([]*eosecc.PrivateKey, 1)
+	keybag.Keys = make([]*ecc.PrivateKey, 1)
 	var err error
 	keybag.Keys[0], err = keyAt(hd.wallet, index)
 	if err != nil {
@@ -167,7 +166,7 @@ func (hd Hd) PubKeyAt(index int) (*ecc.PublicKey, error) {
 	return &pk, nil
 }
 
-func keyAt(wallet *hdwallet.Wallet, index int) (*eosecc.PrivateKey, error) {
+func keyAt(wallet *hdwallet.Wallet, index int) (*ecc.PrivateKey, error) {
 	path, err := hdwallet.ParseDerivationPath(fmt.Sprintf("m/44'/235'/0'/0/%d", index))
 	if err != nil {
 		return nil, err
@@ -186,7 +185,7 @@ func keyAt(wallet *hdwallet.Wallet, index int) (*eosecc.PrivateKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	k, err := eosecc.NewPrivateKey(wif.String())
+	k, err := ecc.NewPrivateKey(wif.String())
 	if err != nil {
 		return nil, err
 	}

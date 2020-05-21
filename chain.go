@@ -7,9 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eoscanada/eos-go"
-	eosecc "github.com/eoscanada/eos-go/ecc"
-	"github.com/fioprotocol/fio-go/imports/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
 	"io"
 	"io/ioutil"
 	"math"
@@ -90,7 +89,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	var api = eos.New(url)
 	api.SetSigner(keyBag)
 	api.SetCustomGetRequiredKeys(
-		func(tx *eos.Transaction) (keys []eosecc.PublicKey, e error) {
+		func(tx *eos.Transaction) (keys []ecc.PublicKey, e error) {
 			return keyBag.AvailableKeys()
 		},
 	)
@@ -386,41 +385,7 @@ type protocolFeatures struct {
 	ProtocolFeatures []interface{} `json:"protocol_features"` // not sure what goes here, leaving private
 }
 
-// BlockHeader duplicates eos.BlockHeader to allow using the modified ecc package
-type BlockHeader struct {
-	Timestamp        eos.BlockTimestamp `json:"timestamp"`
-	Producer         eos.AccountName    `json:"producer"`
-	Confirmed        uint16             `json:"confirmed"`
-	Previous         eos.Checksum256    `json:"previous"`
-	TransactionMRoot eos.Checksum256    `json:"transaction_mroot"`
-	ActionMRoot      eos.Checksum256    `json:"action_mroot"`
-	ScheduleVersion  uint32             `json:"schedule_version"`
-	NewProducers     *Schedule          `json:"new_producers" eos:"optional"`
-	HeaderExtensions []*eos.Extension   `json:"header_extensions"`
-}
-
-// SignedBlockHeader duplicates eos.SignedBlockHeader to allow using the modified ecc package
-type SignedBlockHeader struct {
-	BlockHeader
-	ProducerSignature ecc.Signature `json:"producer_signature"`
-}
-
-// BlockResp duplicates eos.BlockResp to allow using the modified ecc package
-type BlockResp struct {
-	SignedBlock
-	ID             eos.Checksum256 `json:"id"`
-	BlockNum       uint32          `json:"block_num"`
-	RefBlockPrefix uint32          `json:"ref_block_prefix"`
-}
-
-// SignedBlock duplicates eos.SignedBlock to allow using the modified ecc package
-type SignedBlock struct {
-	SignedBlockHeader
-	Transactions    []eos.TransactionReceipt `json:"transactions"`
-	BlockExtensions []*eos.Extension         `json:"block_extensions"`
-}
-
-func (api *API) GetBlockByNum(num uint32) (out *BlockResp, err error) {
+func (api *API) GetBlockByNum(num uint32) (out *eos.BlockResp, err error) {
 	err = api.call("chain", "get_block", eos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
 	//err = api.call("chain", "get_block", M{"block_num_or_id": num}, &out)
 	return
@@ -438,7 +403,7 @@ type BlockHeaderState struct {
 	BlockSigningKey           ecc.PublicKey     `json:"block_signing_key"`
 	ConfirmCount              []int             `json:"confirm_count"`
 	Id                        eos.Checksum256   `json:"id"`
-	Header                    *BlockHeader      `json:"header"`
+	Header                    *eos.BlockHeader      `json:"header"`
 	PendingSchedule           *PendingSchedule  `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
 }
