@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/eoscanada/eos-go/btcsuite/btcd/btcec"
-	"github.com/eoscanada/eos-go/btcsuite/btcutil/base58"
+	"github.com/fioprotocol/fio-go/imports/eos-go/btcsuite/btcd/btcec"
+	"github.com/fioprotocol/fio-go/imports/eos-go/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/ripemd160"
 )
 
 const PublicKeyPrefix = "PUB_"
 const PublicKeyK1Prefix = "PUB_K1_"
 const PublicKeyR1Prefix = "PUB_R1_"
-const PublicKeyPrefixCompat = "EOS"
+const PublicKeyPrefixCompat = "FIO"
 
 type innerPublicKey interface {
 	key(content []byte) (*btcec.PublicKey, error)
@@ -83,8 +83,8 @@ func NewPublicKey(pubKey string) (out PublicKey, err error) {
 			return out, fmt.Errorf("checkDecode: %s", err)
 		}
 		inner = &innerK1PublicKey{}
-	} else if strings.HasPrefix(pubKey, PublicKeyPrefixCompat) { // "EOS"
-		pubKeyMaterial := pubKey[len(PublicKeyPrefixCompat):] // strip "EOS"
+	} else if strings.HasPrefix(pubKey, PublicKeyPrefixCompat) { // "FIO"
+		pubKeyMaterial := pubKey[len(PublicKeyPrefixCompat):] // strip "FIO"
 		curveID = CurveK1
 		decodedPubKey, err = checkDecode(pubKeyMaterial, curveID)
 		if err != nil {
@@ -92,7 +92,7 @@ func NewPublicKey(pubKey string) (out PublicKey, err error) {
 		}
 		inner = &innerK1PublicKey{}
 	} else {
-		return out, fmt.Errorf("public key should start with [%q | %q] (or the old %q)", PublicKeyK1Prefix, PublicKeyR1Prefix, PublicKeyPrefixCompat)
+		return out, fmt.Errorf("public key should start with [%q | %q | %q]", PublicKeyK1Prefix, PublicKeyR1Prefix, PublicKeyPrefixCompat)
 	}
 
 	return PublicKey{Curve: curveID, Content: decodedPubKey, inner: inner}, nil
@@ -120,7 +120,7 @@ func checkDecode(input string, curve CurveID) (result []byte, err error) {
 	if bytes.Compare(ripemd160checksum(decoded[:len(decoded)-4], curve), cksum[:]) != 0 {
 		return nil, fmt.Errorf("invalid checksum")
 	}
-	// perhaps bitcoin has a leading net ID / version, but EOS doesn't
+	// perhaps bitcoin has a leading net ID / version, but FIO doesn't
 	payload := decoded[:len(decoded)-4]
 	result = append(result, payload...)
 	return
@@ -143,7 +143,7 @@ func Ripemd160checksumHashCurve(in []byte, curve CurveID) []byte {
 	_, _ = h.Write(in) // this implementation has no error path
 
 	// FIXME: this seems to be only rolled out to the `SIG_` things..
-	// proper support for importing `EOS` keys isn't rolled out into `dawn4`.
+	// proper support for importing `FIO` keys isn't rolled out into `dawn4`.
 	_, _ = h.Write([]byte(curve.String())) // conditionally ?
 	sum := h.Sum(nil)
 	return sum[:4]

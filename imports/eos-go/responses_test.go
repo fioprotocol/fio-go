@@ -129,7 +129,7 @@ var accountResponseJSONData = `{
 			"threshold": 1,
 			"keys": [
 			{
-				"key": "EOS6HSE9SVvNmGF4Dv8cHLUjF8BigorYykUG2z8UbHZd1BQ9qF88r",
+				"key": "FIO6HSE9SVvNmGF4Dv8cHLUjF8BigorYykUG2z8UbHZd1BQ9qF88r",
 				"weight": 1
 			}
 			],
@@ -144,7 +144,7 @@ var accountResponseJSONData = `{
 			"threshold": 1,
 			"keys": [
 			{
-				"key": "EOS7FJJ7igorHoTq6y6yd7GmRei9cc6CRhR7L2TXP6H9UFEP49jNc",
+				"key": "FIO7FJJ7igorHoTq6y6yd7GmRei9cc6CRhR7L2TXP6H9UFEP49jNc",
 				"weight": 1
 			}
 			],
@@ -159,7 +159,7 @@ var accountResponseJSONData = `{
 			"threshold": 1,
 			"keys": [
 			{
-				"key": "EOS5UhWBMYKPPzb4tigorbnrH9Ft7mogW1MmvViaHJkBif2kSa1f4",
+				"key": "FIO5UhWBMYKPPzb4tigorbnrH9Ft7mogW1MmvViaHJkBif2kSa1f4",
 				"weight": 1
 			}
 			],

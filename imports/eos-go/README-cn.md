@@ -1,7 +1,6 @@
 用 Go 语言与 EOS.IO 交互的 API 库
 =========================
 
-[![GoDoc](https://godoc.org/github.com/eoscanada/eos-go?status.svg)](https://godoc.org/github.com/eoscanada/eos-go)
 
 该库提供对数据架构（二进制打包和JSON接口）的简单访问，
 以及对远程或本地运行的EOS.IO RPC服务器的API调用。 
@@ -27,8 +26,6 @@ fmt.Println("Permission for initn:", accountResp.Permissions[0].RequiredAuth.Key
 ```
 
 `eosio.system` 和 `eosio.token` 的 _Actions_ 合约分别在:
-* https://github.com/eoscanada/eos-go/tree/master/system ([godocs](https://godoc.org/github.com/eoscanada/eos-go/system))
-* https://github.com/eoscanada/eos-go/tree/master/token ([godocs](https://godoc.org/github.com/eoscanada/eos-go/token))
 
 范例
 -------

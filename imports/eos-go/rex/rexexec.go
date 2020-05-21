@@ -1,7 +1,7 @@
 package rex
 
 import (
-	eos "github.com/eoscanada/eos-go"
+	eos "github.com/fioprotocol/fio-go/imports/eos-go"
 )
 
 func NewREXExec(user eos.AccountName, max uint16) *eos.Action {

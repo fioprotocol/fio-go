@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/eoscanada/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
 )
 
 /*

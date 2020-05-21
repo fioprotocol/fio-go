@@ -6,7 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-go"
 	"github.com/fioprotocol/fio-go"
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/yaml.v2"

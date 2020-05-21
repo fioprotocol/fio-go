@@ -1,6 +1,6 @@
 package system
 
-import "github.com/eoscanada/eos-go"
+import "github.com/fioprotocol/fio-go/imports/eos-go"
 
 // NewUnlinkAuth creates an action from the `eosio.system` contract
 // called `unlinkauth`.

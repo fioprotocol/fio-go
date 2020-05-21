@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-go"
 	"io/ioutil"
 	"sort"
 	"strings"
@@ -120,7 +120,7 @@ func (api *API) HasHistory() bool {
 // different actor. This will give preference to the trace referencing the actor queried if possible.
 func (api *API) GetActionsUniq(actor eos.AccountName, offset int64, pos int64) ([]*eos.ActionTrace, error) {
 	traceUniq := make(map[string]*eos.ActionTrace)
-	resp, err := api.GetActions(eos.GetActionsRequest{AccountName: actor, Offset: eos.Int64(offset), Pos: eos.Int64(pos)})
+	resp, err := api.GetActions(eos.GetActionsRequest{AccountName: actor, Offset: offset, Pos: pos})
 	if err != nil {
 		return nil, err
 	}

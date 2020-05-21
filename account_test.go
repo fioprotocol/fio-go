@@ -2,7 +2,7 @@ package fio
 
 import (
 	"encoding/json"
-	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-go"
 	"os"
 	"testing"
 )

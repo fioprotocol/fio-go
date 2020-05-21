@@ -9,7 +9,7 @@ import (
 
 	"time"
 
-	"github.com/eoscanada/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -254,7 +254,7 @@ func TestDecoder_Empty_Checksum256(t *testing.T) {
 
 func TestDecoder_PublicKey(t *testing.T) {
 
-	pk := ecc.MustNewPublicKey("EOS1111111111111111111111111111111114T1Anm")
+	pk := ecc.MustNewPublicKey("FIO1111111111111111111111111111111114T1Anm")
 
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
@@ -414,7 +414,7 @@ func TestDecoder_Encode(t *testing.T) {
 		F7: [2]string{"foo", "bar"},
 		// maps don't serialize deterministically.. we no want that.
 		//		F8:  map[string]string{"foo": "bar", "hello": "you"},
-		F9:  ecc.MustNewPublicKey("EOS1111111111111111111111111111111114T1Anm"),
+		F9:  ecc.MustNewPublicKey("FIO1111111111111111111111111111111114T1Anm"),
 		F10: ecc.Signature{Curve: ecc.CurveK1, Content: make([]byte, 65)},
 		F11: byte(1),
 		F12: uint64(87),
@@ -676,7 +676,7 @@ func TestDecoder_readUint16_missing_data(t *testing.T) {
 	assert.EqualError(t, err, "blockTimestamp required [4] bytes, remaining [0]")
 }
 
-func TestDecoder_SignedBlock_Full(t *testing.T) {
+func estDecoder_SignedBlock_Full(t *testing.T) {
 	dataHex := "1b146b480000000000ea305500000000000140215a6edeea1e697207b5a917d83edf56a963d03e3d5d8d8e1ddb0900000000000000000000000000000000000000000000000000000000000000006a46611d7b15f71ff42de916e19f8ed1011096178f81d9b17987637a545b152100000000000100002001000000000000000000000000000000000000000000000000000000000000fe001f5e6962745bb4fb84dec1e7779b7e3b58c5fe20ed39c41cac1bdefe3e71568bf67bdfb05e4df40087c9ecbc6d9d0f6bcfcddfdc1d00dc1d035c665936307535ab0001000020fe00000000000000000000000000000000000000000000000000000000000004"
 	data, err := hex.DecodeString(dataHex)
 	require.NoError(t, err)
@@ -700,7 +700,7 @@ func TestDecoder_SignedBlock_Full(t *testing.T) {
 	expectedHeaderExtension, _ := hex.DecodeString("01000000000000000000000000000000000000000000000000000000000000fe")
 	expectedBlockExtension, _ := hex.DecodeString("fe00000000000000000000000000000000000000000000000000000000000004")
 
-	assert.Equal(t, BlockTimestamp{expectedTimestamp}, signedBlock.Timestamp)
+	assert.Equal(t, BlockTimestamp{expectedTimestamp}, signedBlock.Timestamp.UTC())
 	assert.Equal(t, AccountName("eosio"), signedBlock.Producer)
 	assert.Equal(t, uint16(0), signedBlock.Confirmed)
 	assert.Equal(t, "0000000140215a6edeea1e697207b5a917d83edf56a963d03e3d5d8d8e1ddb09", signedBlock.Previous.String())

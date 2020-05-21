@@ -1,7 +1,7 @@
 package rex
 
 import (
-	eos "github.com/eoscanada/eos-go"
+	eos "github.com/fioprotocol/fio-go/imports/eos-go"
 )
 
 func NewFundCPULoan(from eos.AccountName, loanNumber uint64, payment eos.Asset) *eos.Action {

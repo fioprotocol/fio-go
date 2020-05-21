@@ -7,9 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eoscanada/eos-go"
-	eosecc "github.com/eoscanada/eos-go/ecc"
-	"github.com/fioprotocol/fio-go/imports/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
 	"io"
 	"io/ioutil"
 	"math"
@@ -90,7 +89,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	var api = eos.New(url)
 	api.SetSigner(keyBag)
 	api.SetCustomGetRequiredKeys(
-		func(tx *eos.Transaction) (keys []eosecc.PublicKey, e error) {
+		func(tx *eos.Transaction) (keys []ecc.PublicKey, e error) {
 			return keyBag.AvailableKeys()
 		},
 	)

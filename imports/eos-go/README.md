@@ -5,7 +5,6 @@ EOS.IO API library for Go
 
 [点击查看中文版](./README-cn.md)
 
-[![GoDoc](https://godoc.org/github.com/eoscanada/eos-go?status.svg)](https://godoc.org/github.com/eoscanada/eos-go)
 
 This library provides simple access to data structures (binary packing
 and JSON interface) and API calls to an EOS.IO RPC server, running
