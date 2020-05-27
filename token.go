@@ -41,7 +41,6 @@ type Transfer struct {
 	To       eos.AccountName `json:"to"`
 	Quantity eos.Asset       `json:"quantity"`
 	Memo     string          `json:"memo"`
-	MaxFee   uint64          `json:"max_fee"`
 }
 
 func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64) *Action {
