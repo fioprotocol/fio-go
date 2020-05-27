@@ -43,6 +43,9 @@ type Transfer struct {
 	Memo     string          `json:"memo"`
 }
 
+// NewTransfer is unlikely to be called, this is a privileged action
+//
+// deprecated: internal action, user cannot call.
 func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64) *Action {
 	return NewAction(
 		eos.AccountName("fio.token"), "transfer", actor,
@@ -56,7 +59,6 @@ func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64
 					Symbol:    "FIO",
 				},
 			},
-			MaxFee: Tokens(GetMaxFee(FeeTransferTokensPubKey)),
 		},
 	)
 }
