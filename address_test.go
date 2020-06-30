@@ -163,6 +163,10 @@ func word() string {
 func TestAddress(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	account, api, opts, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	accountA, err := NewRandomAccount()
 	if err != nil {

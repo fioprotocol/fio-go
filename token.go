@@ -24,7 +24,7 @@ type TransferTokensPubKey struct {
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
 func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amount uint64) *Action {
 	return NewAction(
-		eos.AccountName("fio.token"), "trnsfiopubky", actor,
+		"fio.token", "trnsfiopubky", actor,
 		TransferTokensPubKey{
 			PayeePublicKey: recipientPubKey,
 			Amount:         amount,
