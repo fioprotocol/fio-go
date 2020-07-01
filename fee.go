@@ -3,7 +3,7 @@ package fio
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-fio"
 	"io/ioutil"
 	"sync"
 )

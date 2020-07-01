@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/fioprotocol/fio-go/imports/eos-go"
-	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
 	"github.com/mr-tron/base58"
 	"io/ioutil"
 )

@@ -1,7 +1,7 @@
 package fio
 
 import (
-	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-fio"
 	"sync"
 )
 
