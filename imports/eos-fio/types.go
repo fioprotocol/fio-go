@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 )
 
 var symbolRegex = regexp.MustCompile("^[0-9],[A-Z]{1,7}$")

@@ -19,7 +19,7 @@ import (
 
 	"io/ioutil"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 )
 
 type TransactionHeader struct {

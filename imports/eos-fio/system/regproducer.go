@@ -2,7 +2,7 @@ package system
 
 import (
 	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
-	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 )
 
 // NewRegProducer returns a `regproducer` action that lives on the

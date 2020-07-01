@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
-	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

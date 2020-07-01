@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 )
 
 type API struct {
