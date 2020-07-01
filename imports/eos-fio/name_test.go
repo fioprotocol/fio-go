@@ -1,4 +1,4 @@
-package fos
+package feos
 
 import (
 	"fmt"
