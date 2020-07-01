@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/fioprotocol/fio-go/imports/eos-fio"
 	"log"
 	"os"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/fioprotocol/fio-go/imports/eos-go"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 package forum
 
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-go"
+	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
 )
 
 // NewPost is an action representing a simple message to be posted

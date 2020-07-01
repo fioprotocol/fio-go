@@ -2,12 +2,10 @@ package p2p
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
-
 	"go.uber.org/zap"
 
-	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-fio"
 )
 
 type Proxy struct {

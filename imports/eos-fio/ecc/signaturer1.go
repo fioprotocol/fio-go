@@ -3,7 +3,7 @@ package ecc
 import (
 	"fmt"
 
-	"github.com/fioprotocol/fio-go/imports/eos-go/btcsuite/btcutil/base58"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcutil/base58"
 )
 
 type innerR1Signature struct {

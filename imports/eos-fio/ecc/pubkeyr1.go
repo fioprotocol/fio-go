@@ -3,7 +3,7 @@ package ecc
 import (
 	"fmt"
 
-	"github.com/fioprotocol/fio-go/imports/eos-go/btcsuite/btcd/btcec"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcd/btcec"
 )
 
 type innerR1PublicKey struct {

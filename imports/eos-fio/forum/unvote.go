@@ -1,7 +1,7 @@
 package forum
 
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-go"
+	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
 )
 
 // NewUnVote is an action representing the action to undoing a current vote

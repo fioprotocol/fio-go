@@ -1,6 +1,7 @@
 package p2p
 
 import (
+	"github.com/fioprotocol/fio-go/imports/eos-fio"
 	"math"
 
 	"github.com/pkg/errors"
@@ -8,8 +9,6 @@ import (
 	"go.uber.org/zap"
 
 	"time"
-
-	"github.com/fioprotocol/fio-go/imports/eos-go"
 )
 
 type Client struct {

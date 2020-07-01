@@ -3,7 +3,7 @@ package p2p
 import (
 	"fmt"
 
-	eos "github.com/fioprotocol/fio-go/imports/eos-go"
+	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"go.uber.org/zap"
 )
 

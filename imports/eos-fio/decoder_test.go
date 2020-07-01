@@ -9,7 +9,7 @@ import (
 
 	"time"
 
-	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

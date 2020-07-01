@@ -1,8 +1,8 @@
 package bnet
 
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-go"
-	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
+	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
 )
 
 type BNetMessageType byte

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	eos "github.com/fioprotocol/fio-go/imports/eos-go"
-	"github.com/fioprotocol/fio-go/imports/eos-go/token"
+	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/token"
 )
 
 func ExampleAPI_PushTransaction_transfer_EOS() {

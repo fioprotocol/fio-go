@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fioprotocol/fio-go/imports/eos-go/eoserr"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/eoserr"
 )
 
 // APIError represents the errors as reported by the server

@@ -12,7 +12,7 @@ import (
 
 	"math"
 
-	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/ecc"
 	"go.uber.org/zap"
 )
 

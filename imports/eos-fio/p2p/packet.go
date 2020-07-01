@@ -1,7 +1,7 @@
 package p2p
 
 import (
-	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/imports/eos-fio"
 )
 
 type Envelope struct {

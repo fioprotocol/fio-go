@@ -7,7 +7,7 @@ package base58_test
 import (
 	"fmt"
 
-	"github.com/fioprotocol/fio-go/imports/eos-go/btcsuite/btcutil/base58"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcutil/base58"
 )
 
 // This example demonstrates how to decode modified base58 encoded data.

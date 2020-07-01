@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	eos "github.com/fioprotocol/fio-go/imports/eos-go"
+	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
 )
 
 func ExamplePackedTransaction_Unpack() {

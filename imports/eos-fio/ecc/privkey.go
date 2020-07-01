@@ -7,8 +7,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/fioprotocol/fio-go/imports/eos-go/btcsuite/btcd/btcec"
-	"github.com/fioprotocol/fio-go/imports/eos-go/btcsuite/btcutil"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcd/btcec"
+	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcutil"
 )
 
 const PrivateKeyPrefix = "PVT_"
