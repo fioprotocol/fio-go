@@ -36,7 +36,7 @@ func TestAPI_AllABIs(t *testing.T) {
 		t.Error("did not get abis")
 		return
 	}
-	if a[eos.AccountName("eosio")] == nil {
+	if a[fos.AccountName("eosio")] == nil {
 		t.Error("did not get abi for eosio")
 		return
 	}
@@ -53,7 +53,7 @@ func TestAPI_GetTableRowsOrder(t *testing.T) {
 		return
 	}
 
-	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+	gtr, err := api.GetTableRows(fos.GetTableRowsRequest{
 		Code:       "eosio",
 		Scope:      "eosio",
 		Table:      "producers",
@@ -192,7 +192,7 @@ func TestAction_ToEos(t *testing.T) {
 }
 
 func TestNewAction(t *testing.T) {
-	a := eos.AccountName("test")
+	a := fos.AccountName("test")
 
 	actOwner := NewActionAsOwner(
 		"fio.token", "trnsfiopubky", a,
@@ -204,7 +204,7 @@ func TestNewAction(t *testing.T) {
 			Tpid:           CurrentTpid(),
 		},
 	)
-	if actOwner.Authorization[0].Permission != eos.PermissionName("owner") {
+	if actOwner.Authorization[0].Permission != fos.PermissionName("owner") {
 		t.Error("NewActionAsOwner did not set owner")
 	}
 
@@ -218,7 +218,7 @@ func TestNewAction(t *testing.T) {
 			Tpid:           CurrentTpid(),
 		},
 	)
-	if actPerm.Authorization[0].Permission != eos.PermissionName("owner") {
+	if actPerm.Authorization[0].Permission != fos.PermissionName("owner") {
 		t.Error("NewActionWitherPermission did not set permission")
 	}
 }
@@ -241,7 +241,7 @@ func TestAPI_GetTableByScopeMore(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	res, err := api.GetTableByScopeMore(eos.GetTableByScopeRequest{
+	res, err := api.GetTableByScopeMore(fos.GetTableByScopeRequest{
 		Code:  "eosio",
 		Table: "producers",
 		Limit: 1,

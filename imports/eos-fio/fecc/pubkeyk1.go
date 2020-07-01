@@ -1,4 +1,4 @@
-package ecc
+package fecc
 
 import (
 	"fmt"
@@ -6,10 +6,10 @@ import (
 	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcd/btcec"
 )
 
-type innerR1PublicKey struct {
+type innerK1PublicKey struct {
 }
 
-func (p *innerR1PublicKey) key(content []byte) (*btcec.PublicKey, error) {
+func (p *innerK1PublicKey) key(content []byte) (*btcec.PublicKey, error) {
 	key, err := btcec.ParsePubKey(content, btcec.S256())
 	if err != nil {
 		return nil, fmt.Errorf("parsePubKey: %s", err)
@@ -18,6 +18,6 @@ func (p *innerR1PublicKey) key(content []byte) (*btcec.PublicKey, error) {
 	return key, nil
 }
 
-func (p *innerR1PublicKey) prefix() string {
-	return PublicKeyR1Prefix
+func (p *innerK1PublicKey) prefix() string {
+	return PublicKeyPrefixCompat
 }

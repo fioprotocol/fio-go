@@ -17,7 +17,7 @@ func main() {
 	}
 
 	textkey := flag.Args()[0]
-	pubkey, err := ecc.NewPublicKey(textkey)
+	pubkey, err := fecc.NewPublicKey(textkey)
 	if err != nil {
 		log.Fatalln("invalid public key:", err)
 	}

@@ -1,4 +1,4 @@
-package eos
+package fos
 
 import (
 	"encoding/base64"
@@ -575,8 +575,8 @@ type Authority struct {
 }
 
 type KeyWeight struct {
-	PublicKey ecc.PublicKey `json:"key"`
-	Weight    uint16        `json:"weight"` // weight_type
+	PublicKey fecc.PublicKey `json:"key"`
+	Weight    uint16         `json:"weight"` // weight_type
 }
 
 type WaitWeight struct {

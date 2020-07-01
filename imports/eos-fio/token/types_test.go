@@ -43,11 +43,11 @@ func TestUnpackActionTransfer(t *testing.T) {
 	}{
 		{
 			"00000003884ed1c900000000884ed1c90900000000000000000000000000000000",
-			Transfer{AN("tbcox2.3"), AN("tbcox2"), eos.Asset{Amount: 9}, ""},
+			Transfer{AN("tbcox2.3"), AN("tbcox2"), fos.Asset{Amount: 9}, ""},
 		},
 		{
 			"00000003884ed1c900000000884ed1c90900000000000000000000000000000004616c6c6f",
-			Transfer{AN("tbcox2.3"), AN("tbcox2"), eos.Asset{Amount: 9}, "allo"},
+			Transfer{AN("tbcox2.3"), AN("tbcox2"), fos.Asset{Amount: 9}, "allo"},
 		},
 	}
 
@@ -56,7 +56,7 @@ func TestUnpackActionTransfer(t *testing.T) {
 		assert.NoError(t, err)
 
 		var res Transfer
-		assert.NoError(t, eos.UnmarshalBinary(buf, &res), fmt.Sprintf("Index %d", idx))
+		assert.NoError(t, fos.UnmarshalBinary(buf, &res), fmt.Sprintf("Index %d", idx))
 		assert.Equal(t, test.out, res)
 	}
 

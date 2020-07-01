@@ -13,24 +13,24 @@ import (
 // Account holds the information for an account, it differs from a regular EOS account in that the
 // account name (Actor) is derived from the public key, and a FIO public key has a different prefix
 type Account struct {
-	KeyBag    *eos.KeyBag
+	KeyBag    *fos.KeyBag
 	PubKey    string
-	Actor     eos.AccountName
+	Actor     fos.AccountName
 	Addresses []FioName
 	Domains   []FioName
 }
 
 // Name wraps eos.Name for convenience and less imports for client
-type Name eos.Name
+type Name fos.Name
 
-func (n Name) ToEos() eos.Name {
-	return eos.Name(n)
+func (n Name) ToEos() fos.Name {
+	return fos.Name(n)
 }
 
 // NewAccountFromWif builds an Account given a private key string.
 // Note: this is an ephemeral, in-memory, account which has no relation to keosd, and is not persistent.
 func NewAccountFromWif(wif string) (*Account, error) {
-	kb := eos.NewKeyBag()
+	kb := fos.NewKeyBag()
 	err := kb.ImportPrivateKey(wif)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (a *Account) GetNames(api *API) (addresses int, domains int, err error) {
 
 // NewRandomAccount creates a new account with a random key.
 func NewRandomAccount() (*Account, error) {
-	key, err := ecc.NewRandomPrivateKey()
+	key, err := fecc.NewRandomPrivateKey()
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func NewRandomAccount() (*Account, error) {
 }
 
 // ActorFromPub calculates the FIO Actor (EOS Account) from a public key
-func ActorFromPub(pubKey string) (eos.AccountName, error) {
+func ActorFromPub(pubKey string) (fos.AccountName, error) {
 	const actorKey = `.12345abcdefghijklmnopqrstuvwxyz`
 	if len(pubKey) != 53 {
 		return "", errors.New("public key should be 53 chars")
@@ -106,7 +106,7 @@ func ActorFromPub(pubKey string) (eos.AccountName, error) {
 		actor[12-i] = actorKey[result&uint64(0x1f)]
 		result = result >> 5
 	}
-	return eos.AccountName(string(actor[:12])), nil
+	return fos.AccountName(string(actor[:12])), nil
 }
 
 /*
@@ -116,22 +116,22 @@ func ActorFromPub(pubKey string) (eos.AccountName, error) {
 
 // AccountResp duplicates the eos.AccountResp accounting for differences in public key format
 type AccountResp struct {
-	AccountName            eos.AccountName          `json:"account_name"`
+	AccountName            fos.AccountName          `json:"account_name"`
 	Privileged             bool                     `json:"privileged"`
-	LastCodeUpdate         eos.JSONTime             `json:"last_code_update"`
-	Created                eos.JSONTime             `json:"created"`
-	CoreLiquidBalance      eos.Asset                `json:"core_liquid_balance"`
-	RAMQuota               eos.Int64                `json:"ram_quota"`
-	RAMUsage               eos.Int64                `json:"ram_usage"`
-	NetWeight              eos.Int64                `json:"net_weight"`
-	CPUWeight              eos.Int64                `json:"cpu_weight"`
-	NetLimit               eos.AccountResourceLimit `json:"net_limit"`
-	CPULimit               eos.AccountResourceLimit `json:"cpu_limit"`
+	LastCodeUpdate         fos.JSONTime             `json:"last_code_update"`
+	Created                fos.JSONTime             `json:"created"`
+	CoreLiquidBalance      fos.Asset                `json:"core_liquid_balance"`
+	RAMQuota               fos.Int64                `json:"ram_quota"`
+	RAMUsage               fos.Int64                `json:"ram_usage"`
+	NetWeight              fos.Int64                `json:"net_weight"`
+	CPUWeight              fos.Int64                `json:"cpu_weight"`
+	NetLimit               fos.AccountResourceLimit `json:"net_limit"`
+	CPULimit               fos.AccountResourceLimit `json:"cpu_limit"`
 	Permissions            []Permission             `json:"permissions"`
-	TotalResources         eos.TotalResources       `json:"total_resources"`
-	SelfDelegatedBandwidth eos.DelegatedBandwidth   `json:"self_delegated_bandwidth"`
-	RefundRequest          *eos.RefundRequest       `json:"refund_request"`
-	VoterInfo              eos.VoterInfo            `json:"voter_info"`
+	TotalResources         fos.TotalResources       `json:"total_resources"`
+	SelfDelegatedBandwidth fos.DelegatedBandwidth   `json:"self_delegated_bandwidth"`
+	RefundRequest          *fos.RefundRequest       `json:"refund_request"`
+	VoterInfo              fos.VoterInfo            `json:"voter_info"`
 }
 
 // Permission duplicates the eos.Permission accounting for differences in public key format
@@ -145,14 +145,14 @@ type Permission struct {
 type Authority struct {
 	Threshold uint32                      `json:"threshold"`
 	Keys      []KeyWeight                 `json:"keys,omitempty"`
-	Accounts  []eos.PermissionLevelWeight `json:"accounts,omitempty"`
-	Waits     []eos.WaitWeight            `json:"waits,omitempty"`
+	Accounts  []fos.PermissionLevelWeight `json:"accounts,omitempty"`
+	Waits     []fos.WaitWeight            `json:"waits,omitempty"`
 }
 
 // KeyWeight duplicates the eos.KeyWeight accounting for differences in public key format
 type KeyWeight struct {
-	PublicKey ecc.PublicKey `json:"key"`
-	Weight    uint16        `json:"weight"` // weight_type
+	PublicKey fecc.PublicKey `json:"key"`
+	Weight    uint16         `json:"weight"` // weight_type
 }
 
 // GetFioAccount gets information about an account, it should be used instead of GetAccount due to differences in

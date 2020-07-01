@@ -1,4 +1,4 @@
-package ecc
+package fecc
 
 import (
 	"encoding/hex"

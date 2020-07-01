@@ -23,8 +23,8 @@ func main() {
 		log.Fatalln("error decoding hex:", err)
 	}
 
-	var tx *eos.Transaction
-	err = eos.UnmarshalBinary(b, &tx)
+	var tx *fos.Transaction
+	err = fos.UnmarshalBinary(b, &tx)
 	if err != nil {
 		log.Fatalln("error decoding:", err)
 	}

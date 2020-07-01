@@ -1,4 +1,4 @@
-package eos
+package fos
 
 import (
 	"bytes"
@@ -283,13 +283,13 @@ func (a *ABI) writeField(binaryEncoder *Encoder, fieldName string, fieldType str
 		}
 		object = Checksum512(data)
 	case "public_key":
-		pk, err := ecc.NewPublicKey(value.String())
+		pk, err := fecc.NewPublicKey(value.String())
 		if err != nil {
 			return fmt.Errorf("writing field: public_key: %s", err)
 		}
 		object = pk
 	case "signature":
-		signature, err := ecc.NewSignature(value.String())
+		signature, err := fecc.NewSignature(value.String())
 		if err != nil {
 			return fmt.Errorf("writing field: public_key: %s", err)
 		}

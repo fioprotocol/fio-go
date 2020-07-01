@@ -12,17 +12,17 @@ import (
 // `requiredPermission` to sign transactions for `code::actionName`
 // and not rely on your `active` (which might be more sensitive as it
 // can sign anything) for the given operation.
-func NewLinkAuth(account, code eos.AccountName, actionName eos.ActionName, requiredPermission eos.PermissionName) *eos.Action {
-	a := &eos.Action{
+func NewLinkAuth(account, code fos.AccountName, actionName fos.ActionName, requiredPermission fos.PermissionName) *fos.Action {
+	a := &fos.Action{
 		Account: AN("eosio"),
 		Name:    ActN("linkauth"),
-		Authorization: []eos.PermissionLevel{
+		Authorization: []fos.PermissionLevel{
 			{
 				Actor:      account,
-				Permission: eos.PermissionName("active"),
+				Permission: fos.PermissionName("active"),
 			},
 		},
-		ActionData: eos.NewActionData(LinkAuth{
+		ActionData: fos.NewActionData(LinkAuth{
 			Account:     account,
 			Code:        code,
 			Type:        actionName,
@@ -36,8 +36,8 @@ func NewLinkAuth(account, code eos.AccountName, actionName eos.ActionName, requi
 // LinkAuth represents the native `linkauth` action, through the
 // system contract.
 type LinkAuth struct {
-	Account     eos.AccountName    `json:"account"`
-	Code        eos.AccountName    `json:"code"`
-	Type        eos.ActionName     `json:"type"`
-	Requirement eos.PermissionName `json:"requirement"`
+	Account     fos.AccountName    `json:"account"`
+	Code        fos.AccountName    `json:"code"`
+	Type        fos.ActionName     `json:"type"`
+	Requirement fos.PermissionName `json:"requirement"`
 }

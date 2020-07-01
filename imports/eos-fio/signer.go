@@ -1,4 +1,4 @@
-package eos
+package fos
 
 import (
 	"crypto/sha256"
@@ -14,13 +14,13 @@ import (
 )
 
 type Signer interface {
-	AvailableKeys() (out []ecc.PublicKey, err error)
+	AvailableKeys() (out []fecc.PublicKey, err error)
 
 	// Sign signs a `tx` transaction. It gets passed a
 	// SignedTransaction because it is possible that it holds a few
 	// signatures and requests this wallet only to add one or more
 	// signatures it requires.
-	Sign(tx *SignedTransaction, chainID []byte, requiredKeys ...ecc.PublicKey) (*SignedTransaction, error)
+	Sign(tx *SignedTransaction, chainID []byte, requiredKeys ...fecc.PublicKey) (*SignedTransaction, error)
 
 	ImportPrivateKey(wifPrivKey string) error
 }
@@ -42,11 +42,11 @@ func (s *WalletSigner) ImportPrivateKey(wifKey string) (err error) {
 	return s.api.WalletImportKey(s.walletName, wifKey)
 }
 
-func (s *WalletSigner) AvailableKeys() (out []ecc.PublicKey, err error) {
+func (s *WalletSigner) AvailableKeys() (out []fecc.PublicKey, err error) {
 	return s.api.WalletPublicKeys()
 }
 
-func (s *WalletSigner) Sign(tx *SignedTransaction, chainID []byte, requiredKeys ...ecc.PublicKey) (*SignedTransaction, error) {
+func (s *WalletSigner) Sign(tx *SignedTransaction, chainID []byte, requiredKeys ...fecc.PublicKey) (*SignedTransaction, error) {
 	// Fetch the available keys over there... and ask this wallet
 	// provider to sign with the keys he has..
 
@@ -68,17 +68,17 @@ func (s *WalletSigner) Sign(tx *SignedTransaction, chainID []byte, requiredKeys 
 
 // KeyBag holds private keys in memory, for signing transactions.
 type KeyBag struct {
-	Keys []*ecc.PrivateKey `json:"keys"`
+	Keys []*fecc.PrivateKey `json:"keys"`
 }
 
 func NewKeyBag() *KeyBag {
 	return &KeyBag{
-		Keys: make([]*ecc.PrivateKey, 0),
+		Keys: make([]*fecc.PrivateKey, 0),
 	}
 }
 
 func (b *KeyBag) Add(wifKey string) error {
-	privKey, err := ecc.NewPrivateKey(wifKey)
+	privKey, err := fecc.NewPrivateKey(wifKey)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (b *KeyBag) ImportFromFile(path string) error {
 	return nil
 }
 
-func (b *KeyBag) AvailableKeys() (out []ecc.PublicKey, err error) {
+func (b *KeyBag) AvailableKeys() (out []fecc.PublicKey, err error) {
 	for _, k := range b.Keys {
 		out = append(out, k.PublicKey())
 	}
@@ -120,17 +120,17 @@ func (b *KeyBag) ImportPrivateKey(wifPrivKey string) (err error) {
 	return b.Add(wifPrivKey)
 }
 
-func (b *KeyBag) SignDigest(digest []byte, requiredKey ecc.PublicKey) (ecc.Signature, error) {
+func (b *KeyBag) SignDigest(digest []byte, requiredKey fecc.PublicKey) (fecc.Signature, error) {
 
 	privateKey := b.keyMap()[requiredKey.String()]
 	if privateKey == nil {
-		return ecc.Signature{}, fmt.Errorf("private key not found for public key [%s]", requiredKey.String())
+		return fecc.Signature{}, fmt.Errorf("private key not found for public key [%s]", requiredKey.String())
 	}
 
 	return privateKey.Sign(digest)
 }
 
-func (b *KeyBag) Sign(tx *SignedTransaction, chainID []byte, requiredKeys ...ecc.PublicKey) (*SignedTransaction, error) {
+func (b *KeyBag) Sign(tx *SignedTransaction, chainID []byte, requiredKeys ...fecc.PublicKey) (*SignedTransaction, error) {
 	// TODO: probably want to use `tx.packed` and hash the ContextFreeData also.
 	txdata, cfd, err := tx.PackedTransactionAndCFD()
 	if err != nil {
@@ -166,8 +166,8 @@ func (b *KeyBag) Sign(tx *SignedTransaction, chainID []byte, requiredKeys ...ecc
 	return tx, nil
 }
 
-func (b *KeyBag) keyMap() map[string]*ecc.PrivateKey {
-	out := map[string]*ecc.PrivateKey{}
+func (b *KeyBag) keyMap() map[string]*fecc.PrivateKey {
+	out := map[string]*fecc.PrivateKey{}
 	for _, key := range b.Keys {
 		out[key.PublicKey().String()] = key
 	}

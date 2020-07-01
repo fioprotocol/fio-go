@@ -1,4 +1,4 @@
-package eos
+package fos
 
 import (
 	"encoding/binary"
@@ -343,7 +343,7 @@ func TestPackAccountName(t *testing.T) {
 }
 
 func TestAuthorityBinaryMarshal(t *testing.T) {
-	key, err := ecc.NewPublicKey("FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV")
+	key, err := fecc.NewPublicKey("FIO6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV")
 	require.NoError(t, err)
 	a := Authority{
 		Threshold: 2,

@@ -9,17 +9,17 @@ import (
 //
 // usingPermission needs to be `owner` if you want to modify the
 // `owner` authorization, otherwise `active` will do for the rest.
-func NewUpdateAuth(account eos.AccountName, permission, parent eos.PermissionName, authority eos.Authority, usingPermission eos.PermissionName) *eos.Action {
-	a := &eos.Action{
+func NewUpdateAuth(account fos.AccountName, permission, parent fos.PermissionName, authority fos.Authority, usingPermission fos.PermissionName) *fos.Action {
+	a := &fos.Action{
 		Account: AN("eosio"),
 		Name:    ActN("updateauth"),
-		Authorization: []eos.PermissionLevel{
+		Authorization: []fos.PermissionLevel{
 			{
 				Actor:      account,
 				Permission: usingPermission,
 			},
 		},
-		ActionData: eos.NewActionData(UpdateAuth{
+		ActionData: fos.NewActionData(UpdateAuth{
 			Account:    account,
 			Permission: permission,
 			Parent:     parent,
@@ -36,8 +36,8 @@ func NewUpdateAuth(account eos.AccountName, permission, parent eos.PermissionNam
 //
 // If you change the `owner` permission, there should be no parent.
 type UpdateAuth struct {
-	Account    eos.AccountName    `json:"account"`
-	Permission eos.PermissionName `json:"permission"`
-	Parent     eos.PermissionName `json:"parent"`
-	Auth       eos.Authority      `json:"auth"`
+	Account    fos.AccountName    `json:"account"`
+	Permission fos.PermissionName `json:"permission"`
+	Parent     fos.PermissionName `json:"parent"`
+	Auth       fos.Authority      `json:"auth"`
 }

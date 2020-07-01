@@ -48,7 +48,7 @@ func (p *Proxy) read(sender *Peer, receiver *Peer, errChannel chan error) {
 	}
 }
 
-func (p *Proxy) handle(packet *eos.Packet, sender *Peer, receiver *Peer) error {
+func (p *Proxy) handle(packet *fos.Packet, sender *Peer, receiver *Peer) error {
 
 	_, err := receiver.Write(packet.Raw)
 	if err != nil {
@@ -56,7 +56,7 @@ func (p *Proxy) handle(packet *eos.Packet, sender *Peer, receiver *Peer) error {
 	}
 
 	switch m := packet.P2PMessage.(type) {
-	case *eos.GoAwayMessage:
+	case *fos.GoAwayMessage:
 		return errors.Errorf("handling message: go away: reason [%d]", m.Reason)
 	}
 

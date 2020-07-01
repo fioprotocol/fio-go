@@ -79,7 +79,7 @@ func (req ObtRequestContent) Encrypt(from *Account, toPubKey string) (content st
 		return "", err
 	}
 	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
-	abi, _ := eos.NewABI(abiReader)
+	abi, _ := fos.NewABI(abiReader)
 	//bin, err := abi.DecodeTableRowTyped("record_send_content", j)
 	bin, err := abi.EncodeAction("new_funds_content", j)
 	if err != nil {
@@ -137,7 +137,7 @@ func (rec ObtRecordContent) Encrypt(from *Account, toPubKey string) (content str
 		return "", err
 	}
 	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
-	abi, _ := eos.NewABI(abiReader)
+	abi, _ := fos.NewABI(abiReader)
 	//bin, err := abi.DecodeTableRowTyped("record_send_content", j)
 	bin, err := abi.EncodeAction("record_send_content", j)
 	if err != nil {
@@ -215,7 +215,7 @@ type RecordSend struct {
 }
 
 // NewRecordSend builds the action for providing the result of a off-chain transaction
-func NewRecordSend(actor eos.AccountName, reqId string, payer string, payee string, content string) *Action {
+func NewRecordSend(actor fos.AccountName, reqId string, payer string, payee string, content string) *Action {
 	return NewAction(
 		"fio.reqobt", "recordobt", actor,
 		RecordSend{
@@ -253,7 +253,7 @@ type FundsResp struct {
 }
 
 // NewFundsReq builds the action for providing the result of a off-chain transaction
-func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, content string) *Action {
+func NewFundsReq(actor fos.AccountName, payerFio string, payeeFio string, content string) *Action {
 	return NewAction(
 		"fio.reqobt", "newfundsreq", actor,
 		FundsReq{
@@ -276,7 +276,7 @@ type CancelFndReq struct {
 }
 
 // NewCancelFndReq builds the action to cancel a request that is pending by the payee
-func NewCancelFndReq(actor eos.AccountName, requestId uint64) *Action {
+func NewCancelFndReq(actor fos.AccountName, requestId uint64) *Action {
 	return NewAction(
 		"fio.reqobt", "cancelfndreq", actor,
 		CancelFndReq{
@@ -329,7 +329,7 @@ type RejectFndReq struct {
 }
 
 // NewRejectFndReq builds the action to reject a request
-func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
+func NewRejectFndReq(actor fos.AccountName, requestId string) *Action {
 	return NewAction(
 		"fio.reqobt", "rejectfndreq", actor,
 		RejectFndReq{
@@ -507,14 +507,14 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 func tryDecryptRequest(bin []byte, obtType ObtType) (content *ObtRequestContent, err error) {
 	content = &ObtRequestContent{}
 	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
-	abi, _ := eos.NewABI(abiReader)
+	abi, _ := fos.NewABI(abiReader)
 	decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
 	if err != nil {
 		abiReader = bytes.NewReader([]byte(ObtAbiJson))
-		abi, _ = eos.NewABI(abiReader)
+		abi, _ = fos.NewABI(abiReader)
 		decode, err = abi.DecodeTableRowTyped(obtType.String(), bin)
 		if err != nil {
-			err := eos.UnmarshalBinary(bin, content)
+			err := fos.UnmarshalBinary(bin, content)
 			if err != nil {
 				return nil, err
 			}
@@ -527,14 +527,14 @@ func tryDecryptRequest(bin []byte, obtType ObtType) (content *ObtRequestContent,
 func tryDecryptRecord(bin []byte, obtType ObtType) (content *ObtRecordContent, err error) {
 	content = &ObtRecordContent{}
 	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
-	abi, _ := eos.NewABI(abiReader)
+	abi, _ := fos.NewABI(abiReader)
 	decode, err := abi.DecodeTableRowTyped(obtType.String(), bin)
 	if err != nil {
 		abiReader = bytes.NewReader([]byte(ObtAbiJson))
-		abi, _ = eos.NewABI(abiReader)
+		abi, _ = fos.NewABI(abiReader)
 		decode, err = abi.DecodeTableRowTyped(obtType.String(), bin)
 		if err != nil {
-			err := eos.UnmarshalBinary(bin, content)
+			err := fos.UnmarshalBinary(bin, content)
 			if err != nil {
 				return nil, err
 			}
@@ -557,7 +557,7 @@ func EciesSecret(private *Account, public string) (secret []byte, hash *[64]byte
 	priv := ecies.ImportECDSA(wif.PrivKey.ToECDSA())
 
 	// convert public key string into an ecies public key struct
-	eosPub, err := ecc.NewPublicKey(public)
+	eosPub, err := fecc.NewPublicKey(public)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -595,7 +595,7 @@ type RequestStatus struct {
 	PayerFioPublicKey string       `json:"payer_fio_public_key"`
 	PayeeFioPublicKey string       `json:"payee_fio_public_key"`
 	Content           string       `json:"content"`
-	TimeStamp         eos.JSONTime `json:"time_stamp"`
+	TimeStamp         fos.JSONTime `json:"time_stamp"`
 	Status            string       `json:"status"`
 }
 
@@ -671,7 +671,7 @@ type FundsReqTableResp struct {
 // endpoint because that requires knowing the offset of the request and the id. The downside is that this
 // returns a slightly different struct.
 func (api *API) GetFioRequest(requestId uint64) (request *FundsReqTableResp, err error) {
-	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
+	resp, err := api.GetTableRows(fos.GetTableRowsRequest{
 		Code:       "fio.reqobt",
 		Scope:      "fio.reqobt",
 		Table:      "fioreqctxts",
@@ -739,7 +739,7 @@ type FundsRequestStatusResp struct {
 // This only applies to recordobt that was in response to a request, the recordobts table stores records not tied to an
 // existing request.
 func (api *API) GetFioRequestStatus(requestId uint64) (hasResponse bool, request *FundsRequestStatusResp, err error) {
-	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
+	resp, err := api.GetTableRows(fos.GetTableRowsRequest{
 		Code:       "fio.reqobt",
 		Scope:      "fio.reqobt",
 		Table:      "fioreqstss",

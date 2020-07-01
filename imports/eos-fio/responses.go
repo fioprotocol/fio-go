@@ -1,4 +1,4 @@
-package eos
+package fos
 
 import (
 	"encoding/hex"
@@ -281,7 +281,7 @@ type GetRawABIResp struct {
 }
 
 type GetRequiredKeysResp struct {
-	RequiredKeys []ecc.PublicKey `json:"required_keys"`
+	RequiredKeys []fecc.PublicKey `json:"required_keys"`
 }
 
 // PushTransactionFullResp unwraps the responses from a successful `push_transaction`.
@@ -328,7 +328,7 @@ type WalletSignTransactionResp struct {
 	// to the network..  ... although.. it's better if you can trust
 	// your wallet !
 
-	Signatures []ecc.Signature `json:"signatures"`
+	Signatures []fecc.Signature `json:"signatures"`
 }
 
 type MyStruct struct {

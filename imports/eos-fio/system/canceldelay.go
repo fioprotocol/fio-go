@@ -11,14 +11,14 @@ import (
 // previously sent to the chain with a `delay_sec` larger than 0.  You
 // need to sign with cancelingAuth, to cancel a transaction signed
 // with that same authority.
-func NewCancelDelay(cancelingAuth eos.PermissionLevel, transactionID eos.Checksum256) *eos.Action {
-	a := &eos.Action{
+func NewCancelDelay(cancelingAuth fos.PermissionLevel, transactionID fos.Checksum256) *fos.Action {
+	a := &fos.Action{
 		Account: AN("eosio"),
 		Name:    ActN("canceldelay"),
-		Authorization: []eos.PermissionLevel{
+		Authorization: []fos.PermissionLevel{
 			cancelingAuth,
 		},
-		ActionData: eos.NewActionData(CancelDelay{
+		ActionData: fos.NewActionData(CancelDelay{
 			CancelingAuth: cancelingAuth,
 			TransactionID: transactionID,
 		}),
@@ -30,6 +30,6 @@ func NewCancelDelay(cancelingAuth eos.PermissionLevel, transactionID eos.Checksu
 // CancelDelay represents the native `canceldelay` action, through the
 // system contract.
 type CancelDelay struct {
-	CancelingAuth eos.PermissionLevel `json:"canceling_auth"`
-	TransactionID eos.Checksum256     `json:"trx_id"`
+	CancelingAuth fos.PermissionLevel `json:"canceling_auth"`
+	TransactionID fos.Checksum256     `json:"trx_id"`
 }

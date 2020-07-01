@@ -1,4 +1,4 @@
-package ecc
+package fecc
 
 import (
 	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcd/btcec"

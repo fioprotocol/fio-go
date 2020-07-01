@@ -1,4 +1,4 @@
-package eos
+package fos
 
 import (
 	"encoding/hex"
@@ -713,8 +713,8 @@ func TestABI_Read(t *testing.T) {
 		{"caseName": "checksum160", "typeName": "checksum160", "value": "\"0000000000000000000000000000000000000000\"", "encode": Checksum160(make([]byte, TypeSize.Checksum160)), "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
 		{"caseName": "checksum256", "typeName": "checksum256", "value": "\"0000000000000000000000000000000000000000000000000000000000000000\"", "encode": Checksum256(make([]byte, TypeSize.Checksum256)), "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
 		{"caseName": "checksum512", "typeName": "checksum512", "value": "\"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"", "encode": Checksum512(make([]byte, TypeSize.Checksum512)), "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
-		{"caseName": "public_key", "typeName": "public_key", "value": "\"FIO1111111111111111111111111111111114T1Anm\"", "encode": ecc.MustNewPublicKey("FIO1111111111111111111111111111111114T1Anm"), "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
-		{"caseName": "signature", "typeName": "signature", "value": "\"SIG_K1_K96L1au4xFJg5edn6qBK6UDbSsC2RKsMs4cXCA2LoCPZxBDMXehdZFWPh1GeRhzGoQjBwNK2eBmUXf4L8SBApL69pGdUJm\"", "encode": ecc.Signature{Curve: ecc.CurveK1, Content: signatureBuffer[1:]}, "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
+		{"caseName": "public_key", "typeName": "public_key", "value": "\"FIO1111111111111111111111111111111114T1Anm\"", "encode": fecc.MustNewPublicKey("FIO1111111111111111111111111111111114T1Anm"), "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
+		{"caseName": "signature", "typeName": "signature", "value": "\"SIG_K1_K96L1au4xFJg5edn6qBK6UDbSsC2RKsMs4cXCA2LoCPZxBDMXehdZFWPh1GeRhzGoQjBwNK2eBmUXf4L8SBApL69pGdUJm\"", "encode": fecc.Signature{Curve: fecc.CurveK1, Content: signatureBuffer[1:]}, "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
 		{"caseName": "symbol", "typeName": "symbol", "value": "\"4,EOS\"", "encode": EOSSymbol, "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
 		{"caseName": "symbol_code", "typeName": "symbol_code", "value": "18446744073709551615", "encode": SymbolCode(18446744073709551615), "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},
 		{"caseName": "asset", "typeName": "asset", "value": "\"10.0000 EOS\"", "encode": Asset{Amount: 100000, Symbol: EOSSymbol}, "expectedError": nil, "isOptional": false, "isArray": false, "fieldName": "testedField"},

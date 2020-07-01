@@ -1,4 +1,4 @@
-package eos_test
+package fos_test
 
 import (
 	"encoding/hex"

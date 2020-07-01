@@ -17,12 +17,12 @@ type TransferTokensPubKey struct {
 	PayeePublicKey string          `json:"payee_public_key"`
 	Amount         uint64          `json:"amount"`
 	MaxFee         uint64          `json:"max_fee"`
-	Actor          eos.AccountName `json:"actor"`
+	Actor          fos.AccountName `json:"actor"`
 	Tpid           string          `json:"tpid"`
 }
 
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
-func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amount uint64) *Action {
+func NewTransferTokensPubKey(actor fos.AccountName, recipientPubKey string, amount uint64) *Action {
 	return NewAction(
 		"fio.token", "trnsfiopubky", actor,
 		TransferTokensPubKey{
@@ -37,24 +37,24 @@ func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amou
 
 // Transfer is a privileged call, and not normally used for sending tokens, use TransferTokensPubKey instead
 type Transfer struct {
-	From     eos.AccountName `json:"from"`
-	To       eos.AccountName `json:"to"`
-	Quantity eos.Asset       `json:"quantity"`
+	From     fos.AccountName `json:"from"`
+	To       fos.AccountName `json:"to"`
+	Quantity fos.Asset       `json:"quantity"`
 	Memo     string          `json:"memo"`
 }
 
 // NewTransfer is unlikely to be called, this is a privileged action
 //
 // deprecated: internal action, user cannot call.
-func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64) *Action {
+func NewTransfer(actor fos.AccountName, recipient fos.AccountName, amount uint64) *Action {
 	return NewAction(
-		eos.AccountName("fio.token"), "transfer", actor,
+		fos.AccountName("fio.token"), "transfer", actor,
 		Transfer{
 			From: actor,
 			To:   recipient,
-			Quantity: eos.Asset{
-				Amount: eos.Int64(amount),
-				Symbol: eos.Symbol{
+			Quantity: fos.Asset{
+				Amount: fos.Int64(amount),
+				Symbol: fos.Symbol{
 					Precision: 9,
 					Symbol:    "FIO",
 				},
@@ -64,8 +64,8 @@ func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64
 }
 
 // GetBalance gets an account's balance
-func (api *API) GetBalance(account eos.AccountName) (float64, error) {
-	a, err := api.GetCurrencyBalance(account, "FIO", eos.AccountName("fio.token"))
+func (api *API) GetBalance(account fos.AccountName) (float64, error) {
+	a, err := api.GetCurrencyBalance(account, "FIO", fos.AccountName("fio.token"))
 	if err != nil {
 		return 0.0, err
 	}
@@ -81,6 +81,6 @@ func (api *API) GetBalance(account eos.AccountName) (float64, error) {
 // not a member function of API, and will be removed in a future version
 //
 // deprecated: use api.GetBalance instead
-func GetFioBalance(account eos.AccountName, api *API) (float64, error) {
+func GetFioBalance(account fos.AccountName, api *API) (float64, error) {
 	return api.GetBalance(account)
 }

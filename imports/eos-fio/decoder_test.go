@@ -1,4 +1,4 @@
-package eos
+package fos
 
 import (
 	"encoding/binary"
@@ -254,7 +254,7 @@ func TestDecoder_Empty_Checksum256(t *testing.T) {
 
 func TestDecoder_PublicKey(t *testing.T) {
 
-	pk := ecc.MustNewPublicKey("FIO1111111111111111111111111111111114T1Anm")
+	pk := fecc.MustNewPublicKey("FIO1111111111111111111111111111111114T1Anm")
 
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
@@ -270,7 +270,7 @@ func TestDecoder_PublicKey(t *testing.T) {
 }
 
 func TestDecoder_PublicKey_K1(t *testing.T) {
-	pk := ecc.MustNewPublicKey("PUB_K1_1111111111111111111111111111111114T1Anm")
+	pk := fecc.MustNewPublicKey("PUB_K1_1111111111111111111111111111111114T1Anm")
 
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
@@ -286,7 +286,7 @@ func TestDecoder_PublicKey_K1(t *testing.T) {
 }
 
 func TestDecoder_PublicKey_R1(t *testing.T) {
-	pk := ecc.MustNewPublicKey("PUB_R1_81x8BXgDQGTWmcAaavfCDcVTTyzz1BeBYbje9yJomVMCJZbz86")
+	pk := fecc.MustNewPublicKey("PUB_R1_81x8BXgDQGTWmcAaavfCDcVTTyzz1BeBYbje9yJomVMCJZbz86")
 
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
@@ -304,7 +304,7 @@ func TestDecoder_PublicKey_R1(t *testing.T) {
 
 func TestDecoder_Empty_PublicKey(t *testing.T) {
 
-	pk := ecc.PublicKey{Curve: ecc.CurveK1, Content: []byte{}}
+	pk := fecc.PublicKey{Curve: fecc.CurveK1, Content: []byte{}}
 
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
@@ -313,7 +313,7 @@ func TestDecoder_Empty_PublicKey(t *testing.T) {
 
 func TestDecoder_Signature(t *testing.T) {
 
-	sig := ecc.MustNewSignatureFromData(bytes.Repeat([]byte{0}, 66))
+	sig := fecc.MustNewSignatureFromData(bytes.Repeat([]byte{0}, 66))
 
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
@@ -329,7 +329,7 @@ func TestDecoder_Signature(t *testing.T) {
 
 func TestDecoder_Empty_Signature(t *testing.T) {
 
-	sig := ecc.Signature{Content: []byte{}}
+	sig := fecc.Signature{Content: []byte{}}
 
 	buf := new(bytes.Buffer)
 	enc := NewEncoder(buf)
@@ -385,8 +385,8 @@ type EncodeTestStruct struct {
 	F6 []string
 	F7 [2]string
 	//	F8  map[string]string
-	F9  ecc.PublicKey
-	F10 ecc.Signature
+	F9  fecc.PublicKey
+	F10 fecc.Signature
 	F11 byte
 	F12 uint64
 	F13 []byte
@@ -414,8 +414,8 @@ func TestDecoder_Encode(t *testing.T) {
 		F7: [2]string{"foo", "bar"},
 		// maps don't serialize deterministically.. we no want that.
 		//		F8:  map[string]string{"foo": "bar", "hello": "you"},
-		F9:  ecc.MustNewPublicKey("FIO1111111111111111111111111111111114T1Anm"),
-		F10: ecc.Signature{Curve: ecc.CurveK1, Content: make([]byte, 65)},
+		F9:  fecc.MustNewPublicKey("FIO1111111111111111111111111111111114T1Anm"),
+		F10: fecc.Signature{Curve: fecc.CurveK1, Content: make([]byte, 65)},
 		F11: byte(1),
 		F12: uint64(87),
 		F13: []byte{1, 2, 3, 4, 5},
@@ -443,8 +443,8 @@ func TestDecoder_Encode(t *testing.T) {
 	assert.Equal(t, []string{"def", "789"}, s.F6)
 	assert.Equal(t, [2]string{"foo", "bar"}, s.F7)
 	//	assert.Equal(t, map[string]string{"foo": "bar", "hello": "you"}, s.F8)
-	assert.Equal(t, ecc.MustNewPublicKeyFromData(bytes.Repeat([]byte{0}, 34)), s.F9)
-	assert.Equal(t, ecc.MustNewSignatureFromData(bytes.Repeat([]byte{0}, 66)), s.F10)
+	assert.Equal(t, fecc.MustNewPublicKeyFromData(bytes.Repeat([]byte{0}, 34)), s.F9)
+	assert.Equal(t, fecc.MustNewSignatureFromData(bytes.Repeat([]byte{0}, 66)), s.F10)
 	assert.Equal(t, byte(1), s.F11)
 	assert.Equal(t, uint64(87), s.F12)
 	assert.Equal(t, []byte{1, 2, 3, 4, 5}, s.F13)

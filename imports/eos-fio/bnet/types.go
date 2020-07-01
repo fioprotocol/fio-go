@@ -22,7 +22,7 @@ const (
 //
 
 type Hello struct {
-	PeerID                   ecc.PublicKey     `json:"peer_id"`
+	PeerID                   fecc.PublicKey    `json:"peer_id"`
 	NetworkVersion           string            `json:"network_version"`
 	User                     string            `json:"user"`
 	Password                 string            `json:"password"`

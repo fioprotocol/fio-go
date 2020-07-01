@@ -32,12 +32,12 @@ func CurrentTpid() string {
 
 // PayTpidRewards is used for wallets "technology provided id" to claim incentive rewards
 type PayTpidRewards struct {
-	Actor eos.AccountName `json:"actor"`
+	Actor fos.AccountName `json:"actor"`
 }
 
-func NewPayTpidRewards(actor eos.AccountName) *Action {
+func NewPayTpidRewards(actor fos.AccountName) *Action {
 	return NewAction(
-		eos.AccountName("fio.treasury"), "tpidclaim", actor,
+		fos.AccountName("fio.treasury"), "tpidclaim", actor,
 		PayTpidRewards{Actor: actor},
 	)
 }
@@ -45,11 +45,11 @@ func NewPayTpidRewards(actor eos.AccountName) *Action {
 // UpdateTpid is a privileged call
 type UpdateTpid struct {
 	Tpid   string          `json:"tpid"`
-	Owner  eos.AccountName `json:"owner"`
+	Owner  fos.AccountName `json:"owner"`
 	Amount uint64          `json:"amount"`
 }
 
-func NewUpdateTpid(actor eos.AccountName, tpid string, amount uint64) *Action {
+func NewUpdateTpid(actor fos.AccountName, tpid string, amount uint64) *Action {
 	return NewAction(
 		"fio.tpid", "updatepid", actor,
 		UpdateTpid{
@@ -65,7 +65,7 @@ type RewardsPaid struct {
 	Tpid string `json:"tpid"`
 }
 
-func NewRewardsPaid(actor eos.AccountName, tpid string) *Action {
+func NewRewardsPaid(actor fos.AccountName, tpid string) *Action {
 	return NewAction(
 		"fio.tpid", "rewardspaid", actor,
 		UpdateTpid{
@@ -80,7 +80,7 @@ type UpdateBounty struct {
 	Amount uint64 `json:"amount"`
 }
 
-func NewUpdateBounty(actor eos.AccountName, amount uint64) *Action {
+func NewUpdateBounty(actor fos.AccountName, amount uint64) *Action {
 	return NewAction(
 		"fio.tpid", "updatebounty", actor,
 		UpdateBounty{Amount: amount},

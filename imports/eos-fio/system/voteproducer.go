@@ -8,14 +8,14 @@ import (
 // `eosio.bios` contract. It should exist only when booting a new
 // network, as it is replaced using the `eos-bios` boot process by the
 // `eosio.system` contract.
-func NewVoteProducer(voter eos.AccountName, proxy eos.AccountName, producers ...eos.AccountName) *eos.Action {
-	a := &eos.Action{
+func NewVoteProducer(voter fos.AccountName, proxy fos.AccountName, producers ...fos.AccountName) *fos.Action {
+	a := &fos.Action{
 		Account: AN("eosio"),
 		Name:    ActN("voteproducer"),
-		Authorization: []eos.PermissionLevel{
+		Authorization: []fos.PermissionLevel{
 			{Actor: voter, Permission: PN("active")},
 		},
-		ActionData: eos.NewActionData(
+		ActionData: fos.NewActionData(
 			VoteProducer{
 				Voter:     voter,
 				Proxy:     proxy,
@@ -28,7 +28,7 @@ func NewVoteProducer(voter eos.AccountName, proxy eos.AccountName, producers ...
 
 // VoteProducer represents the `eosio.system::voteproducer` action
 type VoteProducer struct {
-	Voter     eos.AccountName   `json:"voter"`
-	Proxy     eos.AccountName   `json:"proxy"`
-	Producers []eos.AccountName `json:"producers"`
+	Voter     fos.AccountName   `json:"voter"`
+	Proxy     fos.AccountName   `json:"proxy"`
+	Producers []fos.AccountName `json:"producers"`
 }

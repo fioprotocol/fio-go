@@ -20,14 +20,14 @@ import (
 type VoteProducer struct {
 	Producers  []string `json:"producers"`
 	FioAddress string   `json:"fio_address"`
-	Actor      eos.AccountName
+	Actor      fos.AccountName
 	MaxFee     uint64 `json:"max_fee"`
 }
 
-func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress string) *Action {
+func NewVoteProducer(producers []string, actor fos.AccountName, fioAddress string) *Action {
 	sort.Strings(producers)
 	return NewAction(
-		eos.AccountName("eosio"), "voteproducer", actor,
+		fos.AccountName("eosio"), "voteproducer", actor,
 		VoteProducer{
 			Producers:  producers,
 			FioAddress: fioAddress,
@@ -40,12 +40,12 @@ func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress strin
 // BpClaim requests payout for a block producer
 type BpClaim struct {
 	FioAddress string          `json:"fio_address"`
-	Actor      eos.AccountName `json:"actor"`
+	Actor      fos.AccountName `json:"actor"`
 }
 
-func NewBpClaim(fioAddress string, actor eos.AccountName) *Action {
+func NewBpClaim(fioAddress string, actor fos.AccountName) *Action {
 	return NewAction(
-		eos.AccountName("fio.treasury"), "bpclaim", actor,
+		fos.AccountName("fio.treasury"), "bpclaim", actor,
 		BpClaim{
 			FioAddress: fioAddress,
 			Actor:      actor,
@@ -72,11 +72,11 @@ type RegProducer struct {
 	FioPubKey  string          `json:"fio_pub_key"`
 	Url        string          `json:"url"`
 	Location   uint16          `json:"location"`
-	Actor      eos.AccountName `json:"actor"`
+	Actor      fos.AccountName `json:"actor"`
 	MaxFee     uint64          `json:"max_fee"`
 }
 
-func NewRegProducer(fioAddress string, fioPubKey string, url string, location ProducerLocation, actor eos.AccountName) (*Action, error) {
+func NewRegProducer(fioAddress string, fioPubKey string, url string, location ProducerLocation, actor fos.AccountName) (*Action, error) {
 	if !strings.HasPrefix(url, "http") {
 		return nil, errors.New("url must begin with http:// or https://")
 	}
@@ -94,7 +94,7 @@ func NewRegProducer(fioAddress string, fioPubKey string, url string, location Pr
 		}), nil
 }
 
-func MustNewRegProducer(fioAddress string, fioPubKey string, url string, location ProducerLocation, actor eos.AccountName) *Action {
+func MustNewRegProducer(fioAddress string, fioPubKey string, url string, location ProducerLocation, actor fos.AccountName) *Action {
 	p, err := NewRegProducer(fioAddress, fioPubKey, url, location, actor)
 	if err != nil {
 		fmt.Println("MustNewRegProducer failed")
@@ -105,11 +105,11 @@ func MustNewRegProducer(fioAddress string, fioPubKey string, url string, locatio
 
 type UnRegProducer struct {
 	FioAddress string          `json:"fio_address"`
-	Actor      eos.AccountName `json:"actor"`
+	Actor      fos.AccountName `json:"actor"`
 	MaxFee     uint64          `json:"max_fee"`
 }
 
-func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
+func NewUnRegProducer(fioAddress string, actor fos.AccountName) *Action {
 	return NewAction("eosio", "unregprod", actor, UnRegProducer{
 		FioAddress: fioAddress,
 		Actor:      actor,
@@ -120,11 +120,11 @@ func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
 type VoteProxy struct {
 	Proxy      string          `json:"proxy"`
 	FioAddress string          `json:"fio_address"`
-	Actor      eos.AccountName `json:"actor"`
+	Actor      fos.AccountName `json:"actor"`
 	MaxFee     uint64          `json:"max_fee"`
 }
 
-func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Action {
+func NewVoteProxy(proxy string, fioAddress string, actor fos.AccountName) *Action {
 	return NewAction("eosio", "voteproxy", actor,
 		VoteProxy{
 			Proxy:      proxy,
@@ -137,11 +137,11 @@ func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Actio
 
 type RegProxy struct {
 	FioAddress string          `json:"fio_address"`
-	Actor      eos.AccountName `json:"actor"`
+	Actor      fos.AccountName `json:"actor"`
 	MaxFee     uint64          `json:"max_fee"`
 }
 
-func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
+func NewRegProxy(fioAddress string, actor fos.AccountName) *Action {
 	return NewAction("eosio", "regproxy", actor,
 		RegProxy{
 			FioAddress: fioAddress,
@@ -152,8 +152,8 @@ func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
 }
 
 type ProducerKey struct {
-	AccountName     eos.AccountName `json:"producer_name"`
-	BlockSigningKey ecc.PublicKey   `json:"block_signing_key"`
+	AccountName     fos.AccountName `json:"producer_name"`
+	BlockSigningKey fecc.PublicKey  `json:"block_signing_key"`
 }
 
 type Schedule struct {
@@ -194,7 +194,7 @@ type Producers struct {
 
 // Producer is a modification of the corresponding eos-go structure
 type Producer struct {
-	Owner             eos.AccountName `json:"owner"`
+	Owner             fos.AccountName `json:"owner"`
 	FioAddress        Address         `json:"fio_address"`
 	TotalVotes        string          `json:"total_votes"`
 	ProducerPublicKey string          `json:"producer_public_key"`
@@ -282,13 +282,13 @@ type BpJson struct {
 // GetBpJson attempts to retrieve the bp.json file for a producer based on the URL in the eosio.producers table.
 // It intentionally rejects URLs that are an IP address, or resolve to a private IP address to reduce the risk of
 // SSRF attacks, note however this check is not comprehensive, and is not risk free.
-func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
+func (api *API) GetBpJson(producer fos.AccountName) (*BpJson, error) {
 	return api.getBpJson(producer, false)
 }
 
 // allows override of private ip check for tests
-func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, error) {
-	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+func (api *API) getBpJson(producer fos.AccountName, allowIp bool) (*BpJson, error) {
+	gtr, err := api.GetTableRows(fos.GetTableRowsRequest{
 		Code:       "eosio",
 		Scope:      "eosio",
 		Table:      "producers",
@@ -430,7 +430,7 @@ type prodRow struct {
 
 // GetVotes returns a slice of an account's current votes
 func (api *API) GetVotes(account string) (votedFor []string, err error) {
-	getVote, err := api.GetTableRows(eos.GetTableRowsRequest{
+	getVote, err := api.GetTableRows(fos.GetTableRowsRequest{
 		Code:  "eosio",
 		Scope: "eosio",
 		Table: "voters",
@@ -458,7 +458,7 @@ func (api *API) GetVotes(account string) (votedFor []string, err error) {
 		if row == "" {
 			continue
 		}
-		gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+		gtr, err := api.GetTableRows(fos.GetTableRowsRequest{
 			Code:       "eosio",
 			Scope:      "eosio",
 			Table:      "producers",

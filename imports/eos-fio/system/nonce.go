@@ -8,14 +8,14 @@ import (
 // `eosio.bios` contract. It should exist only when booting a new
 // network, as it is replaced using the `eos-bios` boot process by the
 // `eosio.system` contract.
-func NewNonce(nonce string) *eos.Action {
-	a := &eos.Action{
+func NewNonce(nonce string) *fos.Action {
+	a := &fos.Action{
 		Account:       AN("eosio"),
 		Name:          ActN("nonce"),
-		Authorization: []eos.PermissionLevel{
+		Authorization: []fos.PermissionLevel{
 			//{Actor: AN("eosio"), Permission: PN("active")},
 		},
-		ActionData: eos.NewActionData(Nonce{
+		ActionData: fos.NewActionData(Nonce{
 			Value: nonce,
 		}),
 	}

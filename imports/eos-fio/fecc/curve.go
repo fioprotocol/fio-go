@@ -1,4 +1,4 @@
-package ecc
+package fecc
 
 type CurveID uint8
 

@@ -7,7 +7,7 @@ import (
 
 // NewRegProducer returns a `regproducer` action that lives on the
 // `eosio.system` contract.
-func NewRegProducer(producer eos.AccountName, producerKey ecc.PublicKey, url string, location uint16) *eos.Action {
+func NewRegProducer(producer eos.AccountName, producerKey fecc.PublicKey, url string, location uint16) *eos.Action {
 	return &eos.Action{
 		Account: AN("eosio"),
 		Name:    ActN("regproducer"),
@@ -26,7 +26,7 @@ func NewRegProducer(producer eos.AccountName, producerKey ecc.PublicKey, url str
 // RegProducer represents the `eosio.system::regproducer` action
 type RegProducer struct {
 	Producer    eos.AccountName `json:"producer"`
-	ProducerKey ecc.PublicKey   `json:"producer_key"`
+	ProducerKey fecc.PublicKey  `json:"producer_key"`
 	URL         string          `json:"url"`
 	Location    uint16          `json:"location"` // what,s the meaning of that anyway ?
 }

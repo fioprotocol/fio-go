@@ -139,7 +139,7 @@ func UpdateMaxFees(api *API) bool {
 		EndPoint  string `json:"end_point"`
 		SufAmount uint64 `json:"suf_amount"`
 	}
-	fees, err := api.GetTableRows(eos.GetTableRowsRequest{
+	fees, err := api.GetTableRows(fos.GetTableRowsRequest{
 		Code:  "fio.fee",
 		Scope: "fio.fee",
 		Table: "fiofees",
@@ -246,7 +246,7 @@ type SetFeeVote struct {
 	Actor     string     `json:"actor"`
 }
 
-func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
+func NewSetFeeVote(ratios []FeeValue, actor fos.AccountName) *Action {
 	return NewAction("fio.fee", "setfeevote", actor,
 		SetFeeVote{
 			FeeRatios: ratios,
@@ -261,7 +261,7 @@ type BundleVote struct {
 	Actor               string `json:"actor"`
 }
 
-func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
+func NewBundleVote(transactions uint64, actor fos.AccountName) *Action {
 	return NewAction("fio.fee", "bundlevote", actor,
 		BundleVote{
 			BundledTransactions: transactions,
@@ -280,14 +280,14 @@ type SetFeeMult struct {
 type FioFee struct {
 	FeeId        uint64      `json:"fee_id"`
 	EndPoint     string      `json:"end_point"`
-	EndPointHash eos.Uint128 `json:"end_point_hash"`
+	EndPointHash fos.Uint128 `json:"end_point_hash"`
 	Type         uint64      `json:"type"`
 	SufAmount    uint64      `json:"suf_amount"`
 }
 
 // FeeVoter holds information about the block producer performing a vote
 type FeeVoter struct {
-	BlockProducerName eos.AccountName `json:"block_producer_name"`
+	BlockProducerName fos.AccountName `json:"block_producer_name"`
 	FeeMultiplier     float64         `json:"fee_multiplier"`
 	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
@@ -295,7 +295,7 @@ type FeeVoter struct {
 // FeeVote is used by block producers to vote for a fee
 type FeeVote struct {
 	Id                uint64          `json:"id"`
-	BlockProducerName eos.AccountName `json:"block_producer_name"`
+	BlockProducerName fos.AccountName `json:"block_producer_name"`
 	EndPoint          string          `json:"end_point"`
 	EndPointHash      uint64          `json:"end_point_hash"`
 	SufAmount         uint64          `json:"suf_amount"`
@@ -305,7 +305,7 @@ type FeeVote struct {
 // BundleVoter holds information about the block producer voting for the number of free bundled transactions for new
 // or renewed addresses
 type BundleVoter struct {
-	BlockProducerName eos.AccountName `json:"block_producer_name"`
+	BlockProducerName fos.AccountName `json:"block_producer_name"`
 	BundleVoteNumber  uint64          `json:"bundlevotenumber"`
 	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }

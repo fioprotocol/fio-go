@@ -9,17 +9,17 @@ import (
 //
 // `unlinkauth` detaches a previously set permission from a
 // `code::actionName`. See `linkauth`.
-func NewUnlinkAuth(account, code eos.AccountName, actionName eos.ActionName) *eos.Action {
-	a := &eos.Action{
+func NewUnlinkAuth(account, code fos.AccountName, actionName fos.ActionName) *fos.Action {
+	a := &fos.Action{
 		Account: AN("eosio"),
 		Name:    ActN("unlinkauth"),
-		Authorization: []eos.PermissionLevel{
+		Authorization: []fos.PermissionLevel{
 			{
 				Actor:      account,
-				Permission: eos.PermissionName("active"),
+				Permission: fos.PermissionName("active"),
 			},
 		},
-		ActionData: eos.NewActionData(UnlinkAuth{
+		ActionData: fos.NewActionData(UnlinkAuth{
 			Account: account,
 			Code:    code,
 			Type:    actionName,
@@ -32,7 +32,7 @@ func NewUnlinkAuth(account, code eos.AccountName, actionName eos.ActionName) *eo
 // UnlinkAuth represents the native `unlinkauth` action, through the
 // system contract.
 type UnlinkAuth struct {
-	Account eos.AccountName `json:"account"`
-	Code    eos.AccountName `json:"code"`
-	Type    eos.ActionName  `json:"type"`
+	Account fos.AccountName `json:"account"`
+	Code    fos.AccountName `json:"code"`
+	Type    fos.ActionName  `json:"type"`
 }

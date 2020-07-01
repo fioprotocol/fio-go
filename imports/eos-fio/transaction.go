@@ -1,4 +1,4 @@
-package eos
+package fos
 
 import (
 	"bytes"
@@ -137,8 +137,8 @@ func (tx *Transaction) setRefBlock(blockID []byte) {
 type SignedTransaction struct {
 	*Transaction
 
-	Signatures      []ecc.Signature `json:"signatures"`
-	ContextFreeData []HexBytes      `json:"context_free_data"`
+	Signatures      []fecc.Signature `json:"signatures"`
+	ContextFreeData []HexBytes       `json:"context_free_data"`
 
 	packed *PackedTransaction
 }
@@ -146,7 +146,7 @@ type SignedTransaction struct {
 func NewSignedTransaction(tx *Transaction) *SignedTransaction {
 	return &SignedTransaction{
 		Transaction:     tx,
-		Signatures:      make([]ecc.Signature, 0),
+		Signatures:      make([]fecc.Signature, 0),
 		ContextFreeData: make([]HexBytes, 0),
 	}
 }
@@ -160,7 +160,7 @@ func (s *SignedTransaction) String() string {
 	return string(data)
 }
 
-func (s *SignedTransaction) SignedByKeys(chainID Checksum256) (out []ecc.PublicKey, err error) {
+func (s *SignedTransaction) SignedByKeys(chainID Checksum256) (out []fecc.PublicKey, err error) {
 	trx, cfd, err := s.PackedTransactionAndCFD()
 	if err != nil {
 		return
@@ -241,10 +241,10 @@ func (s *SignedTransaction) Pack(compression CompressionType) (*PackedTransactio
 // signatures, and all. They circulate like that on the P2P net, and
 // that's how they are stored.
 type PackedTransaction struct {
-	Signatures            []ecc.Signature `json:"signatures"`
-	Compression           CompressionType `json:"compression"` // in C++, it's an enum, not sure how it Binary-marshals..
-	PackedContextFreeData HexBytes        `json:"packed_context_free_data"`
-	PackedTransaction     HexBytes        `json:"packed_trx"`
+	Signatures            []fecc.Signature `json:"signatures"`
+	Compression           CompressionType  `json:"compression"` // in C++, it's an enum, not sure how it Binary-marshals..
+	PackedContextFreeData HexBytes         `json:"packed_context_free_data"`
+	PackedTransaction     HexBytes         `json:"packed_trx"`
 
 	wasPackedLocally bool
 }
