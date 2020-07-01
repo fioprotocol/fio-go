@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"io/ioutil"
 	"sort"
 	"strings"
 )
 
 type BlockTxidsResp struct {
-	Ids                   []fos.Checksum256 `json:"ids"`
-	LastIrreversibleBlock uint32            `json:"last_irreversible_block"`
+	Ids                   []feos.Checksum256 `json:"ids"`
+	LastIrreversibleBlock uint32             `json:"last_irreversible_block"`
 }
 
 func (api *API) HistGetBlockTxids(blockNum uint32) (*BlockTxidsResp, error) {
@@ -38,7 +38,7 @@ func (api *API) HistGetBlockTxids(blockNum uint32) (*BlockTxidsResp, error) {
 	return blocks, nil
 }
 
-func (api *API) GetTransaction(id fos.Checksum256) (*fos.TransactionResp, error) {
+func (api *API) GetTransaction(id feos.Checksum256) (*feos.TransactionResp, error) {
 	resp, err := api.HttpClient.Post(
 		api.BaseURL+"/v1/history/get_transaction",
 		"application/json",
@@ -53,7 +53,7 @@ func (api *API) GetTransaction(id fos.Checksum256) (*fos.TransactionResp, error)
 	if err != nil {
 		return nil, err
 	}
-	at := &fos.TransactionResp{}
+	at := &feos.TransactionResp{}
 	err = json.Unmarshal(body, at)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ type accountActions struct {
 
 // GetMaxActions returns the highest account_action_sequence from the get_actions endpoint.
 // This is needed because paging only works with positive offsets.
-func (api *API) GetMaxActions(account fos.AccountName) (highest uint32, err error) {
+func (api *API) GetMaxActions(account feos.AccountName) (highest uint32, err error) {
 	resp, err := api.HttpClient.Post(
 		api.BaseURL+"/v1/history/get_actions",
 		"application/json",
@@ -118,9 +118,9 @@ func (api *API) HasHistory() bool {
 // GetActionsUniq strips the results of GetActions of duplicate traces, this can occur with certain transactions
 // that may have multiple actors involved and the same trace is presented more than once but associated with a
 // different actor. This will give preference to the trace referencing the actor queried if possible.
-func (api *API) GetActionsUniq(actor fos.AccountName, offset int64, pos int64) ([]*fos.ActionTrace, error) {
-	traceUniq := make(map[string]*fos.ActionTrace)
-	resp, err := api.GetActions(fos.GetActionsRequest{AccountName: actor, Offset: offset, Pos: pos})
+func (api *API) GetActionsUniq(actor feos.AccountName, offset int64, pos int64) ([]*feos.ActionTrace, error) {
+	traceUniq := make(map[string]*feos.ActionTrace)
+	resp, err := api.GetActions(feos.GetActionsRequest{AccountName: actor, Offset: offset, Pos: pos})
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (api *API) GetActionsUniq(actor fos.AccountName, offset int64, pos int64) (
 	}
 	for i := range resp.Actions {
 		// use a closure to dereference
-		func(act *fos.ActionResp) {
+		func(act *feos.ActionResp) {
 			// have we already seen this act_digest?
 			switch traceUniq[act.Trace.Receipt.ActionDigest] {
 			case nil:
@@ -142,7 +142,7 @@ func (api *API) GetActionsUniq(actor fos.AccountName, offset int64, pos int64) (
 			}
 		}(&resp.Actions[i])
 	}
-	traces := make([]*fos.ActionTrace, 0)
+	traces := make([]*feos.ActionTrace, 0)
 	for _, v := range traceUniq {
 		traces = append(traces, v)
 	}

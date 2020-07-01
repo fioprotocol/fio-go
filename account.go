@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 	"github.com/mr-tron/base58"
 	"io/ioutil"
@@ -13,24 +13,24 @@ import (
 // Account holds the information for an account, it differs from a regular EOS account in that the
 // account name (Actor) is derived from the public key, and a FIO public key has a different prefix
 type Account struct {
-	KeyBag    *fos.KeyBag
+	KeyBag    *feos.KeyBag
 	PubKey    string
-	Actor     fos.AccountName
+	Actor     feos.AccountName
 	Addresses []FioName
 	Domains   []FioName
 }
 
 // Name wraps eos.Name for convenience and less imports for client
-type Name fos.Name
+type Name feos.Name
 
-func (n Name) ToEos() fos.Name {
-	return fos.Name(n)
+func (n Name) ToEos() feos.Name {
+	return feos.Name(n)
 }
 
 // NewAccountFromWif builds an Account given a private key string.
 // Note: this is an ephemeral, in-memory, account which has no relation to keosd, and is not persistent.
 func NewAccountFromWif(wif string) (*Account, error) {
-	kb := fos.NewKeyBag()
+	kb := feos.NewKeyBag()
 	err := kb.ImportPrivateKey(wif)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func NewRandomAccount() (*Account, error) {
 }
 
 // ActorFromPub calculates the FIO Actor (EOS Account) from a public key
-func ActorFromPub(pubKey string) (fos.AccountName, error) {
+func ActorFromPub(pubKey string) (feos.AccountName, error) {
 	const actorKey = `.12345abcdefghijklmnopqrstuvwxyz`
 	if len(pubKey) != 53 {
 		return "", errors.New("public key should be 53 chars")
@@ -106,7 +106,7 @@ func ActorFromPub(pubKey string) (fos.AccountName, error) {
 		actor[12-i] = actorKey[result&uint64(0x1f)]
 		result = result >> 5
 	}
-	return fos.AccountName(string(actor[:12])), nil
+	return feos.AccountName(string(actor[:12])), nil
 }
 
 /*
@@ -116,22 +116,22 @@ func ActorFromPub(pubKey string) (fos.AccountName, error) {
 
 // AccountResp duplicates the eos.AccountResp accounting for differences in public key format
 type AccountResp struct {
-	AccountName            fos.AccountName          `json:"account_name"`
-	Privileged             bool                     `json:"privileged"`
-	LastCodeUpdate         fos.JSONTime             `json:"last_code_update"`
-	Created                fos.JSONTime             `json:"created"`
-	CoreLiquidBalance      fos.Asset                `json:"core_liquid_balance"`
-	RAMQuota               fos.Int64                `json:"ram_quota"`
-	RAMUsage               fos.Int64                `json:"ram_usage"`
-	NetWeight              fos.Int64                `json:"net_weight"`
-	CPUWeight              fos.Int64                `json:"cpu_weight"`
-	NetLimit               fos.AccountResourceLimit `json:"net_limit"`
-	CPULimit               fos.AccountResourceLimit `json:"cpu_limit"`
-	Permissions            []Permission             `json:"permissions"`
-	TotalResources         fos.TotalResources       `json:"total_resources"`
-	SelfDelegatedBandwidth fos.DelegatedBandwidth   `json:"self_delegated_bandwidth"`
-	RefundRequest          *fos.RefundRequest       `json:"refund_request"`
-	VoterInfo              fos.VoterInfo            `json:"voter_info"`
+	AccountName            feos.AccountName          `json:"account_name"`
+	Privileged             bool                      `json:"privileged"`
+	LastCodeUpdate         feos.JSONTime             `json:"last_code_update"`
+	Created                feos.JSONTime             `json:"created"`
+	CoreLiquidBalance      feos.Asset                `json:"core_liquid_balance"`
+	RAMQuota               feos.Int64                `json:"ram_quota"`
+	RAMUsage               feos.Int64                `json:"ram_usage"`
+	NetWeight              feos.Int64                `json:"net_weight"`
+	CPUWeight              feos.Int64                `json:"cpu_weight"`
+	NetLimit               feos.AccountResourceLimit `json:"net_limit"`
+	CPULimit               feos.AccountResourceLimit `json:"cpu_limit"`
+	Permissions            []Permission              `json:"permissions"`
+	TotalResources         feos.TotalResources       `json:"total_resources"`
+	SelfDelegatedBandwidth feos.DelegatedBandwidth   `json:"self_delegated_bandwidth"`
+	RefundRequest          *feos.RefundRequest       `json:"refund_request"`
+	VoterInfo              feos.VoterInfo            `json:"voter_info"`
 }
 
 // Permission duplicates the eos.Permission accounting for differences in public key format
@@ -143,10 +143,10 @@ type Permission struct {
 
 // Authority duplicates the eos.Authority accounting for differences in public key format
 type Authority struct {
-	Threshold uint32                      `json:"threshold"`
-	Keys      []KeyWeight                 `json:"keys,omitempty"`
-	Accounts  []fos.PermissionLevelWeight `json:"accounts,omitempty"`
-	Waits     []fos.WaitWeight            `json:"waits,omitempty"`
+	Threshold uint32                       `json:"threshold"`
+	Keys      []KeyWeight                  `json:"keys,omitempty"`
+	Accounts  []feos.PermissionLevelWeight `json:"accounts,omitempty"`
+	Waits     []feos.WaitWeight            `json:"waits,omitempty"`
 }
 
 // KeyWeight duplicates the eos.KeyWeight accounting for differences in public key format

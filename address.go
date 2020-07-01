@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -41,14 +41,14 @@ func (a Address) Valid() (ok bool) {
 
 // RegAddress Registers a FIO Address on the FIO blockchain
 type RegAddress struct {
-	FioAddress        string          `json:"fio_address"`
-	OwnerFioPublicKey string          `json:"owner_fio_public_key"`
-	MaxFee            uint64          `json:"max_fee"`
-	Actor             fos.AccountName `json:"actor"`
-	Tpid              string          `json:"tpid"`
+	FioAddress        string           `json:"fio_address"`
+	OwnerFioPublicKey string           `json:"owner_fio_public_key"`
+	MaxFee            uint64           `json:"max_fee"`
+	Actor             feos.AccountName `json:"actor"`
+	Tpid              string           `json:"tpid"`
 }
 
-func NewRegAddress(actor fos.AccountName, address Address, ownerPubKey string) (action *Action, ok bool) {
+func NewRegAddress(actor feos.AccountName, address Address, ownerPubKey string) (action *Action, ok bool) {
 	if ok := address.Valid(); !ok {
 		return nil, false
 	}
@@ -65,7 +65,7 @@ func NewRegAddress(actor fos.AccountName, address Address, ownerPubKey string) (
 }
 
 // MustNewRegAddress panics on a bad address, but allows embedding because it only returns one value
-func MustNewRegAddress(actor fos.AccountName, address Address, ownerPubKey string) (action *Action) {
+func MustNewRegAddress(actor feos.AccountName, address Address, ownerPubKey string) (action *Action) {
 	a, ok := NewRegAddress(actor, address, ownerPubKey)
 	if !ok {
 		panic("invalid fio address in call to MustNewRegAddress")
@@ -79,11 +79,11 @@ func MustNewRegAddress(actor fos.AccountName, address Address, ownerPubKey strin
 // When adding addresses, only 5 can be added in a single call, and an account is limited to 100 public
 // addresses total.
 type AddAddress struct {
-	FioAddress      string          `json:"fio_address"`
-	PublicAddresses []TokenPubAddr  `json:"public_addresses"`
-	MaxFee          uint64          `json:"max_fee"`
-	Actor           fos.AccountName `json:"actor"`
-	Tpid            string          `json:"tpid"`
+	FioAddress      string           `json:"fio_address"`
+	PublicAddresses []TokenPubAddr   `json:"public_addresses"`
+	MaxFee          uint64           `json:"max_fee"`
+	Actor           feos.AccountName `json:"actor"`
+	Tpid            string           `json:"tpid"`
 }
 
 // TokenPubAddr holds *publicly* available token information for a FIO address, allowing anyone to lookup an address
@@ -94,7 +94,7 @@ type TokenPubAddr struct {
 }
 
 // NewAddAddress adds a single public address
-func NewAddAddress(actor fos.AccountName, fioAddress Address, token string, chain string, publicAddress string) (action *Action, ok bool) {
+func NewAddAddress(actor feos.AccountName, fioAddress Address, token string, chain string, publicAddress string) (action *Action, ok bool) {
 	if !fioAddress.Valid() {
 		return nil, false
 	}
@@ -119,7 +119,7 @@ func NewAddAddress(actor fos.AccountName, fioAddress Address, token string, chai
 }
 
 // NewAddAddresses adds multiple public addresses at a time
-func NewAddAddresses(actor fos.AccountName, fioAddress Address, addrs []TokenPubAddr) (action *Action, ok bool) {
+func NewAddAddresses(actor feos.AccountName, fioAddress Address, addrs []TokenPubAddr) (action *Action, ok bool) {
 	if !fioAddress.Valid() {
 		return nil, false
 	}
@@ -147,14 +147,14 @@ func NewAddAddresses(actor fos.AccountName, fioAddress Address, addrs []TokenPub
 
 // RegDomain registers a FIO Domain on the FIO blockchain
 type RegDomain struct {
-	FioDomain         string          `json:"fio_domain"`
-	OwnerFioPublicKey string          `json:"owner_fio_public_key"`
-	MaxFee            uint64          `json:"max_fee"`
-	Actor             fos.AccountName `json:"actor"`
-	Tpid              string          `json:"tpid"`
+	FioDomain         string           `json:"fio_domain"`
+	OwnerFioPublicKey string           `json:"owner_fio_public_key"`
+	MaxFee            uint64           `json:"max_fee"`
+	Actor             feos.AccountName `json:"actor"`
+	Tpid              string           `json:"tpid"`
 }
 
-func NewRegDomain(actor fos.AccountName, domain string, ownerPubKey string) *Action {
+func NewRegDomain(actor feos.AccountName, domain string, ownerPubKey string) *Action {
 	return NewAction(
 		"fio.address", "regdomain", actor,
 		RegDomain{
@@ -169,13 +169,13 @@ func NewRegDomain(actor fos.AccountName, domain string, ownerPubKey string) *Act
 
 // RenewDomain extends the expiration of a domain for a year
 type RenewDomain struct {
-	FioDomain string          `json:"fio_domain"`
-	MaxFee    uint64          `json:"max_fee"`
-	Tpid      string          `json:"tpid"`
-	Actor     fos.AccountName `json:"actor"`
+	FioDomain string           `json:"fio_domain"`
+	MaxFee    uint64           `json:"max_fee"`
+	Tpid      string           `json:"tpid"`
+	Actor     feos.AccountName `json:"actor"`
 }
 
-func NewRenewDomain(actor fos.AccountName, domain string) *Action {
+func NewRenewDomain(actor feos.AccountName, domain string) *Action {
 	return NewAction(
 		"fio.address", "renewdomain", actor,
 		RenewDomain{
@@ -189,14 +189,14 @@ func NewRenewDomain(actor fos.AccountName, domain string) *Action {
 
 // TransferDom (future) transfers ownership of a domain
 type TransferDom struct {
-	FioDomain            string          `json:"fio_domain"`
-	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
-	MaxFee               uint64          `json:"max_fee"`
-	Tpid                 string          `json:"tpid"`
-	Actor                fos.AccountName `json:"actor"`
+	FioDomain            string           `json:"fio_domain"`
+	NewOwnerFioPublicKey string           `json:"new_owner_fio_public_key"`
+	MaxFee               uint64           `json:"max_fee"`
+	Tpid                 string           `json:"tpid"`
+	Actor                feos.AccountName `json:"actor"`
 }
 
-func NewTransferDom(actor fos.AccountName, domain string, newOwnerPubKey string) *Action {
+func NewTransferDom(actor feos.AccountName, domain string, newOwnerPubKey string) *Action {
 	return NewAction(
 		"fio.address", "xferdomain", actor,
 		TransferDom{
@@ -211,13 +211,13 @@ func NewTransferDom(actor fos.AccountName, domain string, newOwnerPubKey string)
 
 // RenewAddress extends the expiration of an address by a year, and refreshes the bundle
 type RenewAddress struct {
-	FioAddress string          `json:"fio_address"`
-	MaxFee     uint64          `json:"max_fee"`
-	Tpid       string          `json:"tpid"`
-	Actor      fos.AccountName `json:"actor"`
+	FioAddress string           `json:"fio_address"`
+	MaxFee     uint64           `json:"max_fee"`
+	Tpid       string           `json:"tpid"`
+	Actor      feos.AccountName `json:"actor"`
 }
 
-func NewRenewAddress(actor fos.AccountName, address string) *Action {
+func NewRenewAddress(actor feos.AccountName, address string) *Action {
 	return NewAction(
 		"fio.address", "renewaddress", actor,
 		RenewAddress{
@@ -231,14 +231,14 @@ func NewRenewAddress(actor fos.AccountName, address string) *Action {
 
 // TransferAddress (future) transfers ownership of a FIO address
 type TransferAddress struct {
-	FioAddress           string          `json:"fio_address"`
-	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
-	MaxFee               uint64          `json:"max_fee"`
-	Tpid                 string          `json:"tpid"`
-	Actor                fos.AccountName `json:"actor"`
+	FioAddress           string           `json:"fio_address"`
+	NewOwnerFioPublicKey string           `json:"new_owner_fio_public_key"`
+	MaxFee               uint64           `json:"max_fee"`
+	Tpid                 string           `json:"tpid"`
+	Actor                feos.AccountName `json:"actor"`
 }
 
-func NewTransferAddress(actor fos.AccountName, address Address, newOwnerPubKey string) *Action {
+func NewTransferAddress(actor feos.AccountName, address Address, newOwnerPubKey string) *Action {
 	return NewAction(
 		"fio.address", "xferaddress", actor,
 		TransferAddress{
@@ -255,14 +255,14 @@ func NewTransferAddress(actor fos.AccountName, address Address, newOwnerPubKey s
 //
 // Deprecated: only used in development environments
 type ExpDomain struct {
-	Actor  fos.AccountName `json:"actor"`
-	Domain string          `json:"domain"`
+	Actor  feos.AccountName `json:"actor"`
+	Domain string           `json:"domain"`
 }
 
 // NewExpDomain is used by a test contract and not available on mainnet
 //
 // Deprecated: only used in development environments
-func NewExpDomain(actor fos.AccountName, domain string) *Action {
+func NewExpDomain(actor feos.AccountName, domain string) *Action {
 	return NewAction(
 		"fio.address", "expdomain", actor,
 		ExpDomain{
@@ -276,16 +276,16 @@ func NewExpDomain(actor fos.AccountName, domain string) *Action {
 //
 // Deprecated: only used in development environments
 type ExpAddresses struct {
-	Actor                fos.AccountName `json:"actor"`
-	Domain               string          `json:"domain"`
-	AddressPrefix        string          `json:"address_prefix"`
-	NumberAddressesToAdd uint64          `json:"number_addresses_to_add"`
+	Actor                feos.AccountName `json:"actor"`
+	Domain               string           `json:"domain"`
+	AddressPrefix        string           `json:"address_prefix"`
+	NumberAddressesToAdd uint64           `json:"number_addresses_to_add"`
 }
 
 // NewExpAddresses is used by a test contract and not available on mainnet
 //
 // Deprecated: only used in development environments
-func NewExpAddresses(actor fos.AccountName, domain string, addressPrefix string, toAdd uint64) *Action {
+func NewExpAddresses(actor feos.AccountName, domain string, addressPrefix string, toAdd uint64) *Action {
 	return NewAction(
 		"fio.address", "expaddresses", actor,
 		ExpAddresses{
@@ -300,7 +300,7 @@ func NewExpAddresses(actor fos.AccountName, domain string, addressPrefix string,
 // BurnExpired is intended to be called by block producers to remove expired domains or addresses from RAM
 type BurnExpired struct{}
 
-func NewBurnExpired(actor fos.AccountName) *Action {
+func NewBurnExpired(actor feos.AccountName) *Action {
 	return NewAction(
 		"fio.address", "burnexpired", actor,
 		BurnExpired{},
@@ -309,14 +309,14 @@ func NewBurnExpired(actor fos.AccountName) *Action {
 
 // SetDomainPub changes the permissions for a domain, allowing (or not) anyone to register an address
 type SetDomainPub struct {
-	FioDomain string          `json:"fio_domain"`
-	IsPublic  uint8           `json:"is_public"`
-	MaxFee    uint64          `json:"max_fee"`
-	Actor     fos.AccountName `json:"actor"`
-	Tpid      string          `json:"tpid"`
+	FioDomain string           `json:"fio_domain"`
+	IsPublic  uint8            `json:"is_public"`
+	MaxFee    uint64           `json:"max_fee"`
+	Actor     feos.AccountName `json:"actor"`
+	Tpid      string           `json:"tpid"`
 }
 
-func NewSetDomainPub(actor fos.AccountName, domain string, public bool) *Action {
+func NewSetDomainPub(actor feos.AccountName, domain string, public bool) *Action {
 	isPublic := 0
 	if public {
 		isPublic = 1
@@ -486,11 +486,11 @@ type accountMap struct {
 // GetFioNamesForActor searches the accountmap table to get a public key, then searches for fio names or domains belonging
 // to the associated public key
 func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, err error) {
-	name, err := fos.StringToName(actor)
+	name, err := feos.StringToName(actor)
 	if err != nil {
 		return FioNames{}, false, err
 	}
-	resp, err := api.GetTableRows(fos.GetTableRowsRequest{
+	resp, err := api.GetTableRows(feos.GetTableRowsRequest{
 		Code:       "fio.address",
 		Scope:      "fio.address",
 		Table:      "accountmap",
@@ -533,16 +533,16 @@ func flip(orig []byte) []byte {
 
 // DomainResp holds the table query lookup result for a domain
 type DomainResp struct {
-	Name       string           `json:"name"`
-	IsPublic   uint8            `json:"is_public"`
-	Expiration int64            `json:"expiration"`
-	Account    *fos.AccountName `json:"account,omitempty"`
+	Name       string            `json:"name"`
+	IsPublic   uint8             `json:"is_public"`
+	Expiration int64             `json:"expiration"`
+	Account    *feos.AccountName `json:"account,omitempty"`
 }
 
 // GetDomainOwner finds the account that is the owner of a domain
-func (api *API) GetDomainOwner(domain string) (actor *fos.AccountName, err error) {
+func (api *API) GetDomainOwner(domain string) (actor *feos.AccountName, err error) {
 	dnh := DomainNameHash(domain)
-	resp, err := api.GetTableRows(fos.GetTableRowsRequest{
+	resp, err := api.GetTableRows(feos.GetTableRowsRequest{
 		Code:       "fio.address",
 		Scope:      "fio.address",
 		Table:      "domains",
@@ -603,15 +603,15 @@ func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
 }
 
 type RemoveAddrReq struct {
-	FioAddress      string          `json:"fio_address"`
-	PublicAddresses []TokenPubAddr  `json:"public_addresses"`
-	MaxFee          uint64          `json:"max_fee"`
-	Actor           fos.AccountName `json:"actor"`
-	Tpid            string          `json:"tpid"`
+	FioAddress      string           `json:"fio_address"`
+	PublicAddresses []TokenPubAddr   `json:"public_addresses"`
+	MaxFee          uint64           `json:"max_fee"`
+	Actor           feos.AccountName `json:"actor"`
+	Tpid            string           `json:"tpid"`
 }
 
 // NewRemoveAddrReq allows removal of public token/chain addresses
-func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor fos.AccountName) (remove *Action, err error) {
+func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor feos.AccountName) (remove *Action, err error) {
 	if !fioAddress.Valid() {
 		return nil, errors.New("invalid address")
 	}
@@ -632,14 +632,14 @@ func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor fos.Acc
 
 // RemoveAllAddrReq is for removing all public addresses associated with a FIO address
 type RemoveAllAddrReq struct {
-	FioAddress string          `json:"fio_address"`
-	MaxFee     uint64          `json:"max_fee"`
-	Actor      fos.AccountName `json:"actor"`
-	Tpid       string          `json:"tpid"`
+	FioAddress string           `json:"fio_address"`
+	MaxFee     uint64           `json:"max_fee"`
+	Actor      feos.AccountName `json:"actor"`
+	Tpid       string           `json:"tpid"`
 }
 
 // NewRemoveAllAddrReq allows removal of ALL public token/chain addresses
-func NewRemoveAllAddrReq(fioAddress Address, actor fos.AccountName) (remove *Action, err error) {
+func NewRemoveAllAddrReq(fioAddress Address, actor feos.AccountName) (remove *Action, err error) {
 	if !fioAddress.Valid() {
 		return nil, errors.New("invalid address")
 	}

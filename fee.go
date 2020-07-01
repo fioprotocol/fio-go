@@ -3,7 +3,7 @@ package fio
 import (
 	"bytes"
 	"encoding/json"
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"io/ioutil"
 	"sync"
 )
@@ -139,7 +139,7 @@ func UpdateMaxFees(api *API) bool {
 		EndPoint  string `json:"end_point"`
 		SufAmount uint64 `json:"suf_amount"`
 	}
-	fees, err := api.GetTableRows(fos.GetTableRowsRequest{
+	fees, err := api.GetTableRows(feos.GetTableRowsRequest{
 		Code:  "fio.fee",
 		Scope: "fio.fee",
 		Table: "fiofees",
@@ -246,7 +246,7 @@ type SetFeeVote struct {
 	Actor     string     `json:"actor"`
 }
 
-func NewSetFeeVote(ratios []FeeValue, actor fos.AccountName) *Action {
+func NewSetFeeVote(ratios []FeeValue, actor feos.AccountName) *Action {
 	return NewAction("fio.fee", "setfeevote", actor,
 		SetFeeVote{
 			FeeRatios: ratios,
@@ -261,7 +261,7 @@ type BundleVote struct {
 	Actor               string `json:"actor"`
 }
 
-func NewBundleVote(transactions uint64, actor fos.AccountName) *Action {
+func NewBundleVote(transactions uint64, actor feos.AccountName) *Action {
 	return NewAction("fio.fee", "bundlevote", actor,
 		BundleVote{
 			BundledTransactions: transactions,
@@ -278,40 +278,40 @@ type SetFeeMult struct {
 
 // FioFee holds the details of an action's fee
 type FioFee struct {
-	FeeId        uint64      `json:"fee_id"`
-	EndPoint     string      `json:"end_point"`
-	EndPointHash fos.Uint128 `json:"end_point_hash"`
-	Type         uint64      `json:"type"`
-	SufAmount    uint64      `json:"suf_amount"`
+	FeeId        uint64       `json:"fee_id"`
+	EndPoint     string       `json:"end_point"`
+	EndPointHash feos.Uint128 `json:"end_point_hash"`
+	Type         uint64       `json:"type"`
+	SufAmount    uint64       `json:"suf_amount"`
 }
 
 // FeeVoter holds information about the block producer performing a vote
 type FeeVoter struct {
-	BlockProducerName fos.AccountName `json:"block_producer_name"`
-	FeeMultiplier     float64         `json:"fee_multiplier"`
-	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
+	BlockProducerName feos.AccountName `json:"block_producer_name"`
+	FeeMultiplier     float64          `json:"fee_multiplier"`
+	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
 }
 
 // FeeVote is used by block producers to vote for a fee
 type FeeVote struct {
-	Id                uint64          `json:"id"`
-	BlockProducerName fos.AccountName `json:"block_producer_name"`
-	EndPoint          string          `json:"end_point"`
-	EndPointHash      uint64          `json:"end_point_hash"`
-	SufAmount         uint64          `json:"suf_amount"`
-	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
+	Id                uint64           `json:"id"`
+	BlockProducerName feos.AccountName `json:"block_producer_name"`
+	EndPoint          string           `json:"end_point"`
+	EndPointHash      uint64           `json:"end_point_hash"`
+	SufAmount         uint64           `json:"suf_amount"`
+	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
 }
 
 // BundleVoter holds information about the block producer voting for the number of free bundled transactions for new
 // or renewed addresses
 type BundleVoter struct {
-	BlockProducerName fos.AccountName `json:"block_producer_name"`
-	BundleVoteNumber  uint64          `json:"bundlevotenumber"`
-	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
+	BlockProducerName feos.AccountName `json:"block_producer_name"`
+	BundleVoteNumber  uint64           `json:"bundlevotenumber"`
+	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
 }
 
 type UpdateFees struct {}
 
-func NewUpdateFees(actor fos.AccountName) *Action {
+func NewUpdateFees(actor feos.AccountName) *Action {
 	return NewAction("fio.fee", "updatefees", actor, UpdateFees{})
 }

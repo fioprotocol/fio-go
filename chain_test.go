@@ -3,7 +3,7 @@ package fio
 import (
 	"encoding/json"
 	"fmt"
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"math"
 	"reflect"
 	"testing"
@@ -36,7 +36,7 @@ func TestAPI_AllABIs(t *testing.T) {
 		t.Error("did not get abis")
 		return
 	}
-	if a[fos.AccountName("eosio")] == nil {
+	if a[feos.AccountName("eosio")] == nil {
 		t.Error("did not get abi for eosio")
 		return
 	}
@@ -53,7 +53,7 @@ func TestAPI_GetTableRowsOrder(t *testing.T) {
 		return
 	}
 
-	gtr, err := api.GetTableRows(fos.GetTableRowsRequest{
+	gtr, err := api.GetTableRows(feos.GetTableRowsRequest{
 		Code:       "eosio",
 		Scope:      "eosio",
 		Table:      "producers",
@@ -185,14 +185,14 @@ func TestAction_ToEos(t *testing.T) {
 		return
 	}
 	act := NewTransferTokensPubKey(account.Actor, account.PubKey, Tokens(0.0001)).ToEos()
-	if reflect.TypeOf(*act).String() != "fos.Action" {
+	if reflect.TypeOf(*act).String() != "feos.Action" {
 		t.Error("ToEos gave wrong type")
 		fmt.Println(reflect.TypeOf(*act).String())
 	}
 }
 
 func TestNewAction(t *testing.T) {
-	a := fos.AccountName("test")
+	a := feos.AccountName("test")
 
 	actOwner := NewActionAsOwner(
 		"fio.token", "trnsfiopubky", a,
@@ -204,7 +204,7 @@ func TestNewAction(t *testing.T) {
 			Tpid:           CurrentTpid(),
 		},
 	)
-	if actOwner.Authorization[0].Permission != fos.PermissionName("owner") {
+	if actOwner.Authorization[0].Permission != feos.PermissionName("owner") {
 		t.Error("NewActionAsOwner did not set owner")
 	}
 
@@ -218,7 +218,7 @@ func TestNewAction(t *testing.T) {
 			Tpid:           CurrentTpid(),
 		},
 	)
-	if actPerm.Authorization[0].Permission != fos.PermissionName("owner") {
+	if actPerm.Authorization[0].Permission != feos.PermissionName("owner") {
 		t.Error("NewActionWitherPermission did not set permission")
 	}
 }
@@ -241,7 +241,7 @@ func TestAPI_GetTableByScopeMore(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	res, err := api.GetTableByScopeMore(fos.GetTableByScopeRequest{
+	res, err := api.GetTableByScopeMore(feos.GetTableByScopeRequest{
 		Code:  "eosio",
 		Table: "producers",
 		Limit: 1,

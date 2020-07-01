@@ -2,7 +2,7 @@ package fio
 
 import (
 	"encoding/json"
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"os"
 	"testing"
 )
@@ -33,7 +33,7 @@ func TestAPI_GetFioAccount(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if a.AccountName != fos.AccountName("qbxn5zhw2ypw") {
+	if a.AccountName != feos.AccountName("qbxn5zhw2ypw") {
 		t.Error("account name was not correct")
 	}
 }
@@ -44,7 +44,7 @@ func TestNewAccountFromWif(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if account.Actor != fos.AccountName("tccyed5wnyj5") {
+	if account.Actor != feos.AccountName("tccyed5wnyj5") {
 		t.Error("bad actor")
 	}
 	if account.PubKey != `FIO6JN7BrPKPM8BqPs9zSPwbK3nWJ4EKvpjb4k9CFBQ6BbtrL2AHV` {
