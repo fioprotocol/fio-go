@@ -19,11 +19,12 @@ import (
 // VoteProducer votes for a producer
 type VoteProducer struct {
 	Producers  []string `json:"producers"`
-	FioAddress string   `json:"fio_address"`
+	FioAddress string   `json:"fio_address,omitempty"`
 	Actor      fos.AccountName
 	MaxFee     uint64 `json:"max_fee"`
 }
 
+// NewVoteProducer creates a VoteProducer action: note - fioAddress is optional as of FIP-009
 func NewVoteProducer(producers []string, actor fos.AccountName, fioAddress string) *Action {
 	sort.Strings(producers)
 	return NewAction(
@@ -119,11 +120,12 @@ func NewUnRegProducer(fioAddress string, actor fos.AccountName) *Action {
 
 type VoteProxy struct {
 	Proxy      string          `json:"proxy"`
-	FioAddress string          `json:"fio_address"`
+	FioAddress string          `json:"fio_address,omitempty"`
 	Actor      fos.AccountName `json:"actor"`
 	MaxFee     uint64          `json:"max_fee"`
 }
 
+// NewVoteProxy creates a VoteProxy action: note - fioAddress is optional as of FIP-009
 func NewVoteProxy(proxy string, fioAddress string, actor fos.AccountName) *Action {
 	return NewAction("eosio", "voteproxy", actor,
 		VoteProxy{
