@@ -4,6 +4,27 @@ Library for interacting with the FIO network using the go language.
 
 **Warning: This is pre-release software, and under heavy development, not all APIs are stable.**
 
+## 1.x Breaking Changes
+
+In 1.x and later eos-go has been imported and renamed, this is to prevent conflicts with clients that need
+access to both libraries, and to facilitate ECC changes needed for FIO. Updating existing code should be very simple:
+
+```
+import (
+	"github.com/eoscanada/eos-go"
+	"github.com/eoscanada/eos-go/ecc"
+)
+```
+
+becomes:
+
+```
+import (
+	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	ecc "github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+)
+```
+
 ## Example
 
 This demonstrates using the library to send FIO tokens from one account to another:
