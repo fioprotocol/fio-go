@@ -19,7 +19,7 @@ import (
 
 	"bufio"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio"
+	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 )
 

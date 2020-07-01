@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fioprotocol/fio-go/imports/eos-fio"
+	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -630,6 +630,7 @@ func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor fos.Acc
 	), nil
 }
 
+// RemoveAllAddrReq is for removing all public addresses associated with a FIO address
 type RemoveAllAddrReq struct {
 	FioAddress string          `json:"fio_address"`
 	MaxFee     uint64          `json:"max_fee"`

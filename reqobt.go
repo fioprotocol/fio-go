@@ -14,7 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/fioprotocol/fio-go/imports/eos-fio"
+	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcutil"
 	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 	"io/ioutil"

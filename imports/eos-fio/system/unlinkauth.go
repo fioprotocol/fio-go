@@ -1,7 +1,7 @@
 package system
 
 import (
-	"github.com/fioprotocol/fio-go/imports/eos-fio"
+	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
 )
 
 // NewUnlinkAuth creates an action from the `eosio.system` contract

@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/fioprotocol/fio-go/imports/eos-fio"
+	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"log"
 	"os"
 

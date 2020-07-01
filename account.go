@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/fioprotocol/fio-go/imports/eos-fio"
+	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
 	"github.com/mr-tron/base58"
 	"io/ioutil"

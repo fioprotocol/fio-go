@@ -3,7 +3,7 @@ package fio
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fioprotocol/fio-go/imports/eos-fio"
+	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
 	"math"
 	"reflect"
 	"testing"
