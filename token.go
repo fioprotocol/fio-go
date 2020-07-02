@@ -76,4 +76,3 @@ func (api *API) GetBalance(account feos.AccountName) (float64, error) {
 	}
 	return 0.0, nil
 }
-

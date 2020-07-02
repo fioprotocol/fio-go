@@ -307,7 +307,7 @@ type BundleVoter struct {
 	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
 }
 
-type UpdateFees struct {}
+type UpdateFees struct{}
 
 func NewUpdateFees(actor feos.AccountName) *Action {
 	return NewAction("fio.fee", "updatefees", actor, UpdateFees{})
