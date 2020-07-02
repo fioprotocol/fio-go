@@ -25,7 +25,6 @@ const (
 	FeeNewFundsRequest      = "new_funds_request"
 	FeeProxyVote            = "proxy_vote"
 	FeeRecordObtData        = "record_obt_data"
-	FeeRecordSend           = "record_send" // outdated endpoint name
 	FeeRegisterFioAddress   = "register_fio_address"
 	FeeRegisterFioDomain    = "register_fio_domain"
 	FeeRegisterProducer     = "register_producer"
@@ -70,7 +69,6 @@ var (
 		"new_funds_request":           0.8,
 		"proxy_vote":                  0.4,
 		"record_obt_data":             0.8,
-		"record_send":                 0.8, // outdated endpoint name.
 		"register_fio_address":        40.0,
 		"register_fio_domain":         800.0,
 		"register_producer":           200.0,
@@ -82,7 +80,6 @@ var (
 		"renew_fio_address":           40.0,
 		"renew_fio_domain":            800.0,
 		"set_fio_domain_public":       0.4,
-		"setdomainpub":                0.4, // outdated endpoint name.
 		"submit_bundled_transaction":  0.0,
 		"transfer_fio_address":        1.0,
 		"transfer_fio_domain":         1.0,

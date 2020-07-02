@@ -272,31 +272,6 @@ func NewExpDomain(actor feos.AccountName, domain string) *Action {
 	)
 }
 
-// ExpAddresses is used by a test contract and not available on mainnet
-//
-// Deprecated: only used in development environments
-type ExpAddresses struct {
-	Actor                feos.AccountName `json:"actor"`
-	Domain               string           `json:"domain"`
-	AddressPrefix        string           `json:"address_prefix"`
-	NumberAddressesToAdd uint64           `json:"number_addresses_to_add"`
-}
-
-// NewExpAddresses is used by a test contract and not available on mainnet
-//
-// Deprecated: only used in development environments
-func NewExpAddresses(actor feos.AccountName, domain string, addressPrefix string, toAdd uint64) *Action {
-	return NewAction(
-		"fio.address", "expaddresses", actor,
-		ExpAddresses{
-			Actor:                actor,
-			Domain:               domain,
-			AddressPrefix:        addressPrefix,
-			NumberAddressesToAdd: toAdd,
-		},
-	)
-}
-
 // BurnExpired is intended to be called by block producers to remove expired domains or addresses from RAM
 type BurnExpired struct{}
 
