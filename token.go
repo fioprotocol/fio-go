@@ -77,10 +77,3 @@ func (api *API) GetBalance(account feos.AccountName) (float64, error) {
 	return 0.0, nil
 }
 
-// GetFioBalance is a convenience wrapper for GetCurrencyBalance, it is not idiomatic since it is
-// not a member function of API, and will be removed in a future version
-//
-// deprecated: use api.GetBalance instead
-func GetFioBalance(account feos.AccountName, api *API) (float64, error) {
-	return api.GetBalance(account)
-}

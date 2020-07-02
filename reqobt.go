@@ -412,18 +412,12 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []by
 	signature := signer.Sum(nil)
 	contentBuffer.Write(signature)
 
-	switch ObtOldFormat {
-	case false:
-		// base64 encode the message, and it's ready to be embedded in our FundsReq.Content or RecordSend.Content fields
-		b64Buffer := bytes.NewBuffer([]byte{})
-		//encoded := base64.NewEncoder(base64.URLEncoding, b64Buffer)
-		encoded := base64.NewEncoder(base64.StdEncoding, b64Buffer)
-		_, err = encoded.Write(contentBuffer.Bytes())
-		_ = encoded.Close()
-		return string(b64Buffer.Bytes()), nil
-	default:
-		return hex.EncodeToString(contentBuffer.Bytes()), nil
-	}
+	// base64 encode the message, and it's ready to be embedded in our FundsReq.Content or RecordSend.Content fields
+	b64Buffer := bytes.NewBuffer([]byte{})
+	encoded := base64.NewEncoder(base64.StdEncoding, b64Buffer)
+	_, err = encoded.Write(contentBuffer.Bytes())
+	_ = encoded.Close()
+	return string(b64Buffer.Bytes()), nil
 }
 
 // EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
@@ -433,22 +427,12 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 	)
 
 	var msg []byte
-	switch ObtOldFormat {
-	case false:
-		// convert base64 string to []byte
-		b64Reader := bytes.NewReader([]byte(message))
-		//b64Decoder := base64.NewDecoder(base64.URLEncoding, b64Reader)
-		b64Decoder := base64.NewDecoder(base64.StdEncoding, b64Reader)
-		msg, err = ioutil.ReadAll(b64Decoder)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		// or the old style hex string
-		msg, err = hex.DecodeString(message)
-		if err != nil {
-			return nil, err
-		}
+	// convert base64 string to []byte
+	b64Reader := bytes.NewReader([]byte(message))
+	b64Decoder := base64.NewDecoder(base64.StdEncoding, b64Reader)
+	msg, err = ioutil.ReadAll(b64Decoder)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get the shared-secret

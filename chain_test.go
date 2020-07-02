@@ -194,20 +194,6 @@ func TestAction_ToEos(t *testing.T) {
 func TestNewAction(t *testing.T) {
 	a := feos.AccountName("test")
 
-	actOwner := NewActionAsOwner(
-		"fio.token", "trnsfiopubky", a,
-		TransferTokensPubKey{
-			PayeePublicKey: "",
-			Amount:         1,
-			MaxFee:         Tokens(GetMaxFee(FeeTransferTokensPubKey)),
-			Actor:          a,
-			Tpid:           CurrentTpid(),
-		},
-	)
-	if actOwner.Authorization[0].Permission != feos.PermissionName("owner") {
-		t.Error("NewActionAsOwner did not set owner")
-	}
-
 	actPerm := NewActionWithPermission(
 		"fio.token", "trnsfiopubky", a, "owner",
 		TransferTokensPubKey{

@@ -131,23 +131,6 @@ func NewAction(contract feos.AccountName, name feos.ActionName, actor feos.Accou
 	}
 }
 
-// NewActionAsOwner is the same as NewAction, but specifies the owner permission, really only needed for msig updateauth in FIO
-//
-// deprecated: use NewActionWithPermission instead
-func NewActionAsOwner(contract feos.AccountName, name feos.ActionName, actor feos.AccountName, actionData interface{}) *Action {
-	return &Action{
-		Account: contract,
-		Name:    name,
-		Authorization: []feos.PermissionLevel{
-			{
-				Actor:      actor,
-				Permission: "owner",
-			},
-		},
-		ActionData: feos.NewActionData(actionData),
-	}
-}
-
 // NewActionWithPermission allows building an action and specifying the permission
 func NewActionWithPermission(contract feos.AccountName, name feos.ActionName, actor feos.AccountName, permission string, actionData interface{}) *Action {
 	return &Action{
