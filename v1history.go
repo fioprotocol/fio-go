@@ -11,11 +11,13 @@ import (
 	"strings"
 )
 
+// BlockTxidsResp contains a list of transactions in a block.
 type BlockTxidsResp struct {
 	Ids                   []feos.Checksum256 `json:"ids"`
 	LastIrreversibleBlock uint32             `json:"last_irreversible_block"`
 }
 
+// HistGetBlockTxids retrieves the txid for all transactions that occurred in a block from the v1 history plugin.
 func (api *API) HistGetBlockTxids(blockNum uint32) (*BlockTxidsResp, error) {
 	resp, err := api.HttpClient.Post(
 		api.BaseURL+"/v1/history/get_block_txids",
@@ -38,6 +40,7 @@ func (api *API) HistGetBlockTxids(blockNum uint32) (*BlockTxidsResp, error) {
 	return blocks, nil
 }
 
+// GetTransaction duplicates eos-go's GetTransaction. TODO: is this redundant? Can it be removed?
 func (api *API) GetTransaction(id feos.Checksum256) (*feos.TransactionResp, error) {
 	resp, err := api.HttpClient.Post(
 		api.BaseURL+"/v1/history/get_transaction",
@@ -118,6 +121,8 @@ func (api *API) HasHistory() bool {
 // GetActionsUniq strips the results of GetActions of duplicate traces, this can occur with certain transactions
 // that may have multiple actors involved and the same trace is presented more than once but associated with a
 // different actor. This will give preference to the trace referencing the actor queried if possible.
+//
+// Deprecated: a new endpoint that handles de-duplication will make this function irrelevant.
 func (api *API) GetActionsUniq(actor feos.AccountName, offset int64, pos int64) ([]*feos.ActionTrace, error) {
 	traceUniq := make(map[string]*feos.ActionTrace)
 	resp, err := api.GetActions(feos.GetActionsRequest{AccountName: actor, Offset: offset, Pos: pos})

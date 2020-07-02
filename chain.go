@@ -251,7 +251,8 @@ func (api API) AllABIs() (map[feos.AccountName]*feos.ABI, error) {
 	return abiList, nil
 }
 
-// used to deal with string vs bool in More field:
+// getTableByScopeResp is used to deal with string vs bool in More field:
+// TODO: handle int
 type getTableByScopeResp struct {
 	More interface{}     `json:"more"`
 	Rows json.RawMessage `json:"rows"`
@@ -370,7 +371,6 @@ type protocolFeatures struct {
 
 func (api *API) GetBlockByNum(num uint32) (out *feos.BlockResp, err error) {
 	err = api.call("chain", "get_block", feos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
-	//err = api.call("chain", "get_block", M{"block_num_or_id": num}, &out)
 	return
 }
 

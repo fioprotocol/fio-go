@@ -414,6 +414,7 @@ func (api *API) GetProposals(offset int, limit int) (more bool, scopes map[strin
 }
 
 // WrapExecute wraps a transaction to be executed with specific permissions via eosio.wrap
+// NOTE: this is not working as expected, use caution.
 type WrapExecute struct {
 	Executor feos.AccountName  `json:"executor"`
 	Trx      *feos.Transaction `json:"trx"`
