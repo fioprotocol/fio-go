@@ -32,7 +32,7 @@ func TestAddress_Valid(t *testing.T) {
 		"slash/not@llowed",
 		"q?not@llowed",
 		"dot.not@llowed",
-		"less>not@llowed",
+		"less<not@llowed",
 		"great>not@llowed",
 		"under_not@llowed",
 		"missingdomain@",
@@ -46,6 +46,8 @@ func TestAddress_Valid(t *testing.T) {
 		}
 	}
 	good := []string{
+		"a-b-c@xyz",
+		"xyz@a-b-c",
 		"a@b",
 		"a-b@c",
 		"a@b-c",
