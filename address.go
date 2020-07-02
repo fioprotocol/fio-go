@@ -490,20 +490,33 @@ func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, e
 	return api.GetFioNames(results[0].Clientkey)
 }
 
-// DomainNameHash calculates the hash used as an index in the fio.address domains table from the domain name
-func DomainNameHash(s string) string {
+// I128Hash hashes a string to an i128 database value, often used as an index for a string in a table.
+// It is the most-significant 16 bytes in big-endian of a sha1 hash of the provided string, returned as a hex-string
+func I128Hash(s string) string {
 	sha := sha1.New()
 	sha.Write([]byte(s))
 	// last 16 bytes of sha1-sum, as big-endian
 	return "0x" + hex.EncodeToString(flip(sha.Sum(nil)))[8:]
 }
 
-func flip(orig []byte) []byte {
-	flipped := make([]byte, len(orig))
-	for i := range orig {
-		flipped[len(flipped)-i-1] = orig[i]
+// DomainNameHash calculates the hash used as an index in the fio.address domains table from the domain name.
+// This is an alias to I128Hash
+func DomainNameHash(s string) string {
+	return I128Hash(s)
+}
+
+// AddressHash calculates the hash used as an index in the fio.address domains table from the domain name.
+// This is an alias to I128Hash
+func AddressHash(s string) string {
+	return I128Hash(s)
+}
+
+// flip is an endianness swapper for []byte
+func flip(b []byte) []byte {
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
 	}
-	return flipped
+	return b
 }
 
 // DomainResp holds the table query lookup result for a domain
