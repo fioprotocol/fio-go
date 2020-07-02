@@ -499,14 +499,34 @@ func I128Hash(s string) string {
 	return "0x" + hex.EncodeToString(flip(sha.Sum(nil)))[8:]
 }
 
-// DomainNameHash calculates the hash used as an index in the fio.address domains table from the domain name.
-// This is an alias to I128Hash
+// DomainNameHash calculates the hash used as index 4 in the fio.address domains table from the domain name.
+// This is an alias to I128Hash. Example for domain `fio`:
+//    {
+//      "code": "fio.address",
+//      "scope": "fio.address",
+//      "table": "domains",
+//      "lower_bound": "0x8d9d3bd8a6fb22345ce8fa3c416a28e5",
+//      "upper_bound": "0x8d9d3bd8a6fb22345ce8fa3c416a28e5",
+//      "key_type": "i128",
+//      "index_position": "4",
+//      "json": true
+//    }
 func DomainNameHash(s string) string {
 	return I128Hash(s)
 }
 
-// AddressHash calculates the hash used as an index in the fio.address domains table from the domain name.
-// This is an alias to I128Hash
+// AddressHash calculates the hash used as index 5 in the fio.address fionames table from the domain name.
+// This is an alias to I128Hash, example of query for `test@fiotestnet`:
+//    {
+//      "code": "fio.address",
+//      "scope": "fio.address",
+//      "table": "fionames",
+//      "lower_bound": "0xeb0816aeb936141ebec9a4a76c64df58",
+//      "upper_bound": "0xeb0816aeb936141ebec9a4a76c64df58",
+//      "key_type": "i128",
+//      "index_position": "5",
+//      "json": true
+//    }
 func AddressHash(s string) string {
 	return I128Hash(s)
 }
