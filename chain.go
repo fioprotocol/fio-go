@@ -84,22 +84,33 @@ func NewTransaction(actions []*Action, txOpts *TxOptions) *feos.Transaction {
 	return feos.NewTransaction(eosActions, txOpts.toEos())
 }
 
-// NewConnection sets up the API interface for interacting with the FIO API
+// NewConnection sets up the API interface for interacting with the FIO API. This supports both unix domain sockets
+// with the format unix:///path/to/nodeos.sock or http uris. If neither a unix or http prefix is present, it will
+// assume unencrypted TCP is wanted: ie - "http://"+url
 func NewConnection(keyBag *feos.KeyBag, url string) (*API, *TxOptions, error) {
 	var api = feos.New(url)
 	api.SetSigner(keyBag)
+
+	// This overrides the default eos-go behavior that requests the needed keys from the API endpoint.
+	// In the early versions of fio-go this was necessary because of conflicts in the ecc library.
+	// TODO: is overriding the GetRequiredKeys function still necessary?
 	api.SetCustomGetRequiredKeys(
 		func(tx *feos.Transaction) (keys []fecc.PublicKey, e error) {
 			return keyBag.AvailableKeys()
 		},
 	)
+
 	api.Header.Set("User-Agent", "fio-go")
 	txOpts := &TxOptions{}
+
+	// this forces a connection to /v1/chain/get_info so we fail early if the server is not available.
 	err := txOpts.FillFromChain(api)
 	if err != nil {
 		return &API{}, nil, err
 	}
 	a := &API{*api}
+
+	// refreshes the current fees from the fio.fee fiofees table, fails silently.
 	if !maxFeesUpdated {
 		_ = UpdateMaxFees(a)
 	}

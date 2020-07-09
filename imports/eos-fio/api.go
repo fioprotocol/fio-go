@@ -2,6 +2,7 @@ package feos
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,27 +38,51 @@ type API struct {
 }
 
 func New(baseURL string) *API {
-	api := &API{
-		HttpClient: &http.Client{
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: (&net.Dialer{
-					Timeout:   30 * time.Second,
-					KeepAlive: 30 * time.Second,
-					DualStack: true,
-				}).DialContext,
-				MaxIdleConns:          100,
-				IdleConnTimeout:       90 * time.Second,
-				TLSHandshakeTimeout:   10 * time.Second,
-				ExpectContinueTimeout: 1 * time.Second,
-				DisableKeepAlives:     true, // default behavior, because of `nodeos`'s lack of support for Keep alives.
-			},
-		},
-		BaseURL:  baseURL,
-		Compress: CompressionZlib,
-		Header:   make(http.Header),
+	// a little more forgiving than the eos-go default, add http:// if no URI protocol is present
+	if !strings.HasPrefix(baseURL, "http") && !strings.HasPrefix(baseURL, "unix") {
+		baseURL = "http://" + baseURL
 	}
-
+	api := &API{}
+	// This modification to eos-go allows using unix domain sockets, FIO supports this but by default EOS does not.
+	// Url format becomes unix:///path/to/nodeos.sock to use a domain socket API. Should help greatly with speed when
+	// used on a local server.
+	switch strings.HasPrefix(baseURL, "http") {
+	case false:
+		api = &API{
+			HttpClient: &http.Client{
+				Transport: &http.Transport{
+					DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+						return net.Dial("unix", baseURL[7:]) // strip unix:// from prefix
+					},
+				},
+				Timeout: 0,
+			},
+			BaseURL:  "http://unix"+baseURL[7:],
+			Compress: CompressionNone,
+			Header:   make(http.Header),
+		}
+	default:
+		api = &API{
+			HttpClient: &http.Client{
+				Transport: &http.Transport{
+					Proxy: http.ProxyFromEnvironment,
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 30 * time.Second,
+						DualStack: true,
+					}).DialContext,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       90 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					DisableKeepAlives:     true, // default behavior, because of `nodeos`'s lack of support for Keep alives.
+				},
+			},
+			BaseURL:  baseURL,
+			Compress: CompressionZlib,
+			Header:   make(http.Header),
+		}
+	}
 	return api
 }
 
@@ -66,6 +92,9 @@ func New(baseURL string) *API {
 // supporting web server.  Adjust the `KeepAlive` support of the
 // client accordingly.
 func (api *API) FixKeepAlives() bool {
+	if strings.HasPrefix(api.BaseURL, "http://unix/") {
+		return false
+	}
 	// Yeah, to provoke a keep alive, you need to query twice.
 	for i := 0; i < 5; i++ {
 		_, err := api.GetInfo()
@@ -93,6 +122,9 @@ func (api *API) FixKeepAlives() bool {
 }
 
 func (api *API) EnableKeepAlives() bool {
+	if strings.HasPrefix(api.BaseURL, "http://unix/") {
+		return false
+	}
 	if tr, ok := api.HttpClient.Transport.(*http.Transport); ok {
 		tr.DisableKeepAlives = false
 		return true
