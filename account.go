@@ -74,10 +74,11 @@ func NewRandomAccount() (*Account, error) {
 // ActorFromPub calculates the FIO Actor (EOS Account) from a public key
 func ActorFromPub(pubKey string) (feos.AccountName, error) {
 	// ensure the key is valid base58, and the 160 checksum is correct before encoding
-	_, err := fecc.NewPublicKey(pubKey)
+	p, err := fecc.NewPublicKey(pubKey)
 	if err != nil {
 		return "", err
 	}
+	pubKey = p.String() // ensure we end up with a compact key if we get PUB_K1_ prefix
 	const actorKey = `.12345abcdefghijklmnopqrstuvwxyz`
 	if len(pubKey) != 53 {
 		return "", errors.New("public key should be 53 chars")
