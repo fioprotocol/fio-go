@@ -1,8 +1,8 @@
 package bnet
 
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	eos "github.com/fioprotocol/fio-go/eos"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 )
 
 type BNetMessageType byte
@@ -22,7 +22,7 @@ const (
 //
 
 type Hello struct {
-	PeerID                   fecc.PublicKey    `json:"peer_id"`
+	PeerID                   ecc.PublicKey    `json:"peer_id"`
 	NetworkVersion           string            `json:"network_version"`
 	User                     string            `json:"user"`
 	Password                 string            `json:"password"`

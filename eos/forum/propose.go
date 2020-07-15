@@ -1,7 +1,7 @@
 package forum
 
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	eos "github.com/fioprotocol/fio-go/eos"
 )
 
 // NewPropose is an action to submit a proposal for vote.

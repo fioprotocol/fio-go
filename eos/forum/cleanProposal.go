@@ -1,7 +1,7 @@
 package forum
 
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	eos "github.com/fioprotocol/fio-go/eos"
 )
 
 // CleanProposal is an action to flush proposal and allow RAM used by it.

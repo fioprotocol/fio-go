@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/eos"
 )
 
 type Proxy struct {
@@ -48,7 +48,7 @@ func (p *Proxy) read(sender *Peer, receiver *Peer, errChannel chan error) {
 	}
 }
 
-func (p *Proxy) handle(packet *fos.Packet, sender *Peer, receiver *Peer) error {
+func (p *Proxy) handle(packet *eos.Packet, sender *Peer, receiver *Peer) error {
 
 	_, err := receiver.Write(packet.Raw)
 	if err != nil {
@@ -56,7 +56,7 @@ func (p *Proxy) handle(packet *fos.Packet, sender *Peer, receiver *Peer) error {
 	}
 
 	switch m := packet.P2PMessage.(type) {
-	case *fos.GoAwayMessage:
+	case *eos.GoAwayMessage:
 		return errors.Errorf("handling message: go away: reason [%d]", m.Reason)
 	}
 

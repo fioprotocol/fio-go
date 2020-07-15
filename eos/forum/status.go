@@ -1,7 +1,7 @@
 package forum
 
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	eos "github.com/fioprotocol/fio-go/eos"
 )
 
 // Status is an action to set a status update for a given account on the forum contract.

@@ -1,7 +1,7 @@
 package msig
 
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	eos "github.com/fioprotocol/fio-go/eos"
 )
 
 // NewApprove returns a `approve` action that lives on the

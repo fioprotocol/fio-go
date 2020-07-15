@@ -1,4 +1,4 @@
-package feos
+package eos
 
 import (
 	"encoding/hex"

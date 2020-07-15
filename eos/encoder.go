@@ -1,4 +1,4 @@
-package feos
+package eos
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 
 	"math"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 	"go.uber.org/zap"
 )
 
@@ -118,9 +118,9 @@ func (e *Encoder) Encode(v interface{}) (err error) {
 		return e.writeChecksum512(cv)
 	case []byte:
 		return e.writeByteArray(cv)
-	case fecc.PublicKey:
+	case ecc.PublicKey:
 		return e.writePublicKey(cv)
-	case fecc.Signature:
+	case ecc.Signature:
 		return e.writeSignature(cv)
 	case Tstamp:
 		return e.writeTstamp(cv)
@@ -369,7 +369,7 @@ func (e *Encoder) writeChecksum512(checksum Checksum512) error {
 	return e.toWriter(checksum)
 }
 
-func (e *Encoder) writePublicKey(pk fecc.PublicKey) (err error) {
+func (e *Encoder) writePublicKey(pk ecc.PublicKey) (err error) {
 	encoderLog.Debug("write public key", zap.Stringer("pubkey", pk))
 	if len(pk.Content) != 33 {
 		return fmt.Errorf("public key %q should be 33 bytes, was %d", hex.EncodeToString(pk.Content), len(pk.Content))
@@ -382,7 +382,7 @@ func (e *Encoder) writePublicKey(pk fecc.PublicKey) (err error) {
 	return e.toWriter(pk.Content)
 }
 
-func (e *Encoder) writeSignature(s fecc.Signature) (err error) {
+func (e *Encoder) writeSignature(s ecc.Signature) (err error) {
 	encoderLog.Debug("write signature", zap.Stringer("sig", s))
 	if len(s.Content) != 65 {
 		return fmt.Errorf("signature should be 65 bytes, was %d", len(s.Content))

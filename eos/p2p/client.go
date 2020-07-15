@@ -1,7 +1,7 @@
 package p2p
 
 import (
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/eos"
 	"math"
 
 	"github.com/pkg/errors"
@@ -60,10 +60,10 @@ func (c *Client) read(peer *Peer, errChannel chan error) {
 		}
 
 		switch m := packet.P2PMessage.(type) {
-		case *fos.GoAwayMessage:
+		case *eos.GoAwayMessage:
 			errChannel <- errors.Wrapf(err, "GoAwayMessage reason %s", m.Reason)
 
-		case *fos.HandshakeMessage:
+		case *eos.HandshakeMessage:
 			if c.catchup == nil {
 				m.NodeID = peer.NodeID
 				m.P2PAddress = peer.Name
@@ -83,7 +83,7 @@ func (c *Client) read(peer *Peer, errChannel chan error) {
 				}
 				c.catchup.IsCatchingUp = true
 			}
-		case *fos.NoticeMessage:
+		case *eos.NoticeMessage:
 			if c.catchup != nil {
 				pendingNum := m.KnownBlocks.Pending
 				if pendingNum > 0 {
@@ -94,7 +94,7 @@ func (c *Client) read(peer *Peer, errChannel chan error) {
 					}
 				}
 			}
-		case *fos.SignedBlock:
+		case *eos.SignedBlock:
 
 			if c.catchup != nil {
 

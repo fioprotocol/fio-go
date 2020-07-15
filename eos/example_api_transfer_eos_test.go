@@ -1,4 +1,4 @@
-package feos_test
+package eos_test
 
 import (
 	"encoding/hex"
@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
-	"github.com/fioprotocol/fio-go/imports/eos-fio/token"
+	eos "github.com/fioprotocol/fio-go/eos"
+	"github.com/fioprotocol/fio-go/eos/token"
 )
 
 func ExampleAPI_PushTransaction_transfer_EOS() {

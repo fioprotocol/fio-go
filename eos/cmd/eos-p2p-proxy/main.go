@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/p2p"
+	"github.com/fioprotocol/fio-go/eos/p2p"
 )
 
 var peer1 = flag.String("peer1", "localhost:9876", "peer 1")

@@ -9,7 +9,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcutil/base58"
+	"github.com/fioprotocol/fio-go/eos/btcsuite/btcutil/base58"
 )
 
 var stringTests = []struct {

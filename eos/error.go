@@ -1,10 +1,10 @@
-package feos
+package eos
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/eoserr"
+	"github.com/fioprotocol/fio-go/eos/eoserr"
 )
 
 // APIError represents the errors as reported by the server

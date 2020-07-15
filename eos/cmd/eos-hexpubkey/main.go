@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	}
 
 	textkey := flag.Args()[0]
-	pubkey, err := fecc.NewPublicKey(textkey)
+	pubkey, err := ecc.NewPublicKey(textkey)
 	if err != nil {
 		log.Fatalln("invalid public key:", err)
 	}

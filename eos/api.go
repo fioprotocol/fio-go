@@ -1,4 +1,4 @@
-package feos
+package eos
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 )
 
 type API struct {
@@ -32,7 +32,7 @@ type API struct {
 	lastGetInfoStamp time.Time
 	lastGetInfoLock  sync.Mutex
 
-	customGetRequiredKeys func(tx *Transaction) ([]fecc.PublicKey, error)
+	customGetRequiredKeys func(tx *Transaction) ([]ecc.PublicKey, error)
 }
 
 func New(baseURL string) *API {
@@ -100,7 +100,7 @@ func (api *API) EnableKeepAlives() bool {
 	return false
 }
 
-func (api *API) SetCustomGetRequiredKeys(f func(tx *Transaction) ([]fecc.PublicKey, error)) {
+func (api *API) SetCustomGetRequiredKeys(f func(tx *Transaction) ([]ecc.PublicKey, error)) {
 	api.customGetRequiredKeys = f
 }
 
@@ -219,7 +219,7 @@ func (api *API) WalletImportKey(walletName, wifPrivKey string) (err error) {
 	return api.call("wallet", "import_key", []string{walletName, wifPrivKey}, nil)
 }
 
-func (api *API) WalletPublicKeys() (out []fecc.PublicKey, err error) {
+func (api *API) WalletPublicKeys() (out []ecc.PublicKey, err error) {
 	var textKeys []string
 	err = api.call("wallet", "get_public_keys", nil, &textKeys)
 	if err != nil {
@@ -227,7 +227,7 @@ func (api *API) WalletPublicKeys() (out []fecc.PublicKey, err error) {
 	}
 
 	for _, k := range textKeys {
-		newKey, err := fecc.NewPublicKey(k)
+		newKey, err := ecc.NewPublicKey(k)
 		if err != nil {
 			return nil, err
 		}
@@ -246,7 +246,7 @@ func (api *API) ListWallets(walletName ...string) (out []string, err error) {
 	return
 }
 
-func (api *API) ListKeys(walletNames ...string) (out []*fecc.PrivateKey, err error) {
+func (api *API) ListKeys(walletNames ...string) (out []*ecc.PrivateKey, err error) {
 	var textKeys []string
 	err = api.call("wallet", "list_keys", walletNames, &textKeys)
 	if err != nil {
@@ -254,7 +254,7 @@ func (api *API) ListKeys(walletNames ...string) (out []*fecc.PrivateKey, err err
 	}
 
 	for _, k := range textKeys {
-		newKey, err := fecc.NewPrivateKey(k)
+		newKey, err := ecc.NewPrivateKey(k)
 		if err != nil {
 			return nil, err
 		}
@@ -264,7 +264,7 @@ func (api *API) ListKeys(walletNames ...string) (out []*fecc.PrivateKey, err err
 	return
 }
 
-func (api *API) GetPublicKeys() (out []*fecc.PublicKey, err error) {
+func (api *API) GetPublicKeys() (out []*ecc.PublicKey, err error) {
 	var textKeys []string
 	err = api.call("wallet", "get_public_keys", nil, &textKeys)
 	if err != nil {
@@ -272,7 +272,7 @@ func (api *API) GetPublicKeys() (out []*fecc.PublicKey, err error) {
 	}
 
 	for _, k := range textKeys {
-		newKey, err := fecc.NewPublicKey(k)
+		newKey, err := ecc.NewPublicKey(k)
 		if err != nil {
 			return nil, err
 		}
@@ -286,7 +286,7 @@ func (api *API) WalletSetTimeout(timeout int32) (err error) {
 	return api.call("wallet", "set_timeout", timeout, nil)
 }
 
-func (api *API) WalletSignTransaction(tx *SignedTransaction, chainID []byte, pubKeys ...fecc.PublicKey) (out *WalletSignTransactionResp, err error) {
+func (api *API) WalletSignTransaction(tx *SignedTransaction, chainID []byte, pubKeys ...ecc.PublicKey) (out *WalletSignTransactionResp, err error) {
 	var textKeys []string
 	for _, key := range pubKeys {
 		textKeys = append(textKeys, key.String())
@@ -349,7 +349,7 @@ func (api *API) SignTransaction(tx *Transaction, chainID Checksum256, compressio
 
 	stx := NewSignedTransaction(tx)
 
-	var requiredKeys []fecc.PublicKey
+	var requiredKeys []ecc.PublicKey
 	if api.customGetRequiredKeys != nil {
 		var err error
 		requiredKeys, err = api.customGetRequiredKeys(tx)

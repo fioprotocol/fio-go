@@ -1,9 +1,9 @@
-package fecc
+package ecc
 
 import (
 	"fmt"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcd/btcec"
+	"github.com/fioprotocol/fio-go/eos/btcsuite/btcd/btcec"
 )
 
 type innerR1PublicKey struct {

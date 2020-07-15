@@ -1,10 +1,10 @@
-package fecc
+package ecc
 
 import (
 	"fmt"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcd/btcec"
-	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcutil"
+	"github.com/fioprotocol/fio-go/eos/btcsuite/btcd/btcec"
+	"github.com/fioprotocol/fio-go/eos/btcsuite/btcutil"
 )
 
 type innerK1PrivateKey struct {

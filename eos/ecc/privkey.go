@@ -1,4 +1,4 @@
-package fecc
+package ecc
 
 import (
 	cryptorand "crypto/rand"
@@ -7,8 +7,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcd/btcec"
-	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcutil"
+	"github.com/fioprotocol/fio-go/eos/btcsuite/btcd/btcec"
+	"github.com/fioprotocol/fio-go/eos/btcsuite/btcutil"
 )
 
 const PrivateKeyPrefix = "PVT_"

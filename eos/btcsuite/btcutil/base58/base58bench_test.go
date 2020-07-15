@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/btcsuite/btcutil/base58"
+	"github.com/fioprotocol/fio-go/eos/btcsuite/btcutil/base58"
 )
 
 func BenchmarkBase58Encode(b *testing.B) {

@@ -1,4 +1,4 @@
-package feos_test
+package eos_test
 
 import "os"
 

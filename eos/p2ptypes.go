@@ -1,4 +1,4 @@
-package feos
+package eos
 
 import (
 	"crypto/sha256"
@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 )
 
 type P2PMessage interface {
@@ -21,10 +21,10 @@ type HandshakeMessage struct {
 	NetworkVersion           uint16         `json:"network_version"`
 	ChainID                  Checksum256    `json:"chain_id"`
 	NodeID                   Checksum256    `json:"node_id"` // sha256
-	Key                      fecc.PublicKey `json:"key"`     // can be empty, producer key, or peer key
+	Key                      ecc.PublicKey `json:"key"`     // can be empty, producer key, or peer key
 	Time                     Tstamp         `json:"time"`    // time?!
 	Token                    Checksum256    `json:"token"`   // digest of time to prove we own the private `key`
-	Signature                fecc.Signature `json:"sig"`     // can be empty if no key, signature of the digest above
+	Signature                ecc.Signature `json:"sig"`     // can be empty if no key, signature of the digest above
 	P2PAddress               string         `json:"p2p_address"`
 	LastIrreversibleBlockNum uint32         `json:"last_irreversible_block_num"`
 	LastIrreversibleBlockID  Checksum256    `json:"last_irreversible_block_id"`
@@ -204,7 +204,7 @@ func (s TransactionStatus) String() string {
 
 type ProducerKey struct {
 	AccountName     AccountName    `json:"producer_name"`
-	BlockSigningKey fecc.PublicKey `json:"block_signing_key"`
+	BlockSigningKey ecc.PublicKey `json:"block_signing_key"`
 }
 
 type ProducerSchedule struct {
@@ -249,7 +249,7 @@ type OptionalProducerSchedule struct {
 
 type SignedBlockHeader struct {
 	BlockHeader
-	ProducerSignature fecc.Signature `json:"producer_signature"`
+	ProducerSignature ecc.Signature `json:"producer_signature"`
 }
 
 type SignedBlock struct {
@@ -439,7 +439,7 @@ func (m *RequestMessage) GetType() P2PMessageType {
 }
 
 type SignedTransactionMessage struct {
-	Signatures      []fecc.Signature `json:"signatures"`
+	Signatures      []ecc.Signature `json:"signatures"`
 	ContextFreeData []byte           `json:"context_free_data"`
 }
 

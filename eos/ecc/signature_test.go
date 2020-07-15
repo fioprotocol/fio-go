@@ -1,4 +1,4 @@
-package fecc
+package ecc
 
 import (
 	"crypto/sha256"

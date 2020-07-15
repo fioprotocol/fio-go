@@ -1,10 +1,10 @@
-package feos_test
+package eos_test
 
 import (
 	"encoding/json"
 	"fmt"
 
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	eos "github.com/fioprotocol/fio-go/eos"
 )
 
 func ExampleAPI_GetAccount() {

@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/eos"
 	"log"
 	"os"
 
@@ -23,8 +23,8 @@ func main() {
 		log.Fatalln("error decoding hex:", err)
 	}
 
-	var tx *fos.Transaction
-	err = fos.UnmarshalBinary(b, &tx)
+	var tx *eos.Transaction
+	err = eos.UnmarshalBinary(b, &tx)
 	if err != nil {
 		log.Fatalln("error decoding:", err)
 	}

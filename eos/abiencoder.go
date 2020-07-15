@@ -1,4 +1,4 @@
-package feos
+package eos
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 	"go.uber.org/zap"
 
 	"github.com/tidwall/gjson"
@@ -283,13 +283,13 @@ func (a *ABI) writeField(binaryEncoder *Encoder, fieldName string, fieldType str
 		}
 		object = Checksum512(data)
 	case "public_key":
-		pk, err := fecc.NewPublicKey(value.String())
+		pk, err := ecc.NewPublicKey(value.String())
 		if err != nil {
 			return fmt.Errorf("writing field: public_key: %s", err)
 		}
 		object = pk
 	case "signature":
-		signature, err := fecc.NewSignature(value.String())
+		signature, err := ecc.NewSignature(value.String())
 		if err != nil {
 			return fmt.Errorf("writing field: public_key: %s", err)
 		}

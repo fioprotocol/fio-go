@@ -1,4 +1,4 @@
-package feos
+package eos
 
 import (
 	"encoding/binary"
@@ -15,7 +15,7 @@ import (
 
 	"io/ioutil"
 
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 	"go.uber.org/zap"
 )
 
@@ -223,13 +223,13 @@ func (d *Decoder) Decode(v interface{}) (err error) {
 		s, err = d.ReadChecksum256()
 		rv.SetBytes(s)
 		return
-	case *fecc.PublicKey:
-		var p fecc.PublicKey
+	case *ecc.PublicKey:
+		var p ecc.PublicKey
 		p, err = d.ReadPublicKey()
 		rv.Set(reflect.ValueOf(p))
 		return
-	case *fecc.Signature:
-		var s fecc.Signature
+	case *ecc.Signature:
+		var s ecc.Signature
 		s, err = d.ReadSignature()
 		rv.Set(reflect.ValueOf(s))
 		return
@@ -665,7 +665,7 @@ func (d *Decoder) ReadChecksum512() (out Checksum512, err error) {
 	return
 }
 
-func (d *Decoder) ReadPublicKey() (out fecc.PublicKey, err error) {
+func (d *Decoder) ReadPublicKey() (out ecc.PublicKey, err error) {
 
 	if d.remaining() < TypeSize.PublicKey {
 		err = fmt.Errorf("publicKey required [%d] bytes, remaining [%d]", TypeSize.PublicKey, d.remaining())
@@ -674,7 +674,7 @@ func (d *Decoder) ReadPublicKey() (out fecc.PublicKey, err error) {
 	keyContent := make([]byte, 34)
 	copy(keyContent, d.data[d.pos:d.pos+TypeSize.PublicKey])
 
-	out, err = fecc.NewPublicKeyFromData(keyContent)
+	out, err = ecc.NewPublicKeyFromData(keyContent)
 	if err != nil {
 		err = fmt.Errorf("publicKey: key from data: %s", err)
 	}
@@ -684,7 +684,7 @@ func (d *Decoder) ReadPublicKey() (out fecc.PublicKey, err error) {
 	return
 }
 
-func (d *Decoder) ReadSignature() (out fecc.Signature, err error) {
+func (d *Decoder) ReadSignature() (out ecc.Signature, err error) {
 	if d.remaining() < TypeSize.Signature {
 		err = fmt.Errorf("signature required [%d] bytes, remaining [%d]", TypeSize.Signature, d.remaining())
 		return
@@ -693,7 +693,7 @@ func (d *Decoder) ReadSignature() (out fecc.Signature, err error) {
 	sigContent := make([]byte, 66)
 	copy(sigContent, d.data[d.pos:d.pos+TypeSize.Signature])
 
-	out, err = fecc.NewSignatureFromData(sigContent)
+	out, err = ecc.NewSignatureFromData(sigContent)
 	if err != nil {
 		return out, fmt.Errorf("new signature: %s", err)
 	}

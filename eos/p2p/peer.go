@@ -19,8 +19,8 @@ import (
 
 	"bufio"
 
-	fos "github.com/fioprotocol/fio-go/imports/eos-fio"
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 )
 
 type Peer struct {
@@ -46,12 +46,12 @@ func (p Peer) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 }
 
 type HandshakeInfo struct {
-	ChainID                  fos.Checksum256
+	ChainID                  eos.Checksum256
 	HeadBlockNum             uint32
-	HeadBlockID              fos.Checksum256
+	HeadBlockID              eos.Checksum256
 	HeadBlockTime            time.Time
 	LastIrreversibleBlockNum uint32
-	LastIrreversibleBlockID  fos.Checksum256
+	LastIrreversibleBlockID  eos.Checksum256
 }
 
 func (h *HandshakeInfo) String() string {
@@ -96,8 +96,8 @@ func NewOutgoingPeer(address string, agent string, handshakeInfo *HandshakeInfo)
 	return newPeer(address, agent, false, handshakeInfo)
 }
 
-func (p *Peer) Read() (*fos.Packet, error) {
-	packet, err := fos.ReadPacket(p.reader)
+func (p *Peer) Read() (*eos.Packet, error) {
+	packet, err := eos.ReadPacket(p.reader)
 	if p.handshakeTimeout > 0 {
 		p.cancelHandshakeTimeout <- true
 	}
@@ -184,16 +184,16 @@ func (p *Peer) Write(bytes []byte) (int, error) {
 	return p.connection.Write(bytes)
 }
 
-func (p *Peer) WriteP2PMessage(message fos.P2PMessage) (err error) {
+func (p *Peer) WriteP2PMessage(message eos.P2PMessage) (err error) {
 
-	packet := &fos.Packet{
+	packet := &eos.Packet{
 		Type:       message.GetType(),
 		P2PMessage: message,
 	}
 
 	buff := bytes.NewBuffer(make([]byte, 0, 512))
 
-	encoder := fos.NewEncoder(buff)
+	encoder := eos.NewEncoder(buff)
 	err = encoder.Encode(packet)
 	if err != nil {
 		return errors.Wrapf(err, "unable to encode message %s", message)
@@ -213,7 +213,7 @@ func (p *Peer) SendSyncRequest(startBlockNum uint32, endBlockNumber uint32) (err
 		zap.Uint32("start", startBlockNum),
 		zap.Uint32("end", endBlockNumber))
 
-	syncRequest := &fos.SyncRequestMessage{
+	syncRequest := &eos.SyncRequestMessage{
 		StartBlock: startBlockNum,
 		EndBlock:   endBlockNumber,
 	}
@@ -226,12 +226,12 @@ func (p *Peer) SendRequest(startBlockNum uint32, endBlockNumber uint32) (err err
 		zap.Uint32("start", startBlockNum),
 		zap.Uint32("end", endBlockNumber))
 
-	request := &fos.RequestMessage{
-		ReqTrx: fos.OrderedBlockIDs{
+	request := &eos.RequestMessage{
+		ReqTrx: eos.OrderedBlockIDs{
 			Mode:    [4]byte{0, 0, 0, 0},
 			Pending: startBlockNum,
 		},
-		ReqBlocks: fos.OrderedBlockIDs{
+		ReqBlocks: eos.OrderedBlockIDs{
 			Mode:    [4]byte{0, 0, 0, 0},
 			Pending: endBlockNumber,
 		},
@@ -247,12 +247,12 @@ func (p *Peer) SendNotice(headBlockNum uint32, libNum uint32, mode byte) error {
 		zap.Uint32("lib", libNum),
 		zap.Uint8("type", mode))
 
-	notice := &fos.NoticeMessage{
-		KnownTrx: fos.OrderedBlockIDs{
+	notice := &eos.NoticeMessage{
+		KnownTrx: eos.OrderedBlockIDs{
 			Mode:    [4]byte{mode, 0, 0, 0},
 			Pending: headBlockNum,
 		},
-		KnownBlocks: fos.OrderedBlockIDs{
+		KnownBlocks: eos.OrderedBlockIDs{
 			Mode:    [4]byte{mode, 0, 0, 0},
 			Pending: libNum,
 		},
@@ -263,27 +263,27 @@ func (p *Peer) SendNotice(headBlockNum uint32, libNum uint32, mode byte) error {
 func (p *Peer) SendTime() error {
 	p2pLog.Debug("SendTime", zap.String("peer", p.Address))
 
-	notice := &fos.TimeMessage{}
+	notice := &eos.TimeMessage{}
 	return errors.WithStack(p.WriteP2PMessage(notice))
 }
 
 func (p *Peer) SendHandshake(info *HandshakeInfo) error {
 
-	publicKey, err := fecc.NewPublicKey("EOS1111111111111111111111111111111114T1Anm")
+	publicKey, err := ecc.NewPublicKey("EOS1111111111111111111111111111111114T1Anm")
 	if err != nil {
 		return errors.Wrapf(err, "sending handshake to %s: create public key", p.Address)
 	}
 
 	p2pLog.Debug("SendHandshake", zap.String("peer", p.Address), zap.Object("info", info))
 
-	tstamp := fos.Tstamp{Time: info.HeadBlockTime}
+	tstamp := eos.Tstamp{Time: info.HeadBlockTime}
 
-	signature := fecc.Signature{
-		Curve:   fecc.CurveK1,
+	signature := ecc.Signature{
+		Curve:   ecc.CurveK1,
 		Content: make([]byte, 65, 65),
 	}
 
-	handshake := &fos.HandshakeMessage{
+	handshake := &eos.HandshakeMessage{
 		NetworkVersion:           1206,
 		ChainID:                  info.ChainID,
 		NodeID:                   p.NodeID,

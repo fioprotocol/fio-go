@@ -1,17 +1,15 @@
 package msig
 
-import (
-	"github.com/fioprotocol/fio-go/imports/eos-fio"
-)
+import "github.com/fioprotocol/fio-go/eos"
 
 func init() {
-	feos.RegisterAction(AN("eosio.msig"), ActN("propose"), &Propose{})
-	feos.RegisterAction(AN("eosio.msig"), ActN("approve"), &Approve{})
-	feos.RegisterAction(AN("eosio.msig"), ActN("unapprove"), &Unapprove{})
-	feos.RegisterAction(AN("eosio.msig"), ActN("cancel"), &Cancel{})
-	feos.RegisterAction(AN("eosio.msig"), ActN("exec"), &Exec{})
+	eos.RegisterAction(AN("eosio.msig"), ActN("propose"), &Propose{})
+	eos.RegisterAction(AN("eosio.msig"), ActN("approve"), &Approve{})
+	eos.RegisterAction(AN("eosio.msig"), ActN("unapprove"), &Unapprove{})
+	eos.RegisterAction(AN("eosio.msig"), ActN("cancel"), &Cancel{})
+	eos.RegisterAction(AN("eosio.msig"), ActN("exec"), &Exec{})
 }
 
-var AN = feos.AN
-var PN = feos.PN
-var ActN = feos.ActN
+var AN = eos.AN
+var PN = eos.PN
+var ActN = eos.ActN

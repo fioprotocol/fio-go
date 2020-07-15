@@ -1,11 +1,11 @@
-package feos_test
+package eos_test
 
 import (
 	"encoding/hex"
 	"fmt"
 	"strings"
 
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	eos "github.com/fioprotocol/fio-go/eos"
 )
 
 func ExampleABI_DecodeTableRowTyped() {
