@@ -403,6 +403,10 @@ func (api *API) cachedGetInfo() (*InfoResp, error) {
 
 	if !api.lastGetInfoStamp.IsZero() && time.Now().Add(-1*time.Second).Before(api.lastGetInfoStamp) {
 		info = api.lastGetInfo
+		// fio-go modification: return an error if the system clock is not synced, this will prevent transactions from finalizing
+		if info.HeadBlockTime.Time.After(time.Now().UTC().Add(30*time.Second)) {
+			return nil, errors.New("system time is behind HeadBlockTime by more than the transaction timeout limit")
+		}
 	} else {
 		info, err = api.GetInfo()
 		if err != nil {
