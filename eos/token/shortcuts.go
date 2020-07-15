@@ -1,6 +1,6 @@
 package token
 
-import eos "github.com/fioprotocol/fio-go/eos"
+import "github.com/fioprotocol/fio-go/eos"
 
 var AN = eos.AN
 var PN = eos.PN

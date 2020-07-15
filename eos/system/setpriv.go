@@ -1,6 +1,6 @@
 package system
 
-import eos "github.com/fioprotocol/fio-go/eos"
+import "github.com/fioprotocol/fio-go/eos"
 
 // NewSetPriv returns a `setpriv` action that lives on the
 // `eosio.bios` contract. It should exist only when booting a new

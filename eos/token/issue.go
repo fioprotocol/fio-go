@@ -1,6 +1,6 @@
 package token
 
-import eos "github.com/fioprotocol/fio-go/eos"
+import "github.com/fioprotocol/fio-go/eos"
 
 func NewIssue(to eos.AccountName, quantity eos.Asset, memo string) *eos.Action {
 	return &eos.Action{
