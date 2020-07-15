@@ -61,7 +61,7 @@ func (txo TxOptions) toEos() *eos.TxOptions {
 	}
 }
 
-// copy over CompressionTypes to reduce need for eos-go imports
+// copy over CompressionTypes to reduce need additional imports
 const (
 	CompressionNone = eos.CompressionType(iota)
 	CompressionZlib

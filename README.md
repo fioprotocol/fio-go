@@ -6,8 +6,8 @@ Library for interacting with the FIO network using the go language.
 
 ## 1.x Breaking Changes
 
-In 1.x and later eos-go has been imported and renamed, this is to prevent conflicts with clients that need
-access to both libraries, and to facilitate ECC changes needed for FIO. Updating existing code should be very simple:
+In 1.x and later eos-go has been imported, this is to facilitate ECC changes needed for FIO and to ensure API stability.
+Updating existing code using eos-go dependencies should only require:
 
 ```
 import (
@@ -20,8 +20,8 @@ becomes:
 
 ```
 import (
-	eos "github.com/fioprotocol/fio-go/imports/eos-fio"
-	ecc "github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 )
 ```
 
