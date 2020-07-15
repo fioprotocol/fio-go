@@ -1,7 +1,7 @@
 package fio
 
 import (
-	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/eos"
 	"sync"
 )
 
@@ -32,12 +32,12 @@ func CurrentTpid() string {
 
 // PayTpidRewards is used for wallets "technology provided id" to claim incentive rewards
 type PayTpidRewards struct {
-	Actor feos.AccountName `json:"actor"`
+	Actor eos.AccountName `json:"actor"`
 }
 
-func NewPayTpidRewards(actor feos.AccountName) *Action {
+func NewPayTpidRewards(actor eos.AccountName) *Action {
 	return NewAction(
-		feos.AccountName("fio.treasury"), "tpidclaim", actor,
+		eos.AccountName("fio.treasury"), "tpidclaim", actor,
 		PayTpidRewards{Actor: actor},
 	)
 }
@@ -45,11 +45,11 @@ func NewPayTpidRewards(actor feos.AccountName) *Action {
 // UpdateTpid is a privileged call
 type UpdateTpid struct {
 	Tpid   string           `json:"tpid"`
-	Owner  feos.AccountName `json:"owner"`
+	Owner  eos.AccountName `json:"owner"`
 	Amount uint64           `json:"amount"`
 }
 
-func NewUpdateTpid(actor feos.AccountName, tpid string, amount uint64) *Action {
+func NewUpdateTpid(actor eos.AccountName, tpid string, amount uint64) *Action {
 	return NewAction(
 		"fio.tpid", "updatepid", actor,
 		UpdateTpid{
@@ -65,7 +65,7 @@ type RewardsPaid struct {
 	Tpid string `json:"tpid"`
 }
 
-func NewRewardsPaid(actor feos.AccountName, tpid string) *Action {
+func NewRewardsPaid(actor eos.AccountName, tpid string) *Action {
 	return NewAction(
 		"fio.tpid", "rewardspaid", actor,
 		UpdateTpid{
@@ -80,7 +80,7 @@ type UpdateBounty struct {
 	Amount uint64 `json:"amount"`
 }
 
-func NewUpdateBounty(actor feos.AccountName, amount uint64) *Action {
+func NewUpdateBounty(actor eos.AccountName, amount uint64) *Action {
 	return NewAction(
 		"fio.tpid", "updatebounty", actor,
 		UpdateBounty{Amount: amount},

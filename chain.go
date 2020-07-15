@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
-	"github.com/fioprotocol/fio-go/imports/eos-fio/fecc"
+	"github.com/fioprotocol/fio-go/eos"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 	"io"
 	"io/ioutil"
 	"math"
@@ -25,19 +25,19 @@ const (
 
 // API struct allows extending the eos.API with FIO-specific functions
 type API struct {
-	feos.API
+	eos.API
 }
 
 // Action struct duplicates eos.Action
 type Action struct {
-	Account       feos.AccountName       `json:"account"`
-	Name          feos.ActionName        `json:"name"`
-	Authorization []feos.PermissionLevel `json:"authorization,omitempty"`
-	feos.ActionData
+	Account       eos.AccountName       `json:"account"`
+	Name          eos.ActionName        `json:"name"`
+	Authorization []eos.PermissionLevel `json:"authorization,omitempty"`
+	eos.ActionData
 }
 
-func (act Action) ToEos() *feos.Action {
-	return &feos.Action{
+func (act Action) ToEos() *eos.Action {
+	return &eos.Action{
 		Account:       act.Account,
 		Name:          act.Name,
 		Authorization: act.Authorization,
@@ -47,11 +47,11 @@ func (act Action) ToEos() *feos.Action {
 
 // TxOptions wraps eos.TxOptions
 type TxOptions struct {
-	feos.TxOptions
+	eos.TxOptions
 }
 
-func (txo TxOptions) toEos() *feos.TxOptions {
-	return &feos.TxOptions{
+func (txo TxOptions) toEos() *eos.TxOptions {
+	return &eos.TxOptions{
 		ChainID:          txo.ChainID,
 		HeadBlockID:      txo.HeadBlockID,
 		MaxNetUsageWords: txo.MaxNetUsageWords,
@@ -63,17 +63,17 @@ func (txo TxOptions) toEos() *feos.TxOptions {
 
 // copy over CompressionTypes to reduce need for eos-go imports
 const (
-	CompressionNone = feos.CompressionType(iota)
+	CompressionNone = eos.CompressionType(iota)
 	CompressionZlib
 )
 
 // NewTransaction wraps eos.NewTransaction
-func NewTransaction(actions []*Action, txOpts *TxOptions) *feos.Transaction {
-	eosActions := make([]*feos.Action, 0)
+func NewTransaction(actions []*Action, txOpts *TxOptions) *eos.Transaction {
+	eosActions := make([]*eos.Action, 0)
 	for _, a := range actions {
 		eosActions = append(
 			eosActions,
-			&feos.Action{
+			&eos.Action{
 				Account:       a.Account,
 				Name:          a.Name,
 				Authorization: a.Authorization,
@@ -81,15 +81,15 @@ func NewTransaction(actions []*Action, txOpts *TxOptions) *feos.Transaction {
 			},
 		)
 	}
-	return feos.NewTransaction(eosActions, txOpts.toEos())
+	return eos.NewTransaction(eosActions, txOpts.toEos())
 }
 
 // NewConnection sets up the API interface for interacting with the FIO API
-func NewConnection(keyBag *feos.KeyBag, url string) (*API, *TxOptions, error) {
-	var api = feos.New(url)
+func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
+	var api = eos.New(url)
 	api.SetSigner(keyBag)
 	api.SetCustomGetRequiredKeys(
-		func(tx *feos.Transaction) (keys []fecc.PublicKey, e error) {
+		func(tx *eos.Transaction) (keys []ecc.PublicKey, e error) {
 			return keyBag.AvailableKeys()
 		},
 	)
@@ -117,32 +117,32 @@ func NewWifConnect(wif string, url string) (account *Account, api *API, opts *Tx
 }
 
 // NewAction creates an Action for FIO contract calls, assumes the permission is "active"
-func NewAction(contract feos.AccountName, name feos.ActionName, actor feos.AccountName, actionData interface{}) *Action {
+func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
 		Name:    name,
-		Authorization: []feos.PermissionLevel{
+		Authorization: []eos.PermissionLevel{
 			{
 				Actor:      actor,
 				Permission: "active",
 			},
 		},
-		ActionData: feos.NewActionData(actionData),
+		ActionData: eos.NewActionData(actionData),
 	}
 }
 
 // NewActionWithPermission allows building an action and specifying the permission
-func NewActionWithPermission(contract feos.AccountName, name feos.ActionName, actor feos.AccountName, permission string, actionData interface{}) *Action {
+func NewActionWithPermission(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, permission string, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
 		Name:    name,
-		Authorization: []feos.PermissionLevel{
+		Authorization: []eos.PermissionLevel{
 			{
 				Actor:      actor,
-				Permission: feos.PermissionName(permission),
+				Permission: eos.PermissionName(permission),
 			},
 		},
-		ActionData: feos.NewActionData(actionData),
+		ActionData: eos.NewActionData(actionData),
 	}
 }
 
@@ -196,21 +196,21 @@ func (api API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawM
 		return nil, fmt.Errorf("Copy: %s", err)
 	}
 	if resp.StatusCode == 404 {
-		var apiErr feos.APIError
+		var apiErr eos.APIError
 		if err := json.Unmarshal(cnt.Bytes(), &apiErr); err != nil {
-			return nil, feos.ErrNotFound
+			return nil, eos.ErrNotFound
 		}
 		return nil, apiErr
 	}
 	if resp.StatusCode > 299 {
-		var apiErr feos.APIError
+		var apiErr eos.APIError
 		if err := json.Unmarshal(cnt.Bytes(), &apiErr); err != nil {
 			return nil, fmt.Errorf("%s: status code=%d, body=%s", req.URL.String(), resp.StatusCode, cnt.String())
 		}
 		// Handle cases where some API calls (/v1/chain/get_account for example) returns a 500
 		// error when retrieving data that does not exist.
 		if apiErr.IsUnknownKeyError() {
-			return nil, feos.ErrNotFound
+			return nil, eos.ErrNotFound
 		}
 		return nil, apiErr
 	}
@@ -222,11 +222,11 @@ func (api API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawM
 
 // AllABIs returns a map of every ABI available. This is only possible in FIO because there are a small number
 // of contracts that exist.
-func (api API) AllABIs() (map[feos.AccountName]*feos.ABI, error) {
+func (api API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
 	type contracts struct {
 		Owner string `json:"owner"`
 	}
-	table, err := api.GetTableRows(feos.GetTableRowsRequest{
+	table, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:  "eosio",
 		Scope: "eosio",
 		Table: "abihash",
@@ -237,9 +237,9 @@ func (api API) AllABIs() (map[feos.AccountName]*feos.ABI, error) {
 	}
 	result := make([]contracts, 0)
 	_ = json.Unmarshal(table.Rows, &result)
-	abiList := make(map[feos.AccountName]*feos.ABI)
+	abiList := make(map[eos.AccountName]*eos.ABI)
 	for _, name := range result {
-		bi, err := api.GetABI(feos.AccountName(name.Owner))
+		bi, err := api.GetABI(eos.AccountName(name.Owner))
 		if err != nil {
 			continue
 		}
@@ -259,7 +259,7 @@ type getTableByScopeResp struct {
 }
 
 // GetTableByScopeMore handles responses that have either a bool or a string as the more response.
-func (api API) GetTableByScopeMore(request feos.GetTableByScopeRequest) (*feos.GetTableByScopeResp, error) {
+func (api API) GetTableByScopeMore(request eos.GetTableByScopeRequest) (*eos.GetTableByScopeResp, error) {
 	reqBody, err := json.Marshal(&request)
 	if err != nil {
 		return nil, err
@@ -291,7 +291,7 @@ func (api API) GetTableByScopeMore(request feos.GetTableByScopeRequest) (*feos.G
 			more = moreBool
 		}
 	}
-	return &feos.GetTableByScopeResp{
+	return &eos.GetTableByScopeResp{
 		More: more,
 		Rows: gt.Rows,
 	}, nil
@@ -314,7 +314,7 @@ type GetTableRowsOrderRequest struct {
 }
 
 // GetTableRowsOrder duplicates eos.GetTableRows but adds a Reverse flag
-func (api *API) GetTableRowsOrder(gtro GetTableRowsOrderRequest) (*feos.GetTableRowsResp, error) {
+func (api *API) GetTableRowsOrder(gtro GetTableRowsOrderRequest) (*eos.GetTableRowsResp, error) {
 	j, err := json.Marshal(&gtro)
 	if err != nil {
 		return nil, err
@@ -328,7 +328,7 @@ func (api *API) GetTableRowsOrder(gtro GetTableRowsOrderRequest) (*feos.GetTable
 	if err != nil {
 		return nil, err
 	}
-	tableRows := &feos.GetTableRowsResp{}
+	tableRows := &eos.GetTableRowsResp{}
 	err = json.Unmarshal(body, tableRows)
 	if err != nil {
 		return nil, err
@@ -361,7 +361,7 @@ func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err er
 }
 
 type BlockrootMerkle struct {
-	ActiveNodes []feos.Checksum256 `json:"_active_nodes"`
+	ActiveNodes []eos.Checksum256 `json:"_active_nodes"`
 	NodeCount   uint32             `json:"_node_count"`
 }
 
@@ -369,8 +369,8 @@ type protocolFeatures struct {
 	ProtocolFeatures []interface{} `json:"protocol_features"` // not sure what goes here, leaving private
 }
 
-func (api *API) GetBlockByNum(num uint32) (out *feos.BlockResp, err error) {
-	err = api.call("chain", "get_block", feos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
+func (api *API) GetBlockByNum(num uint32) (out *eos.BlockResp, err error) {
+	err = api.call("chain", "get_block", eos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
 	return
 }
 
@@ -383,17 +383,17 @@ type BlockHeaderState struct {
 	BlockrootMerkle           BlockrootMerkle   `json:"blockroot_merkle"`
 	ProducerToLastProduced    []json.RawMessage `json:"producer_to_last_produced"` // array of arrays with mixed types, access via member func
 	ProducerToLastImpliedIrb  []json.RawMessage `json:"producer_to_last_implied_irb"`
-	BlockSigningKey           fecc.PublicKey    `json:"block_signing_key"`
+	BlockSigningKey           ecc.PublicKey    `json:"block_signing_key"`
 	ConfirmCount              []int             `json:"confirm_count"`
-	Id                        feos.Checksum256  `json:"id"`
-	Header                    *feos.BlockHeader `json:"header"`
+	Id                        eos.Checksum256  `json:"id"`
+	Header                    *eos.BlockHeader `json:"header"`
 	PendingSchedule           *PendingSchedule  `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
 }
 
 type PendingSchedule struct {
 	ScheduleLibNum uint32           `json:"schedule_lib_num"`
-	ScheduleHash   feos.Checksum256 `json:"schedule_hash"`
+	ScheduleHash   eos.Checksum256 `json:"schedule_hash"`
 	Schedule       *Schedule
 }
 
@@ -433,7 +433,7 @@ const (
 )
 
 type ProducerToLast struct {
-	Producer          feos.AccountName `json:"producer"`
+	Producer          eos.AccountName `json:"producer"`
 	BlockNum          uint32           `json:"block_num"`
 	ProducedOrImplied string           `json:"produced_or_implied"`
 }
@@ -469,7 +469,7 @@ func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool
 		for _, v := range iToPtl {
 			switch v.(type) {
 			case string:
-				pl.Producer = feos.AccountName(v.(string))
+				pl.Producer = eos.AccountName(v.(string))
 				continue
 			case float64:
 				pl.BlockNum = uint32(v.(float64))
@@ -564,15 +564,15 @@ func (api *API) call(baseAPI string, endpoint string, body interface{}, out inte
 	}
 
 	if resp.StatusCode == 404 {
-		var apiErr feos.APIError
+		var apiErr eos.APIError
 		if err := json.Unmarshal(cnt.Bytes(), &apiErr); err != nil {
-			return feos.ErrNotFound
+			return eos.ErrNotFound
 		}
 		return apiErr
 	}
 
 	if resp.StatusCode > 299 {
-		var apiErr feos.APIError
+		var apiErr eos.APIError
 		if err := json.Unmarshal(cnt.Bytes(), &apiErr); err != nil {
 			return fmt.Errorf("%s: status code=%d, body=%s", req.URL.String(), resp.StatusCode, cnt.String())
 		}
@@ -580,7 +580,7 @@ func (api *API) call(baseAPI string, endpoint string, body interface{}, out inte
 		// Handle cases where some API calls (/v1/chain/get_account for example) returns a 500
 		// error when retrieving data that does not exist.
 		if apiErr.IsUnknownKeyError() {
-			return feos.ErrNotFound
+			return eos.ErrNotFound
 		}
 
 		return apiErr
@@ -627,8 +627,8 @@ func enc(v interface{}) (io.Reader, error) {
 // values, sign it and submit it to the chain.  It is the highest
 // level function on top of the `/v1/chain/push_transaction` endpoint.
 // Overridden from eos-go to make it unnecessary to use .ToEos() casting on actions.
-func (api *API) SignPushActions(a ...*Action) (out *feos.PushTransactionFullResp, err error) {
-	b := make([]*feos.Action, len(a))
+func (api *API) SignPushActions(a ...*Action) (out *eos.PushTransactionFullResp, err error) {
+	b := make([]*eos.Action, len(a))
 	for i, act := range a {
 		b[i] = act.ToEos()
 	}

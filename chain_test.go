@@ -3,7 +3,7 @@ package fio
 import (
 	"encoding/json"
 	"fmt"
-	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/eos"
 	"math"
 	"reflect"
 	"testing"
@@ -36,7 +36,7 @@ func TestAPI_AllABIs(t *testing.T) {
 		t.Error("did not get abis")
 		return
 	}
-	if a[feos.AccountName("eosio")] == nil {
+	if a[eos.AccountName("eosio")] == nil {
 		t.Error("did not get abi for eosio")
 		return
 	}
@@ -53,7 +53,7 @@ func TestAPI_GetTableRowsOrder(t *testing.T) {
 		return
 	}
 
-	gtr, err := api.GetTableRows(feos.GetTableRowsRequest{
+	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:       "eosio",
 		Scope:      "eosio",
 		Table:      "producers",
@@ -185,14 +185,14 @@ func TestAction_ToEos(t *testing.T) {
 		return
 	}
 	act := NewTransferTokensPubKey(account.Actor, account.PubKey, Tokens(0.0001)).ToEos()
-	if reflect.TypeOf(*act).String() != "feos.Action" {
+	if reflect.TypeOf(*act).String() != "eos.Action" {
 		t.Error("ToEos gave wrong type")
 		fmt.Println(reflect.TypeOf(*act).String())
 	}
 }
 
 func TestNewAction(t *testing.T) {
-	a := feos.AccountName("test")
+	a := eos.AccountName("test")
 
 	actPerm := NewActionWithPermission(
 		"fio.token", "trnsfiopubky", a, "owner",
@@ -204,7 +204,7 @@ func TestNewAction(t *testing.T) {
 			Tpid:           CurrentTpid(),
 		},
 	)
-	if actPerm.Authorization[0].Permission != feos.PermissionName("owner") {
+	if actPerm.Authorization[0].Permission != eos.PermissionName("owner") {
 		t.Error("NewActionWitherPermission did not set permission")
 	}
 }
@@ -227,7 +227,7 @@ func TestAPI_GetTableByScopeMore(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	res, err := api.GetTableByScopeMore(feos.GetTableByScopeRequest{
+	res, err := api.GetTableByScopeMore(eos.GetTableByScopeRequest{
 		Code:  "eosio",
 		Table: "producers",
 		Limit: 1,

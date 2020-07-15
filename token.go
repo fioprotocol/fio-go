@@ -1,7 +1,7 @@
 package fio
 
 import (
-	feos "github.com/fioprotocol/fio-go/imports/eos-fio"
+	"github.com/fioprotocol/fio-go/eos"
 )
 
 const FioSymbol = "ᵮ"
@@ -17,12 +17,12 @@ type TransferTokensPubKey struct {
 	PayeePublicKey string           `json:"payee_public_key"`
 	Amount         uint64           `json:"amount"`
 	MaxFee         uint64           `json:"max_fee"`
-	Actor          feos.AccountName `json:"actor"`
+	Actor          eos.AccountName `json:"actor"`
 	Tpid           string           `json:"tpid"`
 }
 
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
-func NewTransferTokensPubKey(actor feos.AccountName, recipientPubKey string, amount uint64) *Action {
+func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amount uint64) *Action {
 	return NewAction(
 		"fio.token", "trnsfiopubky", actor,
 		TransferTokensPubKey{
@@ -37,24 +37,24 @@ func NewTransferTokensPubKey(actor feos.AccountName, recipientPubKey string, amo
 
 // Transfer is a privileged call, and not normally used for sending tokens, use TransferTokensPubKey instead
 type Transfer struct {
-	From     feos.AccountName `json:"from"`
-	To       feos.AccountName `json:"to"`
-	Quantity feos.Asset       `json:"quantity"`
+	From     eos.AccountName `json:"from"`
+	To       eos.AccountName `json:"to"`
+	Quantity eos.Asset       `json:"quantity"`
 	Memo     string           `json:"memo"`
 }
 
 // NewTransfer is unlikely to be called, this is a privileged action
 //
 // deprecated: internal action, user cannot call.
-func NewTransfer(actor feos.AccountName, recipient feos.AccountName, amount uint64) *Action {
+func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64) *Action {
 	return NewAction(
-		feos.AccountName("fio.token"), "transfer", actor,
+		eos.AccountName("fio.token"), "transfer", actor,
 		Transfer{
 			From: actor,
 			To:   recipient,
-			Quantity: feos.Asset{
-				Amount: feos.Int64(amount),
-				Symbol: feos.Symbol{
+			Quantity: eos.Asset{
+				Amount: eos.Int64(amount),
+				Symbol: eos.Symbol{
 					Precision: 9,
 					Symbol:    "FIO",
 				},
@@ -64,8 +64,8 @@ func NewTransfer(actor feos.AccountName, recipient feos.AccountName, amount uint
 }
 
 // GetBalance gets an account's balance
-func (api *API) GetBalance(account feos.AccountName) (float64, error) {
-	a, err := api.GetCurrencyBalance(account, "FIO", feos.AccountName("fio.token"))
+func (api *API) GetBalance(account eos.AccountName) (float64, error) {
+	a, err := api.GetCurrencyBalance(account, "FIO", eos.AccountName("fio.token"))
 	if err != nil {
 		return 0.0, err
 	}
