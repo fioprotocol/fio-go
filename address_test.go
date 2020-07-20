@@ -32,7 +32,7 @@ func TestAddress_Valid(t *testing.T) {
 		"slash/not@llowed",
 		"q?not@llowed",
 		"dot.not@llowed",
-		"less>not@llowed",
+		"less<not@llowed",
 		"great>not@llowed",
 		"under_not@llowed",
 		"missingdomain@",
@@ -46,6 +46,8 @@ func TestAddress_Valid(t *testing.T) {
 		}
 	}
 	good := []string{
+		"a-b-c@xyz",
+		"xyz@a-b-c",
 		"a@b",
 		"a-b@c",
 		"a@b-c",
@@ -163,6 +165,10 @@ func word() string {
 func TestAddress(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	account, api, opts, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	accountA, err := NewRandomAccount()
 	if err != nil {
@@ -356,7 +362,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: " + err.Error())
+		t.Error("transfer address: " + err.Error())
 	}
 	time.Sleep(500 * time.Millisecond)
 
@@ -378,7 +384,7 @@ func TestAddress(t *testing.T) {
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
-		t.Error("set public: " + err.Error())
+		t.Error("transfer domain: " + err.Error())
 	}
 
 	// verify

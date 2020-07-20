@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/eos"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -41,11 +41,11 @@ func (a Address) Valid() (ok bool) {
 
 // RegAddress Registers a FIO Address on the FIO blockchain
 type RegAddress struct {
-	FioAddress        string          `json:"fio_address"`
-	OwnerFioPublicKey string          `json:"owner_fio_public_key"`
-	MaxFee            uint64          `json:"max_fee"`
+	FioAddress        string           `json:"fio_address"`
+	OwnerFioPublicKey string           `json:"owner_fio_public_key"`
+	MaxFee            uint64           `json:"max_fee"`
 	Actor             eos.AccountName `json:"actor"`
-	Tpid              string          `json:"tpid"`
+	Tpid              string           `json:"tpid"`
 }
 
 func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (action *Action, ok bool) {
@@ -79,11 +79,11 @@ func MustNewRegAddress(actor eos.AccountName, address Address, ownerPubKey strin
 // When adding addresses, only 5 can be added in a single call, and an account is limited to 100 public
 // addresses total.
 type AddAddress struct {
-	FioAddress      string          `json:"fio_address"`
-	PublicAddresses []TokenPubAddr  `json:"public_addresses"`
-	MaxFee          uint64          `json:"max_fee"`
+	FioAddress      string           `json:"fio_address"`
+	PublicAddresses []TokenPubAddr   `json:"public_addresses"`
+	MaxFee          uint64           `json:"max_fee"`
 	Actor           eos.AccountName `json:"actor"`
-	Tpid            string          `json:"tpid"`
+	Tpid            string           `json:"tpid"`
 }
 
 // TokenPubAddr holds *publicly* available token information for a FIO address, allowing anyone to lookup an address
@@ -147,11 +147,11 @@ func NewAddAddresses(actor eos.AccountName, fioAddress Address, addrs []TokenPub
 
 // RegDomain registers a FIO Domain on the FIO blockchain
 type RegDomain struct {
-	FioDomain         string          `json:"fio_domain"`
-	OwnerFioPublicKey string          `json:"owner_fio_public_key"`
-	MaxFee            uint64          `json:"max_fee"`
+	FioDomain         string           `json:"fio_domain"`
+	OwnerFioPublicKey string           `json:"owner_fio_public_key"`
+	MaxFee            uint64           `json:"max_fee"`
 	Actor             eos.AccountName `json:"actor"`
-	Tpid              string          `json:"tpid"`
+	Tpid              string           `json:"tpid"`
 }
 
 func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Action {
@@ -169,9 +169,9 @@ func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Act
 
 // RenewDomain extends the expiration of a domain for a year
 type RenewDomain struct {
-	FioDomain string          `json:"fio_domain"`
-	MaxFee    uint64          `json:"max_fee"`
-	Tpid      string          `json:"tpid"`
+	FioDomain string           `json:"fio_domain"`
+	MaxFee    uint64           `json:"max_fee"`
+	Tpid      string           `json:"tpid"`
 	Actor     eos.AccountName `json:"actor"`
 }
 
@@ -189,10 +189,10 @@ func NewRenewDomain(actor eos.AccountName, domain string) *Action {
 
 // TransferDom (future) transfers ownership of a domain
 type TransferDom struct {
-	FioDomain            string          `json:"fio_domain"`
-	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
-	MaxFee               uint64          `json:"max_fee"`
-	Tpid                 string          `json:"tpid"`
+	FioDomain            string           `json:"fio_domain"`
+	NewOwnerFioPublicKey string           `json:"new_owner_fio_public_key"`
+	MaxFee               uint64           `json:"max_fee"`
+	Tpid                 string           `json:"tpid"`
 	Actor                eos.AccountName `json:"actor"`
 }
 
@@ -211,9 +211,9 @@ func NewTransferDom(actor eos.AccountName, domain string, newOwnerPubKey string)
 
 // RenewAddress extends the expiration of an address by a year, and refreshes the bundle
 type RenewAddress struct {
-	FioAddress string          `json:"fio_address"`
-	MaxFee     uint64          `json:"max_fee"`
-	Tpid       string          `json:"tpid"`
+	FioAddress string           `json:"fio_address"`
+	MaxFee     uint64           `json:"max_fee"`
+	Tpid       string           `json:"tpid"`
 	Actor      eos.AccountName `json:"actor"`
 }
 
@@ -231,10 +231,10 @@ func NewRenewAddress(actor eos.AccountName, address string) *Action {
 
 // TransferAddress (future) transfers ownership of a FIO address
 type TransferAddress struct {
-	FioAddress           string          `json:"fio_address"`
-	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
-	MaxFee               uint64          `json:"max_fee"`
-	Tpid                 string          `json:"tpid"`
+	FioAddress           string           `json:"fio_address"`
+	NewOwnerFioPublicKey string           `json:"new_owner_fio_public_key"`
+	MaxFee               uint64           `json:"max_fee"`
+	Tpid                 string           `json:"tpid"`
 	Actor                eos.AccountName `json:"actor"`
 }
 
@@ -256,7 +256,7 @@ func NewTransferAddress(actor eos.AccountName, address Address, newOwnerPubKey s
 // Deprecated: only used in development environments
 type ExpDomain struct {
 	Actor  eos.AccountName `json:"actor"`
-	Domain string          `json:"domain"`
+	Domain string           `json:"domain"`
 }
 
 // NewExpDomain is used by a test contract and not available on mainnet
@@ -268,31 +268,6 @@ func NewExpDomain(actor eos.AccountName, domain string) *Action {
 		ExpDomain{
 			Actor:  actor,
 			Domain: domain,
-		},
-	)
-}
-
-// ExpAddresses is used by a test contract and not available on mainnet
-//
-// Deprecated: only used in development environments
-type ExpAddresses struct {
-	Actor                eos.AccountName `json:"actor"`
-	Domain               string          `json:"domain"`
-	AddressPrefix        string          `json:"address_prefix"`
-	NumberAddressesToAdd uint64          `json:"number_addresses_to_add"`
-}
-
-// NewExpAddresses is used by a test contract and not available on mainnet
-//
-// Deprecated: only used in development environments
-func NewExpAddresses(actor eos.AccountName, domain string, addressPrefix string, toAdd uint64) *Action {
-	return NewAction(
-		"fio.address", "expaddresses", actor,
-		ExpAddresses{
-			Actor:                actor,
-			Domain:               domain,
-			AddressPrefix:        addressPrefix,
-			NumberAddressesToAdd: toAdd,
 		},
 	)
 }
@@ -309,11 +284,11 @@ func NewBurnExpired(actor eos.AccountName) *Action {
 
 // SetDomainPub changes the permissions for a domain, allowing (or not) anyone to register an address
 type SetDomainPub struct {
-	FioDomain string          `json:"fio_domain"`
-	IsPublic  uint8           `json:"is_public"`
-	MaxFee    uint64          `json:"max_fee"`
+	FioDomain string           `json:"fio_domain"`
+	IsPublic  uint8            `json:"is_public"`
+	MaxFee    uint64           `json:"max_fee"`
 	Actor     eos.AccountName `json:"actor"`
-	Tpid      string          `json:"tpid"`
+	Tpid      string           `json:"tpid"`
 }
 
 func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *Action {
@@ -515,27 +490,60 @@ func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, e
 	return api.GetFioNames(results[0].Clientkey)
 }
 
-// DomainNameHash calculates the hash used as an index in the fio.address domains table from the domain name
-func DomainNameHash(s string) string {
+// I128Hash hashes a string to an i128 database value, often used as an index for a string in a table.
+// It is the most-significant 16 bytes in big-endian of a sha1 hash of the provided string, returned as a hex-string
+func I128Hash(s string) string {
 	sha := sha1.New()
 	sha.Write([]byte(s))
 	// last 16 bytes of sha1-sum, as big-endian
 	return "0x" + hex.EncodeToString(flip(sha.Sum(nil)))[8:]
 }
 
-func flip(orig []byte) []byte {
-	flipped := make([]byte, len(orig))
-	for i := range orig {
-		flipped[len(flipped)-i-1] = orig[i]
+// DomainNameHash calculates the hash used as index 4 in the fio.address domains table from the domain name.
+// This is an alias to I128Hash. Example for domain `fio`:
+//    {
+//      "code": "fio.address",
+//      "scope": "fio.address",
+//      "table": "domains",
+//      "lower_bound": "0x8d9d3bd8a6fb22345ce8fa3c416a28e5",
+//      "upper_bound": "0x8d9d3bd8a6fb22345ce8fa3c416a28e5",
+//      "key_type": "i128",
+//      "index_position": "4",
+//      "json": true
+//    }
+func DomainNameHash(s string) string {
+	return I128Hash(s)
+}
+
+// AddressHash calculates the hash used as index 5 in the fio.address fionames table from the domain name.
+// This is an alias to I128Hash, example of query for `test@fiotestnet`:
+//    {
+//      "code": "fio.address",
+//      "scope": "fio.address",
+//      "table": "fionames",
+//      "lower_bound": "0xeb0816aeb936141ebec9a4a76c64df58",
+//      "upper_bound": "0xeb0816aeb936141ebec9a4a76c64df58",
+//      "key_type": "i128",
+//      "index_position": "5",
+//      "json": true
+//    }
+func AddressHash(s string) string {
+	return I128Hash(s)
+}
+
+// flip is an endianness swapper for []byte
+func flip(b []byte) []byte {
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
 	}
-	return flipped
+	return b
 }
 
 // DomainResp holds the table query lookup result for a domain
 type DomainResp struct {
-	Name       string           `json:"name"`
-	IsPublic   uint8            `json:"is_public"`
-	Expiration int64            `json:"expiration"`
+	Name       string            `json:"name"`
+	IsPublic   uint8             `json:"is_public"`
+	Expiration int64             `json:"expiration"`
 	Account    *eos.AccountName `json:"account,omitempty"`
 }
 
@@ -603,11 +611,11 @@ func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
 }
 
 type RemoveAddrReq struct {
-	FioAddress      string          `json:"fio_address"`
-	PublicAddresses []TokenPubAddr  `json:"public_addresses"`
-	MaxFee          uint64          `json:"max_fee"`
+	FioAddress      string           `json:"fio_address"`
+	PublicAddresses []TokenPubAddr   `json:"public_addresses"`
+	MaxFee          uint64           `json:"max_fee"`
 	Actor           eos.AccountName `json:"actor"`
-	Tpid            string          `json:"tpid"`
+	Tpid            string           `json:"tpid"`
 }
 
 // NewRemoveAddrReq allows removal of public token/chain addresses
@@ -630,11 +638,12 @@ func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor eos.Acc
 	), nil
 }
 
+// RemoveAllAddrReq is for removing all public addresses associated with a FIO address
 type RemoveAllAddrReq struct {
-	FioAddress string          `json:"fio_address"`
-	MaxFee     uint64          `json:"max_fee"`
+	FioAddress string           `json:"fio_address"`
+	MaxFee     uint64           `json:"max_fee"`
 	Actor      eos.AccountName `json:"actor"`
-	Tpid       string          `json:"tpid"`
+	Tpid       string           `json:"tpid"`
 }
 
 // NewRemoveAllAddrReq allows removal of ALL public token/chain addresses

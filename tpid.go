@@ -1,7 +1,7 @@
 package fio
 
 import (
-	"github.com/eoscanada/eos-go"
+	"github.com/fioprotocol/fio-go/eos"
 	"sync"
 )
 
@@ -44,9 +44,9 @@ func NewPayTpidRewards(actor eos.AccountName) *Action {
 
 // UpdateTpid is a privileged call
 type UpdateTpid struct {
-	Tpid   string          `json:"tpid"`
+	Tpid   string           `json:"tpid"`
 	Owner  eos.AccountName `json:"owner"`
-	Amount uint64          `json:"amount"`
+	Amount uint64           `json:"amount"`
 }
 
 func NewUpdateTpid(actor eos.AccountName, tpid string, amount uint64) *Action {
