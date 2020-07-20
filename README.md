@@ -2,11 +2,9 @@
 
 Library for interacting with the FIO network using the go language.
 
-**Warning: This is pre-release software, and under heavy development, not all APIs are stable.**
+## Breaking Changes
 
-## 1.x Breaking Changes
-
-In 1.x and later eos-go has been imported, this is to facilitate ECC changes needed for FIO and to ensure API stability.
+In 1.0.0 and later eos-go has been imported, this is to facilitate ECC changes needed for FIO and to ensure API stability.
 Updating existing code using eos-go dependencies should only require:
 
 ```
@@ -46,6 +44,12 @@ func main() {
 		to = `FIO6G9pXXM92Gy5eMwNquGULoCj3ZStwPLPdEb9mVXyEHqWN7HSuA`
 	)
 
+	fatal := func(e error) {
+    	if e != nil {
+    		log.Fatal(e)
+    	}
+    }
+
 	// connect to the network, using credentials
 	account, api, _, err := fio.NewWifConnect(wif, url)
 	fatal(err)
@@ -60,10 +64,5 @@ func main() {
 	fmt.Println(string(j))
 }
 
-func fatal(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
-}
-
 ```
+
