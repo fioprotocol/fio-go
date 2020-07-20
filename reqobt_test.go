@@ -247,40 +247,6 @@ func TestEciesSecret2(t *testing.T) {
 	}
 }
 
-/*
-func TestDecode(t *testing.T) {
-	obt := ObtRequestContent{
-		PayeePublicAddress: "purse.alice",
-		Amount:             "1",
-		TokenCode:          "fio.reqobt",
-	}
-	// our encode and theirs will probably be different, so encode to json for compare
-	const newFundsContentHex = "0B70757273652E616C69636501310A66696F2E7265716F6274000000"
-	obtBin, _ := hex.DecodeString(newFundsContentHex)
-	abiReader := bytes.NewReader([]byte(ObtAbiJson))
-	abi, err := eos.NewABI(abiReader)
-	if err != nil {
-		t.Error(err)
-	}
-	obt2J, err := abi.DecodeTableRowTyped("new_funds_content", obtBin)
-	if err != nil {
-		t.Error(err)
-	}
-	obt2 := &ObtRequestContent{}
-	json.Unmarshal(obt2J, obt2)
-	j2, _ := json.MarshalIndent(obt2, "", "  ")
-	j, _ := json.MarshalIndent(obt, "", "  ")
-	if string(j) != string(j2) {
-		fmt.Println(string(j))
-		fmt.Println(string(j2))
-		t.Error("content didn't match on encode and decode")
-	}
-
-	//iv, _ := hex.DecodeString("f300888ca4f512cebdc0020ff0f7224c")
-}
-
-*/
-
 func TestEncryptDecrypt(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	// run through it several times with random data, keys, and length to ensure padding, etc works.
@@ -331,7 +297,6 @@ func TestEncryptDecrypt(t *testing.T) {
 			ObtId:              "2222222222",
 			Memo:               "ffffffffff",
 		}
-		//req := ObtRecordContent{PayerPublicAddress: hex.EncodeToString(someData)}
 
 		content, e := req.Encrypt(sender, recipient.PubKey)
 		if e != nil {
@@ -356,76 +321,3 @@ func TestEncryptDecrypt(t *testing.T) {
 		}
 	}
 }
-
-/*
-func TestEciesDecrypt(t *testing.T) {
-	iv, _ := hex.DecodeString("f300888ca4f512cebdc0020ff0f7224c")
-	alice, _ := NewAccountFromWif("5J9bWm2ThenDm3tjvmUgHtWCVMUdjRR1pxnRtnJjvKA4b2ut5WK")
-	bob, _ := NewAccountFromWif("5JoQtsKQuH8hC9MyvfJAqo6qmKLm8ePYNucs7tPu2YxG12trzBt")
-	knownSecret := "a71b4ec5a9577926a1d2aa1d9d99327fd3b68f6a1ea597200a0d890bd3331df300a2d49fec0b2b3e6969ce9263c5d6cf47c191c1ef149373ecc9f0d98116b598"
-	cipherText := "f300888ca4f512cebdc0020ff0f7224c0db2984c4ad9afb12629f01a8c6a76328bbde17405655dc4e3cb30dad272996fb1dea8e662e640be193e25d41147a904c571b664a7381ab41ef062448ac1e205"
-	knownEncoded := "0b70757273652e616c69636501310a66696f2e7265716f6274000000"
-
-	//mySecretSeed, mySecret, _ := EciesSecret(alice, bob.PubKey)
-	_, mySecret, _ := EciesSecret(alice, bob.PubKey)
-	if knownSecret != hex.EncodeToString(mySecret[:]) {
-		fmt.Println("---- alice -> bob secret vs known value")
-		fmt.Println("expected", knownSecret)
-		fmt.Println("mine    ", hex.EncodeToString(mySecret[:]))
-		t.Error("secret value did not match")
-	} else {
-		fmt.Println("ecies secret derivation matched alice -> bob.")
-	}
-
-	mySecretSeed, mySecret, _ := EciesSecret(bob, alice.PubKey)
-	if knownSecret != hex.EncodeToString(mySecret[:]) {
-		fmt.Println("---- bob -> alice secret vs known value")
-		fmt.Println("expected", knownSecret)
-		fmt.Println("mine    ", hex.EncodeToString(mySecret[:]))
-		t.Error("secret value did not match")
-	} else {
-		fmt.Println("ecies secret derivation matched bob -> alice.")
-	}
-	if mySecretSeed != nil {
-		fmt.Println("secret seed value", mySecretSeed)
-	}
-
-	obtRequest := ObtRequestContent{
-		PayeePublicAddress: "purse.alice",
-		Amount:             "1",
-		TokenCode:          "fio.reqobt",
-		Memo:               "",
-		Hash:               "",
-		OfflineUrl:         "",
-	}
-	j, _ := json.Marshal(&obtRequest)
-	abiReader := bytes.NewReader([]byte(ObtAbiJson))
-	abi, _ := eos.NewABI(abiReader)
-	b, err := abi.EncodeAction("new_funds_content", j)
-	if err != nil {
-		t.Error(err)
-	}
-	if knownEncoded != hex.EncodeToString(b) {
-		fmt.Println("expected:", knownEncoded)
-		fmt.Println("mine:    ", hex.EncodeToString(b))
-		t.Error("struct did not match when abi encoded.")
-	} else {
-		fmt.Println("abi encoding matched for new_funds_content")
-	}
-
-	myCipherText, err := EciesEncrypt(bob, alice.PubKey, b, iv)
-	if err != nil {
-		t.Error(err)
-	}
-	if myCipherText != cipherText {
-		fmt.Println("AES encryption did not match.")
-		fmt.Println("expected", cipherText[:32], cipherText[32:len(cipherText)-64], cipherText[64:])
-		fmt.Println("mine    ", myCipherText[:32], myCipherText[32:len(myCipherText)-64], myCipherText[64:])
-		t.Error("ciphertext does not match given a fixed iv")
-	} else {
-		fmt.Println("known message encrypted to same value.")
-	}
-
-}
-
-*/

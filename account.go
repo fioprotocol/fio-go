@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/fioprotocol/fio-go/imports/eos-go"
-	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/eos"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 	"github.com/mr-tron/base58"
 	"io/ioutil"
 )
@@ -73,6 +73,12 @@ func NewRandomAccount() (*Account, error) {
 
 // ActorFromPub calculates the FIO Actor (EOS Account) from a public key
 func ActorFromPub(pubKey string) (eos.AccountName, error) {
+	// ensure the key is valid base58, and the 160 checksum is correct before encoding
+	p, err := ecc.NewPublicKey(pubKey)
+	if err != nil {
+		return "", err
+	}
+	pubKey = p.String() // ensure we end up with a compact key if we get PUB_K1_ prefix
 	const actorKey = `.12345abcdefghijklmnopqrstuvwxyz`
 	if len(pubKey) != 53 {
 		return "", errors.New("public key should be 53 chars")
@@ -117,7 +123,7 @@ func ActorFromPub(pubKey string) (eos.AccountName, error) {
 // AccountResp duplicates the eos.AccountResp accounting for differences in public key format
 type AccountResp struct {
 	AccountName            eos.AccountName          `json:"account_name"`
-	Privileged             bool                     `json:"privileged"`
+	Privileged             bool                      `json:"privileged"`
 	LastCodeUpdate         eos.JSONTime             `json:"last_code_update"`
 	Created                eos.JSONTime             `json:"created"`
 	CoreLiquidBalance      eos.Asset                `json:"core_liquid_balance"`
@@ -127,7 +133,7 @@ type AccountResp struct {
 	CPUWeight              eos.Int64                `json:"cpu_weight"`
 	NetLimit               eos.AccountResourceLimit `json:"net_limit"`
 	CPULimit               eos.AccountResourceLimit `json:"cpu_limit"`
-	Permissions            []Permission             `json:"permissions"`
+	Permissions            []Permission              `json:"permissions"`
 	TotalResources         eos.TotalResources       `json:"total_resources"`
 	SelfDelegatedBandwidth eos.DelegatedBandwidth   `json:"self_delegated_bandwidth"`
 	RefundRequest          *eos.RefundRequest       `json:"refund_request"`
@@ -143,8 +149,8 @@ type Permission struct {
 
 // Authority duplicates the eos.Authority accounting for differences in public key format
 type Authority struct {
-	Threshold uint32                      `json:"threshold"`
-	Keys      []KeyWeight                 `json:"keys,omitempty"`
+	Threshold uint32                       `json:"threshold"`
+	Keys      []KeyWeight                  `json:"keys,omitempty"`
 	Accounts  []eos.PermissionLevelWeight `json:"accounts,omitempty"`
 	Waits     []eos.WaitWeight            `json:"waits,omitempty"`
 }
@@ -152,7 +158,7 @@ type Authority struct {
 // KeyWeight duplicates the eos.KeyWeight accounting for differences in public key format
 type KeyWeight struct {
 	PublicKey ecc.PublicKey `json:"key"`
-	Weight    uint16        `json:"weight"` // weight_type
+	Weight    uint16         `json:"weight"` // weight_type
 }
 
 // GetFioAccount gets information about an account, it should be used instead of GetAccount due to differences in

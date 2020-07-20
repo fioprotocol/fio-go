@@ -27,10 +27,7 @@ func main() {
 		}
 	}
 
-	account, err := fio.NewAccountFromWif(wif)
-	fatal(err)
-
-	api, opts, err := fio.NewConnection(nil, url)
+	account, api, _, err := fio.NewWifConnect(wif, url)
 	fatal(err)
 
 	resp, err := api.SignPushActions(fio.NewVoteProducer(producers, account.Actor, voter))

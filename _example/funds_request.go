@@ -27,11 +27,8 @@ func main() {
 		}
 	}
 
-	account, err := fio.NewAccountFromWif(wif)
-	fatal(err)
-
-	api, _, err := fio.NewConnection(nil, url)
-	fatal(err)
+	// setup a connection associated with our private key
+	account, api, _, err := fio.NewWifConnect(wif, url)
 
 	// get the FIO public key for the payer, this is used to encrypt the request:
 	payerPub, ok, err := api.PubAddressLookup(payer, "FIO", "FIO")

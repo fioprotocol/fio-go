@@ -2,7 +2,7 @@ package fio
 
 import (
 	"encoding/json"
-	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/eos"
 	"os"
 	"testing"
 )
@@ -70,5 +70,40 @@ func TestAccount_GetNames(t *testing.T) {
 	}
 	if account.Addresses[0].FioAddress != "bp1@dapixdev" {
 		t.Error("did not have correct address")
+	}
+}
+
+func TestActorFromPub(t *testing.T) {
+	type testAccounts struct {
+		Pubkey string
+		Account string
+		Valid bool
+	}
+	tests := []testAccounts{
+		{"FIO586ZYe3CA2D3cpuYJk565Ny7RhgWxCwnX7kojZSaun2RbTocAf", "y5x3sk44d43p", true},
+		{"EOS6sUfyCJZHj4xQWiK79Zmz9CsfFfQ9ci2jZqGiLo3yYiw9pcgAG", "", false},
+		{"FIO586ZYe3CA2D3cpuYJk565Ny7RhgWxCwnX7kojZSaun2RbTocA1", "", false},
+		{"FIOhellothere", "", false},
+		{"PUB_K1_6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV", "ymwzn5vje5ay", true},
+		{"PUB_K1_6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5C1", "", false},
+	}
+	for _, pk := range tests {
+		act, err := ActorFromPub(pk.Pubkey)
+		switch pk.Valid {
+		case true:
+			if err != nil {
+				t.Error(pk.Pubkey, "should be a valid public key")
+			}
+			if pk.Account != string(act) {
+				t.Error(pk.Pubkey, "should map to", pk.Account, "but got", act)
+			}
+		case false:
+			if err == nil {
+				t.Error(pk.Pubkey, "should be an invalid public key")
+			}
+			if act != "" {
+				t.Error(pk.Pubkey, "should not have mapped to an account, got", act)
+			}
+		}
 	}
 }

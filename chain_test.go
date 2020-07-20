@@ -3,7 +3,7 @@ package fio
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fioprotocol/fio-go/imports/eos-go"
+	"github.com/fioprotocol/fio-go/eos"
 	"math"
 	"reflect"
 	"testing"
@@ -193,20 +193,6 @@ func TestAction_ToEos(t *testing.T) {
 
 func TestNewAction(t *testing.T) {
 	a := eos.AccountName("test")
-
-	actOwner := NewActionAsOwner(
-		"fio.token", "trnsfiopubky", a,
-		TransferTokensPubKey{
-			PayeePublicKey: "",
-			Amount:         1,
-			MaxFee:         Tokens(GetMaxFee(FeeTransferTokensPubKey)),
-			Actor:          a,
-			Tpid:           CurrentTpid(),
-		},
-	)
-	if actOwner.Authorization[0].Permission != eos.PermissionName("owner") {
-		t.Error("NewActionAsOwner did not set owner")
-	}
 
 	actPerm := NewActionWithPermission(
 		"fio.token", "trnsfiopubky", a, "owner",

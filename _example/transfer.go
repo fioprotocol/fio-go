@@ -23,10 +23,7 @@ func main() {
 		}
 	}
 
-	account, err := fio.NewAccountFromWif(wif)
-	fatal(err)
-
-	api, _, err := fio.NewConnection(account.KeyBag, url)
+	account, api, _, err := fio.NewWifConnect(wif, url)
 	fatal(err)
 
 	// send ᵮ1.00

@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fioprotocol/fio-go/imports/eos-go"
-	"github.com/fioprotocol/fio-go/imports/eos-go/ecc"
+	"github.com/fioprotocol/fio-go/eos"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 	"io"
 	"io/ioutil"
 	"math"
@@ -61,7 +61,7 @@ func (txo TxOptions) toEos() *eos.TxOptions {
 	}
 }
 
-// copy over CompressionTypes to reduce need for eos-go imports
+// copy over CompressionTypes to reduce need additional imports
 const (
 	CompressionNone = eos.CompressionType(iota)
 	CompressionZlib
@@ -125,23 +125,6 @@ func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 			{
 				Actor:      actor,
 				Permission: "active",
-			},
-		},
-		ActionData: eos.NewActionData(actionData),
-	}
-}
-
-// NewActionAsOwner is the same as NewAction, but specifies the owner permission, really only needed for msig updateauth in FIO
-//
-// deprecated: use NewActionWithPermission instead
-func NewActionAsOwner(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
-	return &Action{
-		Account: contract,
-		Name:    name,
-		Authorization: []eos.PermissionLevel{
-			{
-				Actor:      actor,
-				Permission: "owner",
 			},
 		},
 		ActionData: eos.NewActionData(actionData),
@@ -268,7 +251,8 @@ func (api API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
 	return abiList, nil
 }
 
-// used to deal with string vs bool in More field:
+// getTableByScopeResp is used to deal with string vs bool in More field:
+// TODO: handle int
 type getTableByScopeResp struct {
 	More interface{}     `json:"more"`
 	Rows json.RawMessage `json:"rows"`
@@ -378,7 +362,7 @@ func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err er
 
 type BlockrootMerkle struct {
 	ActiveNodes []eos.Checksum256 `json:"_active_nodes"`
-	NodeCount   uint32            `json:"_node_count"`
+	NodeCount   uint32             `json:"_node_count"`
 }
 
 type protocolFeatures struct {
@@ -387,7 +371,6 @@ type protocolFeatures struct {
 
 func (api *API) GetBlockByNum(num uint32) (out *eos.BlockResp, err error) {
 	err = api.call("chain", "get_block", eos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
-	//err = api.call("chain", "get_block", M{"block_num_or_id": num}, &out)
 	return
 }
 
@@ -400,16 +383,16 @@ type BlockHeaderState struct {
 	BlockrootMerkle           BlockrootMerkle   `json:"blockroot_merkle"`
 	ProducerToLastProduced    []json.RawMessage `json:"producer_to_last_produced"` // array of arrays with mixed types, access via member func
 	ProducerToLastImpliedIrb  []json.RawMessage `json:"producer_to_last_implied_irb"`
-	BlockSigningKey           ecc.PublicKey     `json:"block_signing_key"`
+	BlockSigningKey           ecc.PublicKey    `json:"block_signing_key"`
 	ConfirmCount              []int             `json:"confirm_count"`
-	Id                        eos.Checksum256   `json:"id"`
-	Header                    *eos.BlockHeader      `json:"header"`
+	Id                        eos.Checksum256  `json:"id"`
+	Header                    *eos.BlockHeader `json:"header"`
 	PendingSchedule           *PendingSchedule  `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
 }
 
 type PendingSchedule struct {
-	ScheduleLibNum uint32          `json:"schedule_lib_num"`
+	ScheduleLibNum uint32           `json:"schedule_lib_num"`
 	ScheduleHash   eos.Checksum256 `json:"schedule_hash"`
 	Schedule       *Schedule
 }
@@ -451,8 +434,8 @@ const (
 
 type ProducerToLast struct {
 	Producer          eos.AccountName `json:"producer"`
-	BlockNum          uint32          `json:"block_num"`
-	ProducedOrImplied string          `json:"produced_or_implied"`
+	BlockNum          uint32           `json:"block_num"`
+	ProducedOrImplied string           `json:"produced_or_implied"`
 }
 
 // ProducerToLast extracts a slice of ProducerToLast structs from a BlockHeaderState, this contains either the last
