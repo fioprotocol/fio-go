@@ -1,4 +1,5 @@
 # FIO-GO
+![Gosec](https://github.com/fioprotocol/fio-go/workflows/Gosec/badge.svg)
 
 Library for interacting with the FIO network using the go language.
 
