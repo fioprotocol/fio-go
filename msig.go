@@ -378,7 +378,10 @@ func (api *API) GetProposalTransaction(proposalAuthor eos.AccountName, proposalN
 		return nil, err
 	}
 	h := sha256.New()
-	h.Write(txBytes)
+	_, err = h.Write(txBytes)
+	if err != nil {
+		return nil, err
+	}
 	sum := h.Sum(nil)
 	return &MsigProposal{ProposalName: proposal[0].ProposalName, PackedTransaction: tx, ProposalHash: sum}, nil
 }

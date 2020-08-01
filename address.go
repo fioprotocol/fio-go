@@ -2,7 +2,6 @@ package fio
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -12,6 +11,8 @@ import (
 	"math"
 	"net/http"
 	"regexp"
+
+	"crypto/sha1" // #nosec
 )
 
 // Address is a FIO address, which should be formatted as 'name@domain'
@@ -493,8 +494,11 @@ func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, e
 // I128Hash hashes a string to an i128 database value, often used as an index for a string in a table.
 // It is the most-significant 16 bytes in big-endian of a sha1 hash of the provided string, returned as a hex-string
 func I128Hash(s string) string {
-	sha := sha1.New()
-	sha.Write([]byte(s))
+	sha := sha1.New() // #nosec
+	_, err := sha.Write([]byte(s))
+	if err != nil {
+		return ""
+	}
 	// last 16 bytes of sha1-sum, as big-endian
 	return "0x" + hex.EncodeToString(flip(sha.Sum(nil)))[8:]
 }
