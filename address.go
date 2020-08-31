@@ -320,6 +320,39 @@ type pubAddressRequest struct {
 	ChainCode  string `json:"chain_code"`
 }
 
+// GetPublic is an alias to PubAddressLookup to correct the confusing name for the lookup.
+func (api API) GetPublic(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
+	return api.PubAddressLookup(fioAddress, chain, token)
+}
+
+type getAllPublicResp struct {
+	Addresses []TokenPubAddr `json:"addresses"`
+}
+
+// GetAllPublic fetches all public addresses for an address.
+func (api API) GetAllPublic(fioAddress Address) ([]TokenPubAddr, error) {
+	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code: "fio.address",
+		Scope: "fio.address",
+		Table: "fionames",
+		LowerBound: I128Hash(string(fioAddress)),
+		UpperBound: I128Hash(string(fioAddress)),
+		KeyType: "i128",
+		Index: "5",
+		Limit: 1,
+		JSON: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]getAllPublicResp, 0)
+	err = json.Unmarshal(gtr.Rows, &result)
+	if len(result) == 0 {
+		return nil, errors.New("empty result")
+	}
+	return result[0].Addresses, nil
+}
+
 // PubAddressLookup finds a public address for a user, given a currency key
 //  pubAddress, ok, err := api.PubAddressLookup(fio.Address("alice:fio", "BTC")
 func (api API) PubAddressLookup(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {

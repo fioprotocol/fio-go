@@ -347,6 +347,15 @@ func TestAddress(t *testing.T) {
 		t.Error("got incorrect public address")
 	}
 
+	// get all of the addresses
+	addrs, err := api.GetAllPublic(Address(names[2]+"@"+domain))
+	if err != nil {
+		t.Error("get all public:" + err.Error())
+	}
+	if len(addrs) != 5 {
+		t.Errorf("get all public: only got %d of 5 addresses", len(addrs))
+	}
+
 	// renew it
 	_, err = apiA.SignPushTransaction(NewTransaction(
 		[]*Action{NewRenewAddress(accountA.Actor, names[2]+"@"+domain)}, optsA),
