@@ -698,3 +698,40 @@ func NewRemoveAllAddrReq(fioAddress Address, actor eos.AccountName) (remove *Act
 		},
 	), nil
 }
+
+type bundleRemaining struct {
+	Bundle int `json:"bundleeligiblecountdown"`
+}
+
+// GetBundleRemaining reports on how many free bundled tx remain for an Address
+func (api *API) GetBundleRemaining(a Address) (remaining int, err error) {
+	if !a.Valid() {
+		return 0, errors.New("invalid FIO address")
+	}
+	hash := I128Hash(string(a))
+	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "fio.address",
+		Scope:      "fio.address",
+		Table:      "fionames",
+		LowerBound: hash,
+		UpperBound: hash,
+		Limit:      1,
+		KeyType:    "i128",
+		Index:      "5",
+		JSON:       true,
+	})
+	if err != nil {
+		return 0, err
+	}
+	br := make([]bundleRemaining, 0)
+	err = json.Unmarshal(gtr.Rows, &br)
+	if err != nil {
+		return 0, err
+	}
+	if br == nil || len(br) != 1 {
+		return 0, nil
+	}
+	return br[0].Bundle, nil
+}
+
+
