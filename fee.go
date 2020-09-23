@@ -156,14 +156,14 @@ func (api *API) RefreshFees() bool {
 	if err != nil {
 		return false
 	}
-	results := make([]FeeValue, 0)
+	results := make([]FioFee, 0)
 	err = json.Unmarshal(fees.Rows, &results)
 	if err != nil {
 		return false
 	}
 	maxFeeMutex.Lock()
 	for _, f := range results {
-		maxFees[f.EndPoint] = float64(f.Value) / 1000000000.0
+		maxFees[f.EndPoint] = float64(f.SufAmount) / 1000000000.0
 	}
 	maxFeeMutex.Unlock()
 	maxFeesUpdated = true
