@@ -418,7 +418,8 @@ type AllowedAction struct {
 	BlockTimeStamp eos.BlockTimestamp `json:"block_time_stamp"` // unixtime value
 }
 
-// AllowedActionResp holds the response from a get_actions API call, adds 'Allowed' prefix to avoid endpoint name ambiguity
+// AllowedActionResp holds the response from a get_actions API call, adds 'Allowed' prefix to avoid a conflict with
+// eos libraries caused by an unfortunate choice in endpoint naming
 type AllowedActionsResp struct {
 	Actions []AllowedAction `json:"actions"`
 	More    uint32          `json:"more"`
@@ -434,11 +435,6 @@ func (api *API) GetAllowedActions(offset uint32, limit uint32) (allowed *Allowed
 	allowed = &AllowedActionsResp{}
 	err = api.call("chain", "get_actions", allowedActionsReq{Limit: limit, Offset: offset}, allowed)
 	return
-}
-
-// GetActions is an alias for GetAllowedActions
-func (api *API) GetActions(offset uint32, limit uint32) (allowed *AllowedActionsResp, err error) {
-	return api.GetAllowedActions(offset, limit)
 }
 
 // BlockHeaderState holds information about reversible blocks.
