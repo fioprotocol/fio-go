@@ -255,7 +255,7 @@ func GetMaxFees() []FeeValue {
 	for k, v := range maxFees {
 		fees[i] = FeeValue{
 			EndPoint: k,
-			Value:    uint64(v*1_000_000_000),
+			Value:    uint64(v * 1_000_000_000),
 		}
 		i += 1
 	}
@@ -305,13 +305,12 @@ type SetFeeMult struct {
 	MaxFee     uint64  `json:"max_fee"`
 }
 
-//
 func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "bundlevote", actor,
 		SetFeeMult{
 			Multiplier: multiplier,
 			Actor:      string(actor),
-			MaxFee:      Tokens(GetMaxFee(FeeSetFeeMult)),
+			MaxFee:     Tokens(GetMaxFee(FeeSetFeeMult)),
 		},
 	)
 }
@@ -326,37 +325,35 @@ func NewComputeFees(actor eos.AccountName) *Action {
 
 // FioFee (table query response) holds the details of an action's fee stored in the fio.fee fiofees table.
 type FioFee struct {
-	FeeId        uint64       `json:"fee_id"`
-	EndPoint     string       `json:"end_point"`
+	FeeId        uint64      `json:"fee_id"`
+	EndPoint     string      `json:"end_point"`
 	EndPointHash eos.Uint128 `json:"end_point_hash"`
-	Type         uint64       `json:"type"`
-	SufAmount    uint64       `json:"suf_amount"`
+	Type         uint64      `json:"type"`
+	SufAmount    uint64      `json:"suf_amount"`
 }
 
 // FeeVoter (table query response) holds information about the block producer performing a multiplier vote
 // as stored in the fio.fee feevoters table
 type FeeVoter struct {
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
-	FeeMultiplier     float64          `json:"fee_multiplier"`
-	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
+	FeeMultiplier     float64         `json:"fee_multiplier"`
+	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
 
 // FeeVote (table query response) holds fee vote information from the fio.fee feevotes table
 type FeeVote struct {
-	Id                uint64           `json:"id"`
+	Id                uint64          `json:"id"`
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
-	EndPoint          string           `json:"end_point"`
-	EndPointHash      uint64           `json:"end_point_hash"`
-	SufAmount         uint64           `json:"suf_amount"`
-	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
+	EndPoint          string          `json:"end_point"`
+	EndPointHash      uint64          `json:"end_point_hash"`
+	SufAmount         uint64          `json:"suf_amount"`
+	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
 
 // BundleVoter (table query response) holds information about the block producer voting for the number of free bundled transactions for new
 // or renewed addresses as stored in the fio.fee bundlevotes table.
 type BundleVoter struct {
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
-	BundleVoteNumber  uint64           `json:"bundlevotenumber"`
-	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
+	BundleVoteNumber  uint64          `json:"bundlevotenumber"`
+	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
-
-
