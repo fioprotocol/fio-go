@@ -351,7 +351,7 @@ type pubAddressRequest struct {
 }
 
 // GetPublic is an alias to PubAddressLookup to correct the confusing name for the lookup.
-func (api API) GetPublic(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
+func (api *API) GetPublic(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
 	return api.PubAddressLookup(fioAddress, chain, token)
 }
 
@@ -360,7 +360,7 @@ type getAllPublicResp struct {
 }
 
 // GetAllPublic fetches all public addresses for an address.
-func (api API) GetAllPublic(fioAddress Address) ([]TokenPubAddr, error) {
+func (api *API) GetAllPublic(fioAddress Address) ([]TokenPubAddr, error) {
 	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:       "fio.address",
 		Scope:      "fio.address",
@@ -385,7 +385,7 @@ func (api API) GetAllPublic(fioAddress Address) ([]TokenPubAddr, error) {
 
 // PubAddressLookup finds a public address for a user, given a currency key
 //  pubAddress, ok, err := api.PubAddressLookup(fio.Address("alice:fio", "BTC")
-func (api API) PubAddressLookup(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
+func (api *API) PubAddressLookup(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
 	if token == "" {
 		token = chain
 	}
@@ -445,7 +445,7 @@ type getFioNamesRequest struct {
 }
 
 // GetFioNames provides a list of domains and addresses for a public key
-func (api API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
+func (api *API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
 	query := getFioNamesRequest{
 		FioPublicKey: pubKey,
 	}

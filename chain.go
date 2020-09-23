@@ -25,7 +25,7 @@ const (
 
 // API struct allows extending the eos.API with FIO-specific functions
 type API struct {
-	eos.API
+	*eos.API
 }
 
 // Action struct duplicates eos.Action
@@ -99,7 +99,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	if err != nil {
 		return &API{}, nil, err
 	}
-	a := &API{*api}
+	a := &API{api}
 	if !maxFeesUpdated {
 		_ = a.RefreshFees()
 	}
@@ -147,7 +147,7 @@ func NewActionWithPermission(contract eos.AccountName, name eos.ActionName, acto
 }
 
 // GetCurrentBlock provides the current head block number
-func (api API) GetCurrentBlock() (blockNum uint32) {
+func (api *API) GetCurrentBlock() (blockNum uint32) {
 	info, err := api.GetInfo()
 	if err != nil {
 		return
@@ -157,7 +157,7 @@ func (api API) GetCurrentBlock() (blockNum uint32) {
 
 // PushEndpointRaw is adapted from eos-go call() function in api.go to allow overriding the endpoint for a push-transaction
 // the endpoint provided should be the full path to the endpoint such as "/v1/chain/push_transaction"
-func (api API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawMessage, err error) {
+func (api *API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawMessage, err error) {
 	enc := func(v interface{}) (io.Reader, error) {
 		if v == nil {
 			return nil, nil
@@ -222,7 +222,7 @@ func (api API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawM
 
 // AllABIs returns a map of every ABI available. This is only possible in FIO because there are a small number
 // of contracts that exist.
-func (api API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
+func (api *API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
 	type contracts struct {
 		Owner string `json:"owner"`
 	}
@@ -259,7 +259,7 @@ type getTableByScopeResp struct {
 }
 
 // GetTableByScopeMore handles responses that have either a bool or a string as the more response.
-func (api API) GetTableByScopeMore(request eos.GetTableByScopeRequest) (*eos.GetTableByScopeResp, error) {
+func (api *API) GetTableByScopeMore(request eos.GetTableByScopeRequest) (*eos.GetTableByScopeResp, error) {
 	reqBody, err := json.Marshal(&request)
 	if err != nil {
 		return nil, err
