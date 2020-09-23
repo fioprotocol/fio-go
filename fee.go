@@ -14,6 +14,7 @@ const (
 	FeeAuthDelete           = "auth_delete"
 	FeeAuthLink             = "auth_link"
 	FeeAuthUpdate           = "auth_update"
+	FeeBundleVote           = "submit_bundled_transaction"
 	FeeBurnExpired          = "burnexpired"
 	FeeCancelFundsRequest   = "cancel_funds_request"
 	FeeMsigApprove          = "msig_approve"
@@ -36,7 +37,8 @@ const (
 	FeeRenewFioAddress      = "renew_fio_address"
 	FeeRenewFioDomain       = "renew_fio_domain"
 	FeeSetDomainPub         = "set_fio_domain_public"
-	FeeSubmitBundledTrans   = "submit_bundled_transaction"
+	FeeSetFeeMult           = "set_fee_multiplier"
+	FeeSetFeeVote           = "set_fee_vote"
 	FeeTransferAddress      = "transfer_fio_address"
 	FeeTransferDom          = "transfer_fio_domain"
 	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
@@ -49,9 +51,8 @@ var (
 	// maxFees holds the fees for transactions
 	// use fio.GetMaxFee() instead of directly accessing this map to ensure concurrent safe access
 	//
-	// *IMPORTANT:* these are _default_ values: call `fio.UpdateMaxFees` to refresh values from the on-chain table.
-	// fees are automatically updated on first connect on a best-effort basis. If voting for fees it is a good
-	// idea to update immediately after voting.
+	// *IMPORTANT:* After performing fee updates call `api.RefreshFees` to refresh values from the on-chain tables.
+	//  maxFees are _default_ values: fees are automatically updated on first connect on a best-effort basis.
 	maxFees = map[string]float64{
 		"add_pub_address":             0.4,
 		"add_to_whitelist":            0.0,
@@ -79,8 +80,10 @@ var (
 		"remove_pub_addresses":        0.6,
 		"renew_fio_address":           40.0,
 		"renew_fio_domain":            800.0,
+		"set_fee_multiplier":          0.4,
+		"set_fee_vote":                0.4,
 		"set_fio_domain_public":       0.4,
-		"submit_bundled_transaction":  0.0,
+		"submit_bundled_transaction":  0.4,
 		"transfer_fio_address":        1.0,
 		"transfer_fio_domain":         1.0,
 		"transfer_tokens_fio_address": 0.1,
@@ -93,34 +96,37 @@ var (
 	// slight chance fee will be wrong if there are two actions with identical name, but don't think there are any cases
 	// where that will happen right now.
 	maxFeesByAction = map[string]string{
+		"addaddress":   FeeAddPubAddress,
+		"approve":      FeeMsigApprove,
+		"bundlevote":   FeeBundleVote,
+		"cancel":       FeeMsigCancel,
+		"cancelfndreq": FeeCancelFundsRequest,
 		"deleteauth":   FeeAuthDelete,
+		"exec":         FeeMsigExec,
+		"invalidate":   FeeMsigInvalidate,
 		"linkauth":     FeeAuthLink,
+		"newfundsreq":  FeeNewFundsRequest,
+		"propose":      FeeMsigPropose,
+		"recordobt":    FeeRecordObtData,
+		"regaddress":   FeeRegisterFioAddress,
+		"regdomain":    FeeRegisterFioDomain,
 		"regproducer":  FeeRegisterProducer,
 		"regproxy":     FeeRegisterProxy,
+		"rejectfndreq": FeeRejectFundsRequest,
+		"remaddress":   FeeRemovePubAddress,
+		"remalladdr":   FeeRemoveAllAddresses,
+		"renewaddress": FeeRenewFioAddress,
+		"renewdomain":  FeeRenewFioDomain,
+		"setdomainpub": FeeSetDomainPub,
+		"setfeemult":   FeeSetFeeMult,
+		"setfeevote":   FeeSetFeeVote,
+		"trnsfiopubky": FeeTransferTokensPubKey,
+		"unapprove":    FeeMsigUnapprove,
 		"unregprod":    FeeUnregisterProducer,
 		"unregproxy":   FeeUnregisterProxy,
 		"updateauth":   FeeAuthUpdate,
 		"voteproducer": FeeVoteProducer,
 		"voteproxy":    FeeProxyVote,
-		"approve":      FeeMsigApprove,
-		"cancel":       FeeMsigCancel,
-		"cancelfndreq": FeeCancelFundsRequest,
-		"exec":         FeeMsigExec,
-		"invalidate":   FeeMsigInvalidate,
-		"propose":      FeeMsigPropose,
-		"unapprove":    FeeMsigUnapprove,
-		"addaddress":   FeeAddPubAddress,
-		"regaddress":   FeeRegisterFioAddress,
-		"regdomain":    FeeRegisterFioDomain,
-		"remalladdr":   FeeRemoveAllAddresses,
-		"remaddress":   FeeRemovePubAddress,
-		"renewaddress": FeeRenewFioAddress,
-		"renewdomain":  FeeRenewFioDomain,
-		"setdomainpub": FeeSetDomainPub,
-		"newfundsreq":  FeeNewFundsRequest,
-		"recordobt":    FeeRecordObtData,
-		"rejectfndreq": FeeRejectFundsRequest,
-		"trnsfiopubky": FeeTransferTokensPubKey,
 		"xferaddress":  FeeTransferAddress,
 		"xferdomain":   FeeTransferDom,
 	}
@@ -131,7 +137,15 @@ var (
 
 // UpdateMaxFees refreshes the maxFees map from the on-chain table. This is automatically called
 // by NewConnection if fees are not already up-to-date.
+//
+// Deprecated use api.RefreshFees instead
 func UpdateMaxFees(api *API) bool {
+	return api.RefreshFees()
+}
+
+// RefreshFees refreshes the maxFees map from the on-chain table. This is automatically called
+// by NewConnection if fees are not already up-to-date.
+func (api *API) RefreshFees() bool {
 	type feeRow struct {
 		EndPoint  string `json:"end_point"`
 		SufAmount uint64 `json:"suf_amount"`
@@ -237,10 +251,28 @@ type FeeValue struct {
 	Value    uint64 `json:"value"`
 }
 
-// NewSetFeeVote is used by block producers to adjust the fee for an action
+// GetMaxFees gets the current max fees as a slice of FeeValue
+func GetMaxFees() []FeeValue {
+	fees := make([]FeeValue, len(maxFees))
+	maxFeeMutex.Lock()
+	i := 0
+	for k, v := range maxFees {
+		fees[i] = FeeValue{
+			EndPoint: k,
+			Value:    uint64(v*1_000_000_000),
+		}
+		i += 1
+	}
+	maxFeeMutex.Unlock()
+	return fees
+}
+
+// NewSetFeeVote is used by block producers to adjust the fee for an action, it is possible that not all fees will
+// fit into a single transaction and may require multiple calls.
 type SetFeeVote struct {
 	FeeRatios []FeeValue `json:"fee_ratios"`
 	Actor     string     `json:"actor"`
+	MaxFee    uint64     `json:"max_fee"`
 }
 
 func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
@@ -248,6 +280,7 @@ func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
 		SetFeeVote{
 			FeeRatios: ratios,
 			Actor:     string(actor),
+			MaxFee:    Tokens(GetMaxFee(FeeSetFeeVote)),
 		})
 }
 
@@ -256,6 +289,7 @@ func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
 type BundleVote struct {
 	BundledTransactions uint64 `json:"bundled_transactions"`
 	Actor               string `json:"actor"`
+	MaxFee              uint64 `json:"max_fee"`
 }
 
 func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
@@ -263,6 +297,7 @@ func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
 		BundleVote{
 			BundledTransactions: transactions,
 			Actor:               string(actor),
+			MaxFee:              Tokens(GetMaxFee(FeeBundleVote)),
 		},
 	)
 }
@@ -271,9 +306,29 @@ func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
 type SetFeeMult struct {
 	Multiplier float64 `json:"multiplier"`
 	Actor      string  `json:"actor"`
+	MaxFee     uint64  `json:"max_fee"`
 }
 
-// FioFee holds the details of an action's fee
+//
+func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
+	return NewAction("fio.fee", "bundlevote", actor,
+		SetFeeMult{
+			Multiplier: multiplier,
+			Actor:      string(actor),
+			MaxFee:      Tokens(GetMaxFee(FeeSetFeeMult)),
+		},
+	)
+}
+
+// ComputeFees calculates fees based upon votes and multipliers, and updates the fiofees table.
+// calling the fio.fee::computefees endpoint will return an error if there is no work.
+type ComputeFees struct{}
+
+func NewComputeFees(actor eos.AccountName) *Action {
+	return NewAction("fio.fee", "updatefees", actor, ComputeFees{})
+}
+
+// FioFee (table query response) holds the details of an action's fee stored in the fio.fee fiofees table.
 type FioFee struct {
 	FeeId        uint64       `json:"fee_id"`
 	EndPoint     string       `json:"end_point"`
@@ -282,14 +337,15 @@ type FioFee struct {
 	SufAmount    uint64       `json:"suf_amount"`
 }
 
-// FeeVoter holds information about the block producer performing a vote
+// FeeVoter (table query response) holds information about the block producer performing a multiplier vote
+// as stored in the fio.fee feevoters table
 type FeeVoter struct {
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
 	FeeMultiplier     float64          `json:"fee_multiplier"`
 	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
 }
 
-// FeeVote is used by block producers to vote for a fee
+// FeeVote (table query response) holds fee vote information from the fio.fee feevotes table
 type FeeVote struct {
 	Id                uint64           `json:"id"`
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
@@ -299,16 +355,12 @@ type FeeVote struct {
 	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
 }
 
-// BundleVoter holds information about the block producer voting for the number of free bundled transactions for new
-// or renewed addresses
+// BundleVoter (table query response) holds information about the block producer voting for the number of free bundled transactions for new
+// or renewed addresses as stored in the fio.fee bundlevotes table.
 type BundleVoter struct {
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
 	BundleVoteNumber  uint64           `json:"bundlevotenumber"`
 	LastVoteTimestamp uint64           `json:"lastvotetimestamp"`
 }
 
-type ComputeFees struct{}
 
-func NewComputeFees(actor eos.AccountName) *Action {
-	return NewAction("fio.fee", "updatefees", actor, ComputeFees{})
-}
