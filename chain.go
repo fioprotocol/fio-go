@@ -101,7 +101,7 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	}
 	a := &API{*api}
 	if !maxFeesUpdated {
-		_ = UpdateMaxFees(a)
+		_ = a.RefreshFees()
 	}
 	return a, txOpts, nil
 }

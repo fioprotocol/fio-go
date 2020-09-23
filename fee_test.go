@@ -10,7 +10,7 @@ func TestUpdateMaxFees(t *testing.T) {
 	}
 	// force the fee to be wrong, has to be done after connecting
 	maxFees["add_pub_address"] = 0.0
-	if ok := UpdateMaxFees(api); !ok {
+	if ok := api.RefreshFees(); !ok {
 		t.Error("could not update fees")
 	}
 	if maxFees["add_pub_address"] == 0.0 {
