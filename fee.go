@@ -10,12 +10,11 @@ import (
 
 const (
 	FeeAddPubAddress        = "add_pub_address"
-	FeeAddToWhitelist       = "add_to_whitelist"
 	FeeAuthDelete           = "auth_delete"
 	FeeAuthLink             = "auth_link"
 	FeeAuthUpdate           = "auth_update"
 	FeeBundleVote           = "submit_bundled_transaction"
-	FeeBurnExpired          = "burnexpired"
+	FeeBurnAddress          = "burn_fio_address"
 	FeeCancelFundsRequest   = "cancel_funds_request"
 	FeeMsigApprove          = "msig_approve"
 	FeeMsigCancel           = "msig_cancel"
@@ -31,7 +30,6 @@ const (
 	FeeRegisterProducer     = "register_producer"
 	FeeRegisterProxy        = "register_proxy"
 	FeeRejectFundsRequest   = "reject_funds_request"
-	FeeRemoveFromWhitelist  = "remove_from_whitelist"
 	FeeRemoveAllAddresses   = "remove_pub_addresses"
 	FeeRemovePubAddress     = "remove_pub_address"
 	FeeRenewFioAddress      = "renew_fio_address"
