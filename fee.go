@@ -146,10 +146,6 @@ func UpdateMaxFees(api *API) bool {
 // RefreshFees refreshes the maxFees map from the on-chain table. This is automatically called
 // by NewConnection if fees are not already up-to-date.
 func (api *API) RefreshFees() bool {
-	type feeRow struct {
-		EndPoint  string `json:"end_point"`
-		SufAmount uint64 `json:"suf_amount"`
-	}
 	fees, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:  "fio.fee",
 		Scope: "fio.fee",
@@ -160,14 +156,14 @@ func (api *API) RefreshFees() bool {
 	if err != nil {
 		return false
 	}
-	results := make([]feeRow, 0)
+	results := make([]FeeValue, 0)
 	err = json.Unmarshal(fees.Rows, &results)
 	if err != nil {
 		return false
 	}
 	maxFeeMutex.Lock()
 	for _, f := range results {
-		maxFees[f.EndPoint] = float64(f.SufAmount) / 1000000000.0
+		maxFees[f.EndPoint] = float64(f.Value) / 1000000000.0
 	}
 	maxFeeMutex.Unlock()
 	maxFeesUpdated = true
