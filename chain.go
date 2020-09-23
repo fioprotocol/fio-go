@@ -399,7 +399,7 @@ type RemoveAction struct {
 	Actor  eos.AccountName `json:"actor"`
 }
 
-func NewRemoveAction(action eos.ActionName, actor eos.AccountName) (action *Action) {
+func NewRemoveAction(action eos.ActionName, actor eos.AccountName) *Action {
 	return NewAction("eosio", "remaction", actor, RemoveAction{
 		Action: action,
 		Actor:  actor,
@@ -407,7 +407,7 @@ func NewRemoveAction(action eos.ActionName, actor eos.AccountName) (action *Acti
 }
 
 // NewRemAction is an alias for NewRemoveAction
-func NewRemAction(action eos.ActionName, actor eos.AccountName) (action *Action) {
+func NewRemAction(action eos.ActionName, actor eos.AccountName) *Action {
 	return NewRemoveAction(action, actor)
 }
 
@@ -424,21 +424,21 @@ type AllowedActionsResp struct {
 	More    uint32          `json:"more"`
 }
 
-type AllowedActionsReq struct {
+type allowedActionsReq struct {
 	Limit  uint32 `json:"limit"`
 	Offset uint32 `json:"offset"`
 }
 
 // GetAllowedActions fetches the list of allowed actions from get_actions
-func (api *API) GetAllowedActions(getActionReq AllowedActionsReq) (allowed *AllowedActionsResp, err error) {
+func (api *API) GetAllowedActions(offset uint32, limit uint32) (allowed *AllowedActionsResp, err error) {
 	allowed = &AllowedActionsResp{}
-	err = api.call("chain", "get_actions", getActionReq, allowed)
+	err = api.call("chain", "get_actions", allowedActionsReq{Limit: limit, Offset: offset}, allowed)
 	return
 }
 
 // GetActions is an alias for GetAllowedActions
-func (api *API) GetActions(getActionReq AllowedActionsReq) (allowed *AllowedActionsResp, err error) {
-	return api.GetAllowedActions(getActionReq)
+func (api *API) GetActions(offset uint32, limit uint32) (allowed *AllowedActionsResp, err error) {
+	return api.GetAllowedActions(offset, limit)
 }
 
 // BlockHeaderState holds information about reversible blocks.
