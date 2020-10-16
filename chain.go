@@ -362,7 +362,7 @@ func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err er
 
 type BlockrootMerkle struct {
 	ActiveNodes []eos.Checksum256 `json:"_active_nodes"`
-	NodeCount   uint32             `json:"_node_count"`
+	NodeCount   uint32            `json:"_node_count"`
 }
 
 type protocolFeatures struct {
@@ -371,6 +371,69 @@ type protocolFeatures struct {
 
 func (api *API) GetBlockByNum(num uint32) (out *eos.BlockResp, err error) {
 	err = api.call("chain", "get_block", eos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
+	return
+}
+
+// AddAction adds a contract action to the list of allowed actions, this is part of the underlying permissions system
+// in FIO that limits general smart-contract functionality. This is a privileged action and will require an MSIG as a
+// system account and block producer approval.
+type AddAction struct {
+	Action   eos.ActionName  `json:"action"`
+	Contract eos.AccountName `json:"contract"`
+	Actor    eos.AccountName `json:"actor"`
+}
+
+func NewAddAction(contract eos.AccountName, newAction eos.ActionName, actor eos.AccountName) (action *Action) {
+	return NewAction("eosio", "addaction", actor,
+		AddAction{
+			Action:   newAction,
+			Contract: contract,
+			Actor:    actor,
+		},
+	)
+}
+
+// RemoveAction deletes an allowed action from the allowed list.
+type RemoveAction struct {
+	Action eos.ActionName  `json:"action"`
+	Actor  eos.AccountName `json:"actor"`
+}
+
+func NewRemoveAction(action eos.ActionName, actor eos.AccountName) *Action {
+	return NewAction("eosio", "remaction", actor, RemoveAction{
+		Action: action,
+		Actor:  actor,
+	})
+}
+
+// NewRemAction is an alias for NewRemoveAction
+func NewRemAction(action eos.ActionName, actor eos.AccountName) *Action {
+	return NewRemoveAction(action, actor)
+}
+
+// AllowedAction is an account::action that is allowed to execute by eosio
+type AllowedAction struct {
+	Action         eos.ActionName     `json:"action"`
+	Contract       eos.AccountName    `json:"contract"`
+	BlockTimeStamp eos.BlockTimestamp `json:"block_time_stamp"` // unixtime value
+}
+
+// AllowedActionResp holds the response from a get_actions API call, adds 'Allowed' prefix to avoid a conflict with
+// eos libraries caused by an unfortunate choice in endpoint naming
+type AllowedActionsResp struct {
+	Actions []AllowedAction `json:"actions"`
+	More    uint32          `json:"more"`
+}
+
+type allowedActionsReq struct {
+	Limit  uint32 `json:"limit"`
+	Offset uint32 `json:"offset"`
+}
+
+// GetAllowedActions fetches the list of allowed actions from get_actions
+func (api *API) GetAllowedActions(offset uint32, limit uint32) (allowed *AllowedActionsResp, err error) {
+	allowed = &AllowedActionsResp{}
+	err = api.call("chain", "get_actions", allowedActionsReq{Limit: limit, Offset: offset}, allowed)
 	return
 }
 
@@ -383,16 +446,16 @@ type BlockHeaderState struct {
 	BlockrootMerkle           BlockrootMerkle   `json:"blockroot_merkle"`
 	ProducerToLastProduced    []json.RawMessage `json:"producer_to_last_produced"` // array of arrays with mixed types, access via member func
 	ProducerToLastImpliedIrb  []json.RawMessage `json:"producer_to_last_implied_irb"`
-	BlockSigningKey           ecc.PublicKey    `json:"block_signing_key"`
+	BlockSigningKey           ecc.PublicKey     `json:"block_signing_key"`
 	ConfirmCount              []int             `json:"confirm_count"`
-	Id                        eos.Checksum256  `json:"id"`
-	Header                    *eos.BlockHeader `json:"header"`
+	Id                        eos.Checksum256   `json:"id"`
+	Header                    *eos.BlockHeader  `json:"header"`
 	PendingSchedule           *PendingSchedule  `json:"pending_schedule"`
 	ActivatedProtocolFeatures protocolFeatures  `json:"activated_protocol_features"`
 }
 
 type PendingSchedule struct {
-	ScheduleLibNum uint32           `json:"schedule_lib_num"`
+	ScheduleLibNum uint32          `json:"schedule_lib_num"`
 	ScheduleHash   eos.Checksum256 `json:"schedule_hash"`
 	Schedule       *Schedule
 }
@@ -434,8 +497,8 @@ const (
 
 type ProducerToLast struct {
 	Producer          eos.AccountName `json:"producer"`
-	BlockNum          uint32           `json:"block_num"`
-	ProducedOrImplied string           `json:"produced_or_implied"`
+	BlockNum          uint32          `json:"block_num"`
+	ProducedOrImplied string          `json:"produced_or_implied"`
 }
 
 // ProducerToLast extracts a slice of ProducerToLast structs from a BlockHeaderState, this contains either the last
