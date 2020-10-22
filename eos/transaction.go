@@ -123,7 +123,7 @@ func (tx *Transaction) Fill(headBlockID Checksum256, delaySecs, maxNetUsageWords
 	tx.MaxCPUUsageMS = maxCPUUsageMS
 	tx.DelaySec = Varuint32(delaySecs)
 
-	tx.SetExpiration(30 * time.Second)
+	tx.SetExpiration(3 * time.Minute)
 }
 
 func (tx *Transaction) setRefBlock(blockID []byte) {
