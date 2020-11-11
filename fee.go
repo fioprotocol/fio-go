@@ -81,7 +81,8 @@ var (
 		"renew_fio_address":           40.0,
 		"renew_fio_domain":            800.0,
 		"submit_fee_multiplier":       0.4,
-		"submit_fee_vote":             0.4,
+		"submit_fee_ratios":           0.4,
+		"submit_fee_vote":             0.4, // outdated endpoint, not longer used.
 		"set_fio_domain_public":       0.4,
 		"submit_bundled_transaction":  0.4,
 		"transfer_fio_address":        1.0,
