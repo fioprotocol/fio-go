@@ -350,7 +350,7 @@ func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, erro
 	if err == nil && resp != nil {
 		if resp.StatusCode == http.StatusOK {
 			body, _ := ioutil.ReadAll(resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			if len(body) != 0 {
 				bpj := &BpJson{}
 				err = json.Unmarshal(body, bpj)

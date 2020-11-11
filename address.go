@@ -2,7 +2,6 @@ package fio
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -12,6 +11,8 @@ import (
 	"math"
 	"net/http"
 	"regexp"
+
+	"crypto/sha1" // #nosec
 )
 
 // Address is a FIO address, which should be formatted as 'name@domain'
@@ -319,6 +320,39 @@ type pubAddressRequest struct {
 	ChainCode  string `json:"chain_code"`
 }
 
+// GetPublic is an alias to PubAddressLookup to correct the confusing name for the lookup.
+func (api API) GetPublic(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
+	return api.PubAddressLookup(fioAddress, chain, token)
+}
+
+type getAllPublicResp struct {
+	Addresses []TokenPubAddr `json:"addresses"`
+}
+
+// GetAllPublic fetches all public addresses for an address.
+func (api API) GetAllPublic(fioAddress Address) ([]TokenPubAddr, error) {
+	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code: "fio.address",
+		Scope: "fio.address",
+		Table: "fionames",
+		LowerBound: I128Hash(string(fioAddress)),
+		UpperBound: I128Hash(string(fioAddress)),
+		KeyType: "i128",
+		Index: "5",
+		Limit: 1,
+		JSON: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]getAllPublicResp, 0)
+	err = json.Unmarshal(gtr.Rows, &result)
+	if len(result) == 0 {
+		return nil, errors.New("empty result")
+	}
+	return result[0].Addresses, nil
+}
+
 // PubAddressLookup finds a public address for a user, given a currency key
 //  pubAddress, ok, err := api.PubAddressLookup(fio.Address("alice:fio", "BTC")
 func (api API) PubAddressLookup(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
@@ -493,8 +527,11 @@ func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, e
 // I128Hash hashes a string to an i128 database value, often used as an index for a string in a table.
 // It is the most-significant 16 bytes in big-endian of a sha1 hash of the provided string, returned as a hex-string
 func I128Hash(s string) string {
-	sha := sha1.New()
-	sha.Write([]byte(s))
+	sha := sha1.New() // #nosec
+	_, err := sha.Write([]byte(s))
+	if err != nil {
+		return ""
+	}
 	// last 16 bytes of sha1-sum, as big-endian
 	return "0x" + hex.EncodeToString(flip(sha.Sum(nil)))[8:]
 }
@@ -661,3 +698,40 @@ func NewRemoveAllAddrReq(fioAddress Address, actor eos.AccountName) (remove *Act
 		},
 	), nil
 }
+
+type bundleRemaining struct {
+	Bundle int `json:"bundleeligiblecountdown"`
+}
+
+// GetBundleRemaining reports on how many free bundled tx remain for an Address
+func (api *API) GetBundleRemaining(a Address) (remaining int, err error) {
+	if !a.Valid() {
+		return 0, errors.New("invalid FIO address")
+	}
+	hash := I128Hash(string(a))
+	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "fio.address",
+		Scope:      "fio.address",
+		Table:      "fionames",
+		LowerBound: hash,
+		UpperBound: hash,
+		Limit:      1,
+		KeyType:    "i128",
+		Index:      "5",
+		JSON:       true,
+	})
+	if err != nil {
+		return 0, err
+	}
+	br := make([]bundleRemaining, 0)
+	err = json.Unmarshal(gtr.Rows, &br)
+	if err != nil {
+		return 0, err
+	}
+	if br == nil || len(br) != 1 {
+		return 0, nil
+	}
+	return br[0].Bundle, nil
+}
+
+

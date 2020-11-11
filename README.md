@@ -1,4 +1,5 @@
 # FIO-GO
+![Gosec](https://github.com/fioprotocol/fio-go/workflows/Gosec/badge.svg)
 
 Library for interacting with the FIO network using the go language.
 
@@ -41,14 +42,14 @@ func main() {
 	const (
 		url = `https://testnet.fioprotocol.io`
 		wif = `5JP1fUXwPxuKuNryh5BEsFhZqnh59yVtpHqHxMMTmtjcni48bqC`
-		to = `FIO6G9pXXM92Gy5eMwNquGULoCj3ZStwPLPdEb9mVXyEHqWN7HSuA`
+		to  = `FIO6G9pXXM92Gy5eMwNquGULoCj3ZStwPLPdEb9mVXyEHqWN7HSuA`
 	)
 
 	fatal := func(e error) {
-    	if e != nil {
-    		log.Fatal(e)
-    	}
-    }
+		if e != nil {
+			log.Fatal(e)
+		}
+	}
 
 	// connect to the network, using credentials
 	account, api, _, err := fio.NewWifConnect(wif, url)

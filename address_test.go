@@ -285,6 +285,15 @@ func TestAddress(t *testing.T) {
 		t.Error("set public: " + err.Error())
 	}
 
+	// check we got bundled transactions
+	rem, err := apiA.GetBundleRemaining(Address(names[2]+"@"+domain))
+	if err != nil {
+		t.Error("set get bundle: " + err.Error())
+	}
+	if rem == 0 {
+		t.Error("expected remaining bundle to be a positive number")
+	}
+
 	// query by actor
 	fioNames, ok, err := api.GetFioNamesForActor(string(accountA.Actor))
 	if err != nil {
@@ -345,6 +354,15 @@ func TestAddress(t *testing.T) {
 	}
 	if pubAddress.PublicAddress != "pubkey" {
 		t.Error("got incorrect public address")
+	}
+
+	// get all of the addresses
+	addrs, err := api.GetAllPublic(Address(names[2]+"@"+domain))
+	if err != nil {
+		t.Error("get all public:" + err.Error())
+	}
+	if len(addrs) != 5 {
+		t.Errorf("get all public: only got %d of 5 addresses", len(addrs))
 	}
 
 	// renew it
