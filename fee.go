@@ -267,7 +267,7 @@ func GetMaxFees() []FeeValue {
 // NewSetFeeVote is used by block producers to adjust the fee for an action, it is possible that not all fees will
 // fit into a single transaction and may require multiple calls.
 type SetFeeVote struct {
-	FeeRatios []*FeeValue      `json:"fee_ratios"`
+	FeeRatios []*FeeValue     `json:"fee_ratios"`
 	MaxFee    uint64          `json:"max_fee"`
 	Actor     eos.AccountName `json:"actor"`
 }

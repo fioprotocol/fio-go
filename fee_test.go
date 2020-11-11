@@ -58,7 +58,7 @@ func Test_NewSetFeeVote(t *testing.T) {
 				EndPoint: "register_fio_domain",
 				Value:    40000000000,
 			},
-		},acc.Actor)}, opts),
+		}, acc.Actor)}, opts),
 		opts.ChainID, CompressionNone,
 	)
 	if err != nil {
@@ -78,7 +78,7 @@ func Test_NewSetFeeVote(t *testing.T) {
 				EndPoint: "register_fio_domain",
 				Value:    40000000000,
 			},
-		},acc.Actor).ToEos(),
+		}, acc.Actor).ToEos(),
 	}, &opts.TxOptions)
 	if err != nil {
 		t.Error(err)
