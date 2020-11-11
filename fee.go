@@ -266,9 +266,9 @@ func GetMaxFees() []FeeValue {
 // NewSetFeeVote is used by block producers to adjust the fee for an action, it is possible that not all fees will
 // fit into a single transaction and may require multiple calls.
 type SetFeeVote struct {
-	FeeRatios []FeeValue `json:"fee_ratios"`
-	MaxFee    uint64     `json:"max_fee"`
-	Actor     string     `json:"actor"`
+	FeeRatios []FeeValue      `json:"fee_ratios"`
+	MaxFee    uint64          `json:"max_fee"`
+	Actor     eos.AccountName `json:"actor"`
 }
 
 func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
@@ -276,7 +276,7 @@ func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
 		SetFeeVote{
 			FeeRatios: ratios,
 			MaxFee:    Tokens(GetMaxFee(FeeUpdateFeeVote)),
-			Actor:     string(actor),
+			Actor:     actor,
 		})
 }
 
@@ -300,9 +300,9 @@ func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
 
 // SetFeeMult is used by block producers to vote for the fee multiplier used for calculating rewards
 type SetFeeMult struct {
-	Multiplier float64 `json:"multiplier"`
-	MaxFee     uint64  `json:"max_fee"`
-	Actor      string  `json:"actor"`
+	Multiplier float64         `json:"multiplier"`
+	MaxFee     uint64          `json:"max_fee"`
+	Actor      eos.AccountName `json:"actor"`
 }
 
 func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
@@ -310,7 +310,7 @@ func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
 		SetFeeMult{
 			Multiplier: multiplier,
 			MaxFee:     Tokens(GetMaxFee(FeeUpdateFeeMult)),
-			Actor:      string(actor),
+			Actor:      actor,
 		},
 	)
 }
