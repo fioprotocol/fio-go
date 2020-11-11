@@ -301,16 +301,16 @@ func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
 // SetFeeMult is used by block producers to vote for the fee multiplier used for calculating rewards
 type SetFeeMult struct {
 	Multiplier float64 `json:"multiplier"`
-	Actor      string  `json:"actor"`
 	MaxFee     uint64  `json:"max_fee"`
+	Actor      string  `json:"actor"`
 }
 
 func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "bundlevote", actor,
 		SetFeeMult{
 			Multiplier: multiplier,
-			Actor:      string(actor),
 			MaxFee:     Tokens(GetMaxFee(FeeUpdateFeeMult)),
+			Actor:      string(actor),
 		},
 	)
 }
