@@ -38,7 +38,7 @@ const (
 	FeeRenewFioDomain       = "renew_fio_domain"
 	FeeSetDomainPub         = "set_fio_domain_public"
 	FeeSubmitFeeMult        = "submit_fee_multiplier"
-	FeeSubmitFeeVote        = "submit_fee_vote"
+	FeeSubmitFeeVote        = "submit_fee_ratios"
 	FeeTransferAddress      = "transfer_fio_address"
 	FeeTransferDom          = "transfer_fio_domain"
 	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
