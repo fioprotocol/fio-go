@@ -37,8 +37,8 @@ const (
 	FeeRenewFioAddress      = "renew_fio_address"
 	FeeRenewFioDomain       = "renew_fio_domain"
 	FeeSetDomainPub         = "set_fio_domain_public"
-	FeeSetFeeMult           = "set_fee_multiplier"
-	FeeSetFeeVote           = "set_fee_vote"
+	FeeUpdateFeeMult        = "update_fee_multiplier"
+	FeeUpdateFeeVote        = "update_fee_vote"
 	FeeTransferAddress      = "transfer_fio_address"
 	FeeTransferDom          = "transfer_fio_domain"
 	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
@@ -80,8 +80,8 @@ var (
 		"remove_pub_addresses":        0.6,
 		"renew_fio_address":           40.0,
 		"renew_fio_domain":            800.0,
-		"set_fee_multiplier":          0.4,
-		"set_fee_vote":                0.4,
+		"update_fee_multiplier":       0.4,
+		"update_fee_vote":             0.4,
 		"set_fio_domain_public":       0.4,
 		"submit_bundled_transaction":  0.4,
 		"transfer_fio_address":        1.0,
@@ -118,8 +118,8 @@ var (
 		"renewaddress": FeeRenewFioAddress,
 		"renewdomain":  FeeRenewFioDomain,
 		"setdomainpub": FeeSetDomainPub,
-		"setfeemult":   FeeSetFeeMult,
-		"setfeevote":   FeeSetFeeVote,
+		"setfeemult":   FeeUpdateFeeMult,
+		"setfeevote":   FeeUpdateFeeVote,
 		"trnsfiopubky": FeeTransferTokensPubKey,
 		"unapprove":    FeeMsigUnapprove,
 		"unregprod":    FeeUnregisterProducer,
@@ -276,7 +276,7 @@ func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
 		SetFeeVote{
 			FeeRatios: ratios,
 			Actor:     string(actor),
-			MaxFee:    Tokens(GetMaxFee(FeeSetFeeVote)),
+			MaxFee:    Tokens(GetMaxFee(FeeUpdateFeeVote)),
 		})
 }
 
@@ -310,7 +310,7 @@ func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
 		SetFeeMult{
 			Multiplier: multiplier,
 			Actor:      string(actor),
-			MaxFee:     Tokens(GetMaxFee(FeeSetFeeMult)),
+			MaxFee:     Tokens(GetMaxFee(FeeUpdateFeeMult)),
 		},
 	)
 }
