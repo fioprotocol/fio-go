@@ -267,16 +267,16 @@ func GetMaxFees() []FeeValue {
 // fit into a single transaction and may require multiple calls.
 type SetFeeVote struct {
 	FeeRatios []FeeValue `json:"fee_ratios"`
-	Actor     string     `json:"actor"`
 	MaxFee    uint64     `json:"max_fee"`
+	Actor     string     `json:"actor"`
 }
 
 func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "setfeevote", actor,
 		SetFeeVote{
 			FeeRatios: ratios,
-			Actor:     string(actor),
 			MaxFee:    Tokens(GetMaxFee(FeeUpdateFeeVote)),
+			Actor:     string(actor),
 		})
 }
 
