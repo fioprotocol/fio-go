@@ -307,7 +307,7 @@ type SetFeeMult struct {
 }
 
 func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
-	return NewAction("fio.fee", "bundlevote", actor,
+	return NewAction("fio.fee", "setfeemult", actor,
 		SetFeeMult{
 			Multiplier: multiplier,
 			MaxFee:     Tokens(GetMaxFee(FeeSubmitFeeMult)),
