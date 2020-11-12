@@ -37,8 +37,8 @@ const (
 	FeeRenewFioAddress      = "renew_fio_address"
 	FeeRenewFioDomain       = "renew_fio_domain"
 	FeeSetDomainPub         = "set_fio_domain_public"
-	FeeUpdateFeeMult        = "update_fee_multiplier"
-	FeeUpdateFeeVote        = "update_fee_vote"
+	FeeSubmitFeeMult        = "submit_fee_multiplier"
+	FeeSubmitFeeVote        = "submit_fee_ratios"
 	FeeTransferAddress      = "transfer_fio_address"
 	FeeTransferDom          = "transfer_fio_domain"
 	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
@@ -80,8 +80,9 @@ var (
 		"remove_pub_addresses":        0.6,
 		"renew_fio_address":           40.0,
 		"renew_fio_domain":            800.0,
-		"update_fee_multiplier":       0.4,
-		"update_fee_vote":             0.4,
+		"submit_fee_multiplier":       0.4,
+		"submit_fee_ratios":           0.4,
+		"submit_fee_vote":             0.4, // outdated endpoint, not longer used.
 		"set_fio_domain_public":       0.4,
 		"submit_bundled_transaction":  0.4,
 		"transfer_fio_address":        1.0,
@@ -118,8 +119,8 @@ var (
 		"renewaddress": FeeRenewFioAddress,
 		"renewdomain":  FeeRenewFioDomain,
 		"setdomainpub": FeeSetDomainPub,
-		"setfeemult":   FeeUpdateFeeMult,
-		"setfeevote":   FeeUpdateFeeVote,
+		"setfeemult":   FeeSubmitFeeMult,
+		"setfeevote":   FeeSubmitFeeVote,
 		"trnsfiopubky": FeeTransferTokensPubKey,
 		"unapprove":    FeeMsigUnapprove,
 		"unregprod":    FeeUnregisterProducer,
@@ -266,17 +267,17 @@ func GetMaxFees() []FeeValue {
 // NewSetFeeVote is used by block producers to adjust the fee for an action, it is possible that not all fees will
 // fit into a single transaction and may require multiple calls.
 type SetFeeVote struct {
-	FeeRatios []FeeValue `json:"fee_ratios"`
-	Actor     string     `json:"actor"`
-	MaxFee    uint64     `json:"max_fee"`
+	FeeRatios []*FeeValue     `json:"fee_ratios"`
+	MaxFee    uint64          `json:"max_fee"`
+	Actor     eos.AccountName `json:"actor"`
 }
 
-func NewSetFeeVote(ratios []FeeValue, actor eos.AccountName) *Action {
+func NewSetFeeVote(ratios []*FeeValue, actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "setfeevote", actor,
 		SetFeeVote{
 			FeeRatios: ratios,
-			Actor:     string(actor),
-			MaxFee:    Tokens(GetMaxFee(FeeUpdateFeeVote)),
+			MaxFee:    Tokens(GetMaxFee(FeeSubmitFeeVote)),
+			Actor:     actor,
 		})
 }
 
@@ -300,17 +301,17 @@ func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
 
 // SetFeeMult is used by block producers to vote for the fee multiplier used for calculating rewards
 type SetFeeMult struct {
-	Multiplier float64 `json:"multiplier"`
-	Actor      string  `json:"actor"`
-	MaxFee     uint64  `json:"max_fee"`
+	Multiplier float64         `json:"multiplier"`
+	MaxFee     uint64          `json:"max_fee"`
+	Actor      eos.AccountName `json:"actor"`
 }
 
 func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
-	return NewAction("fio.fee", "bundlevote", actor,
+	return NewAction("fio.fee", "setfeemult", actor,
 		SetFeeMult{
 			Multiplier: multiplier,
-			Actor:      string(actor),
-			MaxFee:     Tokens(GetMaxFee(FeeUpdateFeeMult)),
+			MaxFee:     Tokens(GetMaxFee(FeeSubmitFeeMult)),
+			Actor:      actor,
 		},
 	)
 }
