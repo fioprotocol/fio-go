@@ -52,24 +52,6 @@ func Test_NewSetFeeVote(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, packed, err := api.SignTransaction(NewTransaction(
-		[]*Action{NewSetFeeVote([]*FeeValue{
-			{
-				EndPoint: "register_fio_domain",
-				Value:    40000000000,
-			},
-		}, acc.Actor)}, opts),
-		opts.ChainID, CompressionNone,
-	)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	j, err := api.PushTransactionRaw(packed)
-	if err != nil {
-		t.Error(err)
-		fmt.Println(string(j))
-	}
 
 	opts.Compress = CompressionZlib
 	resp, err := api.SignPushActionsWithOpts([]*eos.Action{
