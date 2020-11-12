@@ -1,8 +1,10 @@
 package fio
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/fioprotocol/fio-go/eos"
+	"strconv"
 	"testing"
 )
 
@@ -46,7 +48,6 @@ func TestAPI_GetFee(t *testing.T) {
 }
 
 func Test_NewSetFeeVote(t *testing.T) {
-
 	acc, api, opts, err := newApi()
 	if err != nil {
 		t.Error(err)
@@ -65,6 +66,55 @@ func Test_NewSetFeeVote(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 		fmt.Println(resp)
+	}
+}
+
+func Test_NewSubmitMultiplier(t *testing.T) {
+	var multiplier float64
+	acc, api, _, err := newApi()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// grab current multiplier, don't want to guess...
+	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
+		Code:       "fio.fee",
+		Scope:      "fio.fee",
+		Table:      "feevoters",
+		LowerBound: string(acc.Actor),
+		UpperBound: string(acc.Actor),
+		Limit:      1,
+		KeyType:    "name",
+		Index:      "1",
+		JSON:       true,
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	type FeeMultResp struct {
+		FeeMultiplier string `json:"fee_multiplier"`
+	}
+	current := make([]FeeMultResp, 0)
+	err = json.Unmarshal(gtr.Rows, &current)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(current) == 0 || current[0].FeeMultiplier == "0" {
+		multiplier = 1
+	} else {
+		multiplier, err = strconv.ParseFloat(current[0].FeeMultiplier, 64)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		multiplier += 0.1
+	}
+	_, err = api.SignPushActions(NewSetFeeMult(multiplier, acc.Actor))
+	if err != nil {
+		t.Error(err)
 	}
 
 }
