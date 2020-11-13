@@ -366,7 +366,7 @@ func (api *API) SignTransaction(tx *Transaction, chainID Checksum256, compressio
 
 	// FIO specific safety check for fee value over/underflow
 	for i := range tx.Actions {
-		if err := checkFeeRange(tx.Actions[i]); err != nil {
+		if err := CheckFioFeeRange(tx.Actions[i]); err != nil {
 			return nil, nil, err
 		}
 	}
