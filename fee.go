@@ -237,15 +237,17 @@ func MaxFeesJson() []byte {
 	return j
 }
 
+// CreateFee is a privileged action that adds a new fee record in the fiofees table
 type CreateFee struct {
 	EndPoint  string `json:"end_point"`
-	Type      uint64 `json:"type"`
-	SufAmount uint64 `json:"suf_amount"`
+	Type      int64  `json:"type"`
+	SufAmount int64  `json:"suf_amount"`
 }
 
+// FeeValue is used by block producers to vote on the base cost (before multiplier) for a fee
 type FeeValue struct {
 	EndPoint string `json:"end_point"`
-	Value    uint64 `json:"value"`
+	Value    int64  `json:"value"`
 }
 
 // GetMaxFees gets the current max fees as a slice of FeeValue
@@ -256,7 +258,7 @@ func GetMaxFees() []FeeValue {
 	for k, v := range maxFees {
 		fees[i] = FeeValue{
 			EndPoint: k,
-			Value:    uint64(v * 1_000_000_000),
+			Value:    int64(v * 1_000_000_000),
 		}
 		i += 1
 	}
@@ -264,7 +266,7 @@ func GetMaxFees() []FeeValue {
 	return fees
 }
 
-// NewSetFeeVote is used by block producers to adjust the fee for an action, it is possible that not all fees will
+// SetFeeVote is used by block producers to adjust the fee for an action, it is possible that not all fees will
 // fit into a single transaction and may require multiple calls.
 type SetFeeVote struct {
 	FeeRatios []*FeeValue     `json:"fee_ratios"`
@@ -284,12 +286,12 @@ func NewSetFeeVote(ratios []*FeeValue, actor eos.AccountName) *Action {
 // BundleVote is used by block producers to vote for the number of free transactions included when registering or
 // renewing a FIO address
 type BundleVote struct {
-	BundledTransactions uint64 `json:"bundled_transactions"`
+	BundledTransactions int64  `json:"bundled_transactions"`
 	Actor               string `json:"actor"`
 	MaxFee              uint64 `json:"max_fee"`
 }
 
-func NewBundleVote(transactions uint64, actor eos.AccountName) *Action {
+func NewBundleVote(transactions int64, actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "bundlevote", actor,
 		BundleVote{
 			BundledTransactions: transactions,
@@ -321,7 +323,7 @@ func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
 type ComputeFees struct{}
 
 func NewComputeFees(actor eos.AccountName) *Action {
-	return NewAction("fio.fee", "updatefees", actor, ComputeFees{})
+	return NewAction("fio.fee", "computefees", actor, ComputeFees{})
 }
 
 // FioFee (table query response) holds the details of an action's fee stored in the fio.fee fiofees table.
@@ -331,6 +333,7 @@ type FioFee struct {
 	EndPointHash eos.Uint128 `json:"end_point_hash"`
 	Type         uint64      `json:"type"`
 	SufAmount    uint64      `json:"suf_amount"`
+	VotesPending eos.Bool    `json:"votes_pending"`
 }
 
 // FeeVoter (table query response) holds information about the block producer performing a multiplier vote
@@ -342,12 +345,27 @@ type FeeVoter struct {
 }
 
 // FeeVote (table query response) holds fee vote information from the fio.fee feevotes table
+//
+// Deprecated: replaced by FeeVote2
 type FeeVote struct {
 	Id                uint64          `json:"id"`
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
 	EndPoint          string          `json:"end_point"`
-	EndPointHash      uint64          `json:"end_point_hash"`
+	EndPointHash      eos.Uint128     `json:"end_point_hash"`
 	SufAmount         uint64          `json:"suf_amount"`
+	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
+}
+
+type FeeValueTs struct {
+	FeeValue
+	TimeStame uint64 `json:"time_stame"`
+}
+
+// FeeVote2 (query response) is the new voting table format
+type FeeVote2 struct {
+	Id                uint64          `json:"id"`
+	BlockProducerName eos.AccountName `json:"block_producer_name"`
+	FeeVotes          []FeeValueTs    `json:"fee_votes"`
 	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
 
@@ -355,6 +373,6 @@ type FeeVote struct {
 // or renewed addresses as stored in the fio.fee bundlevotes table.
 type BundleVoter struct {
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
-	BundleVoteNumber  uint64          `json:"bundlevotenumber"`
+	BundleVoteNumber  int64           `json:"bundlevotenumber"`
 	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
