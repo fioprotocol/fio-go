@@ -37,7 +37,7 @@ func CheckFioFeeRange(action *Action) error {
 	case reflect.Uint64:
 		return CheckUnderOver(maxFee.Uint())
 	case reflect.Int64:
-		return CheckUnderOver(maxFee.Uint())
+		return CheckUnderOver(maxFee.Int())
 	case reflect.Float32, reflect.Float64:
 		return errors.New("CheckFioFeeRange: cannot be a float")
 	case reflect.String:
