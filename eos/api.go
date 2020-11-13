@@ -364,6 +364,13 @@ func (api *API) SignTransaction(tx *Transaction, chainID Checksum256, compressio
 		requiredKeys = resp.RequiredKeys
 	}
 
+	// FIO specific safety check for fee value over/underflow
+	for i := range tx.Actions {
+		if err := checkFeeRange(tx.Actions[i]); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	signedTx, err := api.Signer.Sign(stx, chainID, requiredKeys...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("signing through wallet: %s", err)
