@@ -321,7 +321,7 @@ func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
 type ComputeFees struct{}
 
 func NewComputeFees(actor eos.AccountName) *Action {
-	return NewAction("fio.fee", "updatefees", actor, ComputeFees{})
+	return NewAction("fio.fee", "computefees", actor, ComputeFees{})
 }
 
 // FioFee (table query response) holds the details of an action's fee stored in the fio.fee fiofees table.
