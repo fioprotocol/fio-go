@@ -1,0 +1,125 @@
+package fio
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/blockpane/eos-go"
+	"io/ioutil"
+	"sort"
+	"strings"
+)
+
+// BlockTxidsResp contains a list of transactions in a block.
+type BlockTxidsResp struct {
+	Ids                   []eos.Checksum256 `json:"ids"`
+	LastIrreversibleBlock uint32             `json:"last_irreversible_block"`
+}
+
+type blockTxidsReq struct {
+	BlockNum uint32 `json:"block_num"`
+}
+
+// HistGetBlockTxids retrieves the txid for all transactions that occurred in a block from the v1 history plugin.
+// this is specific to the Greymass light v1 history plugin in FIO
+func (api *API) HistGetBlockTxids(ctx context.Context, blockNum uint32) (*BlockTxidsResp, error) {
+	blocks := &BlockTxidsResp{}
+	err := api.call(ctx, "history", "get_block_txids", &blockTxidsReq{BlockNum: blockNum}, blocks)
+	return blocks, err
+}
+
+// accountActionSequence is a truncated action trace used only for finding the highest sequence number
+type accountActionSequence struct {
+	AccountActionSequence uint32 `json:"account_action_seq"`
+}
+
+type accountActions struct {
+	Actions []accountActionSequence `json:"actions"`
+}
+
+// GetMaxActions returns the highest account_action_sequence from the get_actions endpoint.
+// This is needed because paging only works with positive offsets.
+// TODO: respect passed context
+func (api *API) GetMaxActions(ctx context.Context, account eos.AccountName) (highest uint32, err error) {
+	resp, err := api.HttpClient.Post(
+		api.BaseURL+"/v1/history/get_actions",
+		"application/json",
+		bytes.NewReader([]byte(fmt.Sprintf(`{"account_name":"%s","pos":-1}`, account))),
+	)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+	if len(body) == 0 {
+		return 0, errors.New("received empty response")
+	}
+
+	aa := &accountActions{}
+	err = json.Unmarshal(body, &aa)
+	if err != nil {
+		return 0, err
+	}
+	if aa.Actions == nil || len(aa.Actions) == 0 {
+		return 0, nil
+	}
+	return aa.Actions[len(aa.Actions)-1].AccountActionSequence, nil
+}
+
+// HasHistory looks at available APIs and returns true if /v1/history/* exists.
+func (api *API) HasHistory(ctx context.Context) bool {
+	_, apis, err := api.GetSupportedApis(ctx)
+	if err != nil {
+		return false
+	}
+	for _, a := range apis {
+		if strings.HasPrefix(a, `/v1/history/`) {
+			return true
+		}
+	}
+	return false
+}
+
+// GetActionsUniq strips the results of GetActions of duplicate traces, this can occur with certain transactions
+// that may have multiple actors involved and the same trace is presented more than once but associated with a
+// different actor. This will give preference to the trace referencing the actor queried if possible.
+//
+// Deprecated: a new endpoint that handles de-duplication will make this function irrelevant.
+func (api *API) GetActionsUniq(ctx context.Context, actor eos.AccountName, offset int64, pos int64) ([]*eos.ActionTrace, error) {
+	traceUniq := make(map[string]*eos.ActionTrace)
+	resp, err := api.GetActions(ctx, eos.GetActionsRequest{AccountName: actor, Offset: eos.Int64(offset), Pos: eos.Int64(pos)})
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil || len(resp.Actions) == 0 {
+		return nil, errors.New("empty result")
+	}
+	for i := range resp.Actions {
+		// use a closure to dereference
+		func(act *eos.ActionResp) {
+			// have we already seen this act_digest?
+			switch traceUniq[act.Trace.Receipt.ActionDigest.String()] {
+			case nil:
+				traceUniq[act.Trace.Receipt.ActionDigest.String()] = &act.Trace
+			default:
+				// if there is a dup, prefer the correct actor, otherwise just ignore and keep the existing:
+				if act.Trace.Receipt.AuthSequence != nil && len(act.Trace.Receipt.AuthSequence) > 0 && act.Trace.Receipt.AuthSequence[0].Account == actor {
+					traceUniq[act.Trace.Receipt.ActionDigest.String()] = &act.Trace
+				}
+			}
+		}(&resp.Actions[i])
+	}
+	traces := make([]*eos.ActionTrace, 0)
+	for _, v := range traceUniq {
+		traces = append(traces, v)
+	}
+	sort.Slice(traces, func(i, j int) bool {
+		return traces[i].Receipt.GlobalSequence < traces[j].Receipt.GlobalSequence
+	})
+	return traces, nil
+}

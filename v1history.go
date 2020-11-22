@@ -18,6 +18,8 @@ type BlockTxidsResp struct {
 }
 
 // HistGetBlockTxids retrieves the txid for all transactions that occurred in a block from the v1 history plugin.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) HistGetBlockTxids(blockNum uint32) (*BlockTxidsResp, error) {
 	resp, err := api.HttpClient.Post(
 		api.BaseURL+"/v1/history/get_block_txids",
@@ -41,6 +43,8 @@ func (api *API) HistGetBlockTxids(blockNum uint32) (*BlockTxidsResp, error) {
 }
 
 // GetTransaction duplicates eos-go's GetTransaction. TODO: is this redundant? Can it be removed?
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetTransaction(id eos.Checksum256) (*eos.TransactionResp, error) {
 	resp, err := api.HttpClient.Post(
 		api.BaseURL+"/v1/history/get_transaction",
@@ -75,6 +79,8 @@ type accountActions struct {
 
 // GetMaxActions returns the highest account_action_sequence from the get_actions endpoint.
 // This is needed because paging only works with positive offsets.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetMaxActions(account eos.AccountName) (highest uint32, err error) {
 	resp, err := api.HttpClient.Post(
 		api.BaseURL+"/v1/history/get_actions",
@@ -105,6 +111,8 @@ func (api *API) GetMaxActions(account eos.AccountName) (highest uint32, err erro
 }
 
 // HasHistory looks at available APIs and returns true if /v1/history/* exists.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) HasHistory() bool {
 	_, apis, err := api.GetSupportedApis()
 	if err != nil {

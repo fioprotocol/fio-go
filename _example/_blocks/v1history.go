@@ -1,9 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fioprotocol/fio-go"
+	"github.com/fioprotocol/fio-go/v2"
 	"log"
 	"time"
 )
@@ -24,9 +25,8 @@ Note: Action traces (ie trace.Traces[0].Action.ActionData.Data) are returned as 
 
 */
 
-const nodeos = "http://testnet:8888"
-
 func main() {
+	const nodeos = "http://testnet:8888"
 
 	// error helper
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -36,12 +36,17 @@ func main() {
 			log.Fatal(trace)
 		}
 	}
+	// context helper
+	cx := func() context.Context {
+		ctx, _ := context.WithTimeout(context.Background(), 3 * time.Second)
+		return ctx
+	}
 
 	// connect
-	api, _, err := fio.NewConnection(nil, nodeos)
+	api, _, err := fio.NewConnection(cx(), nil, nodeos)
 	e(err)
 
-	gi, err := api.GetInfo()
+	gi, err := api.GetInfo(cx())
 	e(err)
 
 	// tracks current block number
@@ -52,7 +57,7 @@ func main() {
 	for {
 		select {
 		case <-tick.C:
-			txids, err := api.HistGetBlockTxids(blockNum)
+			txids, err := api.HistGetBlockTxids(cx(), blockNum)
 			e(err)
 
 			// don't process reversible blocks:
@@ -64,7 +69,7 @@ func main() {
 			if len(txids.Ids) > 0 {
 				log.Println("block: ", blockNum)
 				for _, id := range txids.Ids {
-					trace, err := api.GetTransaction(id)
+					trace, err := api.GetTransaction(cx(), id.String())
 					e(err)
 
 					j, err := json.MarshalIndent(trace, "", "  ")

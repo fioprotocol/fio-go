@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fioprotocol/fio-go"
-	"github.com/fioprotocol/fio-go/eos"
+	"github.com/blockpane/eos-go"
+	"github.com/fioprotocol/fio-go/v2"
 	"log"
+	"time"
 )
 
 // example of voting for fees and setting a multiplier
@@ -25,8 +27,13 @@ func main() {
 			log.Fatal(trace)
 		}
 	}
+	// context helper
+	cx := func() context.Context {
+		ctx, _ := context.WithTimeout(context.Background(), 3 * time.Second)
+		return ctx
+	}
 
-	account, api, opts, err := fio.NewWifConnect(wif, url)
+	account, api, opts, err := fio.NewWifConnect(cx(), wif, url)
 	fatal(err)
 
 	action := fio.NewSetFeeVote(defaultRatios(), account.Actor).ToEos() // note casting to *eos.Action
@@ -34,7 +41,7 @@ func main() {
 	// this is a large tx, without compression it might fail
 	opts.Compress = fio.CompressionZlib
 	// overriding the default compression requires a using different function
-	resp, err := api.SignPushActionsWithOpts([]*eos.Action{action}, &opts.TxOptions)
+	resp, err := api.SignPushActionsWithOpts(cx(), []*eos.Action{action}, &opts.TxOptions)
 	fatal(err)
 
 	// print result
@@ -52,14 +59,14 @@ func main() {
 	multiplier := targetUsd / (regaddressFeeValue * tokenPriceUsd)
 
 	// submit and print the result
-	resp, err = api.SignPushActions(fio.NewSetFeeMult(multiplier, account.Actor))
+	resp, err = api.SignPushActions(cx(), fio.NewSetFeeMult(multiplier, account.Actor))
 	fatal(err)
 	j, _ = json.MarshalIndent(resp, "", "  ")
 	fmt.Println(string(j))
 
 	// it's also important that computefees is called frequently, the on-chain fees don't change automatically without it
 	// this call won't always have any work to do, so it's safe to ignore errors.
-	resp, err = api.SignPushActions(fio.NewComputeFees(account.Actor))
+	resp, err = api.SignPushActions(cx(), fio.NewComputeFees(account.Actor))
 	if err != nil {
 		log.Println(err)
 	}

@@ -36,6 +36,9 @@ type Action struct {
 	eos.ActionData
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (act Action) ToEos() *eos.Action {
 	return &eos.Action{
 		Account:       act.Account,
@@ -50,6 +53,9 @@ type TxOptions struct {
 	eos.TxOptions
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (txo TxOptions) toEos() *eos.TxOptions {
 	return &eos.TxOptions{
 		ChainID:          txo.ChainID,
@@ -68,6 +74,8 @@ const (
 )
 
 // NewTransaction wraps eos.NewTransaction
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewTransaction(actions []*Action, txOpts *TxOptions) *eos.Transaction {
 	eosActions := make([]*eos.Action, 0)
 	for _, a := range actions {
@@ -85,6 +93,8 @@ func NewTransaction(actions []*Action, txOpts *TxOptions) *eos.Transaction {
 }
 
 // NewConnection sets up the API interface for interacting with the FIO API
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	var api = eos.New(url)
 	api.SetSigner(keyBag)
@@ -107,6 +117,8 @@ func NewConnection(keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 }
 
 // NewWifConnect adds convenience by setting everything up, given a WIF and URL
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewWifConnect(wif string, url string) (account *Account, api *API, opts *TxOptions, err error) {
 	account, err = NewAccountFromWif(wif)
 	if err != nil {
@@ -117,6 +129,8 @@ func NewWifConnect(wif string, url string) (account *Account, api *API, opts *Tx
 }
 
 // NewAction creates an Action for FIO contract calls, assumes the permission is "active"
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
@@ -132,6 +146,8 @@ func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 }
 
 // NewActionWithPermission allows building an action and specifying the permission
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewActionWithPermission(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, permission string, actionData interface{}) *Action {
 	return &Action{
 		Account: contract,
@@ -147,6 +163,8 @@ func NewActionWithPermission(contract eos.AccountName, name eos.ActionName, acto
 }
 
 // GetCurrentBlock provides the current head block number
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetCurrentBlock() (blockNum uint32) {
 	info, err := api.GetInfo()
 	if err != nil {
@@ -157,6 +175,8 @@ func (api *API) GetCurrentBlock() (blockNum uint32) {
 
 // PushEndpointRaw is adapted from eos-go call() function in api.go to allow overriding the endpoint for a push-transaction
 // the endpoint provided should be the full path to the endpoint such as "/v1/chain/push_transaction"
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) PushEndpointRaw(endpoint string, body interface{}) (out json.RawMessage, err error) {
 	enc := func(v interface{}) (io.Reader, error) {
 		if v == nil {
@@ -222,6 +242,8 @@ func (api *API) PushEndpointRaw(endpoint string, body interface{}) (out json.Raw
 
 // AllABIs returns a map of every ABI available. This is only possible in FIO because there are a small number
 // of contracts that exist.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) AllABIs() (map[eos.AccountName]*eos.ABI, error) {
 	type contracts struct {
 		Owner string `json:"owner"`
@@ -259,6 +281,8 @@ type getTableByScopeResp struct {
 }
 
 // GetTableByScopeMore handles responses that have either a bool or a string as the more response.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetTableByScopeMore(request eos.GetTableByScopeRequest) (*eos.GetTableByScopeResp, error) {
 	reqBody, err := json.Marshal(&request)
 	if err != nil {
@@ -314,6 +338,8 @@ type GetTableRowsOrderRequest struct {
 }
 
 // GetTableRowsOrder duplicates eos.GetTableRows but adds a Reverse flag
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetTableRowsOrder(gtro GetTableRowsOrderRequest) (*eos.GetTableRowsResp, error) {
 	j, err := json.Marshal(&gtro)
 	if err != nil {
@@ -337,6 +363,8 @@ func (api *API) GetTableRowsOrder(gtro GetTableRowsOrderRequest) (*eos.GetTableR
 }
 
 // GetRefBlockFor calculates the Reference for an arbitrary block and ID
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func GetRefBlockFor(blocknum uint32, id string) (refBlockNum uint32, refBlockPrefix uint32, err error) {
 	// uint16: block % (2 ^ 16)
 	refBlockNum = blocknum % uint32(math.Pow(2.0, 16.0))
@@ -350,6 +378,8 @@ func GetRefBlockFor(blocknum uint32, id string) (refBlockNum uint32, refBlockPre
 }
 
 // GetRefBlock calculates a the block reference for the last irreversible block
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetRefBlock() (refBlockNum uint32, refBlockPrefix uint32, err error) {
 	// get current block:
 	currentInfo, err := api.GetInfo()
@@ -369,6 +399,7 @@ type protocolFeatures struct {
 	ProtocolFeatures []interface{} `json:"protocol_features"` // not sure what goes here, leaving private
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetBlockByNum(num uint32) (out *eos.BlockResp, err error) {
 	err = api.call("chain", "get_block", eos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
 	return
@@ -383,6 +414,7 @@ type AddAction struct {
 	Actor    eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewAddAction(contract eos.AccountName, newAction eos.ActionName, actor eos.AccountName) (action *Action) {
 	return NewAction("eosio", "addaction", actor,
 		AddAction{
@@ -399,6 +431,7 @@ type RemoveAction struct {
 	Actor  eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRemoveAction(action eos.ActionName, actor eos.AccountName) *Action {
 	return NewAction("eosio", "remaction", actor, RemoveAction{
 		Action: action,
@@ -407,6 +440,8 @@ func NewRemoveAction(action eos.ActionName, actor eos.AccountName) *Action {
 }
 
 // NewRemAction is an alias for NewRemoveAction
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRemAction(action eos.ActionName, actor eos.AccountName) *Action {
 	return NewRemoveAction(action, actor)
 }
@@ -431,6 +466,8 @@ type allowedActionsReq struct {
 }
 
 // GetAllowedActions fetches the list of allowed actions from get_actions
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetAllowedActions(offset uint32, limit uint32) (allowed *AllowedActionsResp, err error) {
 	allowed = &AllowedActionsResp{}
 	err = api.call("chain", "get_actions", allowedActionsReq{Limit: limit, Offset: offset}, allowed)
@@ -465,6 +502,8 @@ type BlockHeaderStateReq struct {
 }
 
 // GetBlockHeaderState returns the details for a reversible block. If the block is irreversible the api will return an error.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetBlockHeaderState(numOrId interface{}) (*BlockHeaderState, error) {
 	reqJson, err := json.Marshal(&BlockHeaderStateReq{BlockNumOrId: numOrId})
 	if err != nil {
@@ -504,6 +543,8 @@ type ProducerToLast struct {
 // ProducerToLast extracts a slice of ProducerToLast structs from a BlockHeaderState, this contains either the last
 // block that the producer signed, or the last irreversible block. This is useful for seeing if a producer is missing
 // rounds, or is responsible for double-signed blocks causing forks.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (bhs *BlockHeaderState) ProducerToLast(producedOrImplied uint8) (found bool, last []*ProducerToLast) {
 	var l []json.RawMessage
 	var pOrI string
@@ -556,6 +597,8 @@ type getSupportedApisResp struct {
 // GetSupportedApis queries the /v1/chain/get_supported_apis endpoint for available API calls, which
 // can assist in determining what api plugins are enabled. The onlySafe bool returned will be false
 // if either the producer or network plugins are enabled, which can lead to denial of service attacks.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetSupportedApis() (onlySafe bool, apis []string, err error) {
 	resp, err := api.HttpClient.Get(api.BaseURL + "/v1/node/get_supported_apis")
 	if err != nil {
@@ -584,6 +627,7 @@ func (api *API) GetSupportedApis() (onlySafe bool, apis []string, err error) {
 	return onlySafe, supported.Apis, nil
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) call(baseAPI string, endpoint string, body interface{}, out interface{}) error {
 	jsonBody, err := enc(body)
 	if err != nil {
@@ -690,6 +734,8 @@ func enc(v interface{}) (io.Reader, error) {
 // values, sign it and submit it to the chain.  It is the highest
 // level function on top of the `/v1/chain/push_transaction` endpoint.
 // Overridden from eos-go to make it unnecessary to use .ToEos() casting on actions.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) SignPushActions(a ...*Action) (out *eos.PushTransactionFullResp, err error) {
 	b := make([]*eos.Action, len(a))
 	for i, act := range a {

@@ -30,6 +30,7 @@ const (
 
 type ObtType uint8
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (o ObtType) String() string {
 	switch o {
 	case ObtRequestType:
@@ -64,6 +65,8 @@ type obtRequestContentOmit struct {
 }
 
 // Encrypt serializes and encrypts the 'content' field for OBT requests
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (req ObtRequestContent) Encrypt(from *Account, toPubKey string) (content string, err error) {
 	reqOmit := obtRequestContentOmit{
 		PayeePublicAddress: req.PayeePublicAddress,
@@ -119,6 +122,8 @@ type obtRecordContentOmit struct {
 }
 
 // Encrypt serializes and encrypts the 'content' field for OBT requests
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (rec ObtRecordContent) Encrypt(from *Account, toPubKey string) (content string, err error) {
 	recOmit := obtRecordContentOmit{
 		rec.PayerPublicAddress,
@@ -156,6 +161,7 @@ type ObtContentResult struct {
 	Record  *ObtRecordContent
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (c ObtContentResult) ToJson() ([]byte, error) {
 	switch c.Type {
 	case ObtRequestType:
@@ -175,6 +181,8 @@ func (c ObtContentResult) ToJson() ([]byte, error) {
 }
 
 // DecryptContent provides a new populated ObtContentResult struct given an encrypted content payload
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func DecryptContent(to *Account, fromPubKey string, encrypted string, obtType ObtType) (*ObtContentResult, error) {
 	result := &ObtContentResult{
 		Type: obtType,
@@ -215,6 +223,8 @@ type RecordSend struct {
 }
 
 // NewRecordSend builds the action for providing the result of a off-chain transaction
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRecordSend(actor eos.AccountName, reqId string, payer string, payee string, content string) *Action {
 	return NewAction(
 		"fio.reqobt", "recordobt", actor,
@@ -253,6 +263,8 @@ type FundsResp struct {
 }
 
 // NewFundsReq builds the action for providing the result of a off-chain transaction
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewFundsReq(actor eos.AccountName, payerFio string, payeeFio string, content string) *Action {
 	return NewAction(
 		"fio.reqobt", "newfundsreq", actor,
@@ -276,6 +288,8 @@ type CancelFndReq struct {
 }
 
 // NewCancelFndReq builds the action to cancel a request that is pending by the payee
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewCancelFndReq(actor eos.AccountName, requestId uint64) *Action {
 	return NewAction(
 		"fio.reqobt", "cancelfndreq", actor,
@@ -298,6 +312,7 @@ type CancelledRequest struct {
 	FundsReq
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetCancelledRequests(pubkey string, limit uint32, offset uint32) (cancelled *CancelledRequests, err error) {
 	resp, err := api.HttpClient.Post(
 		api.BaseURL+"/v1/chain/get_cancelled_fio_requests",
@@ -329,6 +344,8 @@ type RejectFndReq struct {
 }
 
 // NewRejectFndReq builds the action to reject a request
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 	return NewAction(
 		"fio.reqobt", "rejectfndreq", actor,
@@ -354,6 +371,8 @@ func NewRejectFndReq(actor eos.AccountName, requestId string) *Action {
 // The 16 byte IV is prepended to the output, resulting in the message format of:
 //  IV + Ciphertext + HMAC
 // See https://github.com/fioprotocol/fiojs/blob/master/docs/message_encryption.md for more information.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []byte) (content string, err error) {
 
 	// Get the shared-secret
@@ -421,6 +440,8 @@ func EciesEncrypt(sender *Account, recipentPub string, plainText []byte, iv []by
 }
 
 // EciesDecrypt is the inverse of EciesEncrypt, using the recipient's private key and sender's public instead.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypted []byte, err error) {
 	const (
 		sigLen = 32
@@ -488,6 +509,8 @@ func EciesDecrypt(recipient *Account, senderPub string, message string) (decrypt
 
 // depending on how the request was built it's possible to get a slightly different abi encoding,
 // this will try three different ways of decoding the request ...
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func tryDecryptRequest(bin []byte, obtType ObtType) (content *ObtRequestContent, err error) {
 	content = &ObtRequestContent{}
 	abiReader := bytes.NewReader([]byte(obtAbiJsonOmit))
@@ -532,6 +555,8 @@ func tryDecryptRecord(bin []byte, obtType ObtType) (content *ObtRecordContent, e
 // The 'secret' returned is the actual secret, the 'hash' returned is what is actually used
 // in the OBT implementation, allowing the secret to be stretched into two keys, one for
 // encryption and one for message authentication.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func EciesSecret(private *Account, public string) (secret []byte, hash *[64]byte, err error) {
 	// convert key to ecies private key type
 	wif, err := btcutil.DecodeWIF(private.KeyBag.Keys[0].String())
@@ -584,11 +609,15 @@ type RequestStatus struct {
 }
 
 // GetPendingFioRequests looks for pending requests
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetPendingFioRequests(pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
 	return api.getFioRequests("pending", pubKey, limit, offset)
 }
 
 // GetSentFioRequests looks for sent requests
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetSentFioRequests(pubKey string, limit int, offset int) (sentRequests PendingFioRequestsResponse, hasSent bool, err error) {
 	return api.getFioRequests("sent", pubKey, limit, offset)
 }
@@ -654,6 +683,8 @@ type FundsReqTableResp struct {
 // GetFioRequest gets a single FIO request using a table lookup, this is more efficient than using the API
 // endpoint because that requires knowing the offset of the request and the id. The downside is that this
 // returns a slightly different struct.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFioRequest(requestId uint64) (request *FundsReqTableResp, err error) {
 	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:       "fio.reqobt",
@@ -722,6 +753,8 @@ type FundsRequestStatusResp struct {
 // GetFioRequestStatus gets a record from the fioreqstss, which is useful for getting the recordobt response to a request.
 // This only applies to recordobt that was in response to a request, the recordobts table stores records not tied to an
 // existing request.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFioRequestStatus(requestId uint64) (hasResponse bool, request *FundsRequestStatusResp, err error) {
 	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:       "fio.reqobt",

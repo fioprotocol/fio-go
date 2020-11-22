@@ -29,6 +29,8 @@ func (n Name) ToEos() eos.Name {
 
 // NewAccountFromWif builds an Account given a private key string.
 // Note: this is an ephemeral, in-memory, account which has no relation to keosd, and is not persistent.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewAccountFromWif(wif string) (*Account, error) {
 	kb := eos.NewKeyBag()
 	err := kb.ImportPrivateKey(wif)
@@ -50,6 +52,8 @@ func NewAccountFromWif(wif string) (*Account, error) {
 }
 
 // GetNames retrieves the FIO addresses and names owned by an account, and populates the Account struct
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (a *Account) GetNames(api *API) (addresses int, domains int, err error) {
 	n, _, err := api.GetFioNames(a.PubKey)
 	if err != nil {
@@ -63,6 +67,8 @@ func (a *Account) GetNames(api *API) (addresses int, domains int, err error) {
 }
 
 // NewRandomAccount creates a new account with a random key.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRandomAccount() (*Account, error) {
 	key, err := ecc.NewRandomPrivateKey()
 	if err != nil {
@@ -72,6 +78,8 @@ func NewRandomAccount() (*Account, error) {
 }
 
 // ActorFromPub calculates the FIO Actor (EOS Account) from a public key
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func ActorFromPub(pubKey string) (eos.AccountName, error) {
 	// ensure the key is valid base58, and the 160 checksum is correct before encoding
 	p, err := ecc.NewPublicKey(pubKey)
@@ -163,6 +171,8 @@ type KeyWeight struct {
 
 // GetFioAccount gets information about an account, it should be used instead of GetAccount due to differences in
 // public key formatting in eos vs fio packages.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFioAccount(actor string) (*AccountResp, error) {
 	q := bytes.NewReader([]byte(`{"account_name": "` + actor + `"}`))
 	resp, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_account", "application/json", q)
@@ -180,6 +190,8 @@ func (api *API) GetFioAccount(actor string) (*AccountResp, error) {
 }
 
 // pubFromEos is a convenience function that returns the FIO pub address from an EOS pub address
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func pubFromEos(eosPub string) (fioPub string) {
 	return "FIO" + eosPub[3:]
 }

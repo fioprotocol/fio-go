@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fioprotocol/fio-go"
-	"github.com/fioprotocol/fio-go/eos"
+	"github.com/blockpane/eos-go"
+	"github.com/fioprotocol/fio-go/v2"
 	"log"
+	"time"
 )
 
 func main() {
@@ -14,13 +16,21 @@ func main() {
 		domain = "fiotestnet"
 	)
 
+	// error helper
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	e := func(err error) {
 		if err != nil {
-			log.Fatal(err)
+			trace := log.Output(2, err.Error())
+			log.Fatal(trace)
 		}
 	}
+	// context helper
+	cx := func() context.Context {
+		ctx, _ := context.WithTimeout(context.Background(), 3 * time.Second)
+		return ctx
+	}
 
-	api, _, err := fio.NewConnection(nil, host)
+	api, _, err := fio.NewConnection(cx(), nil, host)
 	e(err)
 
 	// because the fio domain is a string, it can only be searched via secondary index. The I128 function implements
@@ -32,7 +42,7 @@ func main() {
 		Account string `json:"account"`
 	}
 
-	getRows, err := api.GetTableRows(eos.GetTableRowsRequest{
+	getRows, err := api.GetTableRows(cx(), eos.GetTableRowsRequest{
 		Code:       "fio.address",
 		Scope:      "fio.address",
 		Table:      "domains",

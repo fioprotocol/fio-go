@@ -3,10 +3,12 @@ package main
 // example of registering a domain and an address
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fioprotocol/fio-go"
+	"github.com/fioprotocol/fio-go/v2"
 	"log"
+	"time"
 )
 
 func main() {
@@ -18,18 +20,26 @@ func main() {
 		address = `name@example-domain`
 	)
 
-	fatal := func(e error) {
-		if e != nil {
-			log.Fatal(e)
+	// error helper
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	fatal := func(err error) {
+		if err != nil {
+			trace := log.Output(2, err.Error())
+			log.Fatal(trace)
 		}
+	}
+	// context helper
+	cx := func() context.Context {
+		ctx, _ := context.WithTimeout(context.Background(), 3 * time.Second)
+		return ctx
 	}
 
 	// open a new connection to nodeos with credentials
-	account, api, _, err := fio.NewWifConnect(wif, url)
+	account, api, _, err := fio.NewWifConnect(cx(), wif, url)
 	fatal(err)
 
 	// register a new domain
-	_, err = api.SignPushActions(fio.NewRegDomain(account.Actor, domain, account.PubKey))
+	_, err = api.SignPushActions(cx(), fio.NewRegDomain(account.Actor, domain, account.PubKey))
 	fatal(err)
 
 	// register an address
@@ -37,7 +47,7 @@ func main() {
 	if !ok {
 		log.Fatal("invalid address")
 	}
-	resp, err := api.SignPushActions(addr)
+	resp, err := api.SignPushActions(cx(), addr)
 	fatal(err)
 
 	j, err := json.MarshalIndent(resp, "", "")

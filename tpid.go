@@ -13,6 +13,8 @@ var tpidMux sync.RWMutex
 // SetTpid will set a package variable that will include the provided TPID in all of the calls that support it.
 // This only needs to be called once. By default it is empty, and is recommended for wallet providers or other
 // service providers to set at initialization via SetTpid to get rewards.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func SetTpid(walletAddress string) (ok bool) {
 	tpidMux.Lock()
 	defer tpidMux.Unlock()
@@ -23,6 +25,7 @@ func SetTpid(walletAddress string) (ok bool) {
 	return false
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func CurrentTpid() string {
 	tpidMux.RLock()
 	a := globalTpid
@@ -35,6 +38,7 @@ type PayTpidRewards struct {
 	Actor eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewPayTpidRewards(actor eos.AccountName) *Action {
 	return NewAction(
 		eos.AccountName("fio.treasury"), "tpidclaim", actor,
@@ -49,6 +53,7 @@ type UpdateTpid struct {
 	Amount uint64           `json:"amount"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewUpdateTpid(actor eos.AccountName, tpid string, amount uint64) *Action {
 	return NewAction(
 		"fio.tpid", "updatepid", actor,
@@ -65,6 +70,7 @@ type RewardsPaid struct {
 	Tpid string `json:"tpid"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRewardsPaid(actor eos.AccountName, tpid string) *Action {
 	return NewAction(
 		"fio.tpid", "rewardspaid", actor,
@@ -80,6 +86,7 @@ type UpdateBounty struct {
 	Amount uint64 `json:"amount"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewUpdateBounty(actor eos.AccountName, amount uint64) *Action {
 	return NewAction(
 		"fio.tpid", "updatebounty", actor,

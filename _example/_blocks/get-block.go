@@ -1,8 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/fioprotocol/fio-go"
+	"github.com/fioprotocol/fio-go/v2"
 	"log"
 	"time"
 )
@@ -21,9 +22,8 @@ done over a local connection. See README.md for more details.
 
 */
 
-const nodeos = "http://testnet:8888"
-
 func main() {
+	const nodeos = "http://testnet:8888"
 
 	// error helper
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -33,18 +33,23 @@ func main() {
 			log.Fatal(trace)
 		}
 	}
+	// context helper
+	cx := func() context.Context {
+		ctx, _ := context.WithTimeout(context.Background(), 3 * time.Second)
+		return ctx
+	}
 
 	// connect
-	api, _, err := fio.NewConnection(nil, nodeos)
+	api, _, err := fio.NewConnection(cx(), nil, nodeos)
 	e(err)
 
 	// get *all* known ABIs for decoding action data, this is a shortcut providing a map of all current ABIs
 	// this is only possible because FIO is not a general-purpose smart-contract platform and only has
 	// eight ABIs defined.
-	abis, err := api.AllABIs()
+	abis, err := api.AllABIs(cx(), )
 	e(err)
 
-	gi, err := api.GetInfo()
+	gi, err := api.GetInfo(cx(), )
 	e(err)
 
 	// tracks current block number
@@ -57,7 +62,7 @@ func main() {
 		for {
 			select {
 			case <-tick.C:
-				gi, err := api.GetInfo()
+				gi, err := api.GetInfo(cx(), )
 				e(err)
 				lib = gi.LastIrreversibleBlockNum
 			}
@@ -76,7 +81,7 @@ func main() {
 			}
 
 			// fetch the raw block
-			block, err := api.GetBlockByNum(blockNum)
+			block, err := api.GetBlockByNum(cx(), blockNum)
 			e(err)
 
 			if len(block.Transactions) > 0 {

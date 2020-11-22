@@ -27,6 +27,8 @@ type Address string
 //       only one @ and at least one a-z0-9 on either side of @.
 //       a-z0-9 is required on either side of any dash
 //    Case-insensitive
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (a Address) Valid() (ok bool) {
 	if len(string(a)) < 3 || len(string(a)) > 64 {
 		return false
@@ -49,6 +51,7 @@ type RegAddress struct {
 	Tpid              string          `json:"tpid"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (action *Action, ok bool) {
 	if ok := address.Valid(); !ok {
 		return nil, false
@@ -66,6 +69,8 @@ func NewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (
 }
 
 // MustNewRegAddress panics on a bad address, but allows embedding because it only returns one value
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func MustNewRegAddress(actor eos.AccountName, address Address, ownerPubKey string) (action *Action) {
 	a, ok := NewRegAddress(actor, address, ownerPubKey)
 	if !ok {
@@ -82,6 +87,7 @@ type BurnAddress struct {
 	MaxFee     uint64          `json:"max_fee"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewBurnAddress(actor eos.AccountName, address Address, tpid string) (action *Action, ok bool) {
 	if ok := address.Valid(); !ok {
 		return nil, false
@@ -96,6 +102,7 @@ func NewBurnAddress(actor eos.AccountName, address Address, tpid string) (action
 	), true
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func MustNewBurnAddress(actor eos.AccountName, address Address, tpid string) (action *Action) {
 	a, ok := NewBurnAddress(actor, address, tpid)
 	if !ok {
@@ -125,6 +132,8 @@ type TokenPubAddr struct {
 }
 
 // NewAddAddress adds a single public address
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, chain string, publicAddress string) (action *Action, ok bool) {
 	if !fioAddress.Valid() {
 		return nil, false
@@ -150,6 +159,8 @@ func NewAddAddress(actor eos.AccountName, fioAddress Address, token string, chai
 }
 
 // NewAddAddresses adds multiple public addresses at a time
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewAddAddresses(actor eos.AccountName, fioAddress Address, addrs []TokenPubAddr) (action *Action, ok bool) {
 	if !fioAddress.Valid() {
 		return nil, false
@@ -185,6 +196,7 @@ type RegDomain struct {
 	Tpid              string          `json:"tpid"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRegDomain(actor eos.AccountName, domain string, ownerPubKey string) *Action {
 	return NewAction(
 		"fio.address", "regdomain", actor,
@@ -206,6 +218,7 @@ type RenewDomain struct {
 	Actor     eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRenewDomain(actor eos.AccountName, domain string) *Action {
 	return NewAction(
 		"fio.address", "renewdomain", actor,
@@ -227,6 +240,7 @@ type TransferDom struct {
 	Actor                eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewTransferDom(actor eos.AccountName, domain string, newOwnerPubKey string) *Action {
 	return NewAction(
 		"fio.address", "xferdomain", actor,
@@ -248,6 +262,7 @@ type RenewAddress struct {
 	Actor      eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRenewAddress(actor eos.AccountName, address string) *Action {
 	return NewAction(
 		"fio.address", "renewaddress", actor,
@@ -269,6 +284,7 @@ type TransferAddress struct {
 	Actor                eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewTransferAddress(actor eos.AccountName, address Address, newOwnerPubKey string) *Action {
 	return NewAction(
 		"fio.address", "xferaddress", actor,
@@ -306,6 +322,7 @@ func NewExpDomain(actor eos.AccountName, domain string) *Action {
 // BurnExpired is intended to be called by block producers to remove expired domains or addresses from RAM
 type BurnExpired struct{}
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewBurnExpired(actor eos.AccountName) *Action {
 	return NewAction(
 		"fio.address", "burnexpired", actor,
@@ -322,6 +339,7 @@ type SetDomainPub struct {
 	Tpid      string          `json:"tpid"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewSetDomainPub(actor eos.AccountName, domain string, public bool) *Action {
 	isPublic := 0
 	if public {
@@ -351,6 +369,8 @@ type pubAddressRequest struct {
 }
 
 // GetPublic is an alias to PubAddressLookup to correct the confusing name for the lookup.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetPublic(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
 	return api.PubAddressLookup(fioAddress, chain, token)
 }
@@ -360,6 +380,8 @@ type getAllPublicResp struct {
 }
 
 // GetAllPublic fetches all public addresses for an address.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetAllPublic(fioAddress Address) ([]TokenPubAddr, error) {
 	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:       "fio.address",
@@ -385,6 +407,8 @@ func (api *API) GetAllPublic(fioAddress Address) ([]TokenPubAddr, error) {
 
 // PubAddressLookup finds a public address for a user, given a currency key
 //  pubAddress, ok, err := api.PubAddressLookup(fio.Address("alice:fio", "BTC")
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) PubAddressLookup(fioAddress Address, chain string, token string) (address PubAddress, found bool, err error) {
 	if token == "" {
 		token = chain
@@ -445,6 +469,8 @@ type getFioNamesRequest struct {
 }
 
 // GetFioNames provides a list of domains and addresses for a public key
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFioNames(pubKey string) (names FioNames, found bool, err error) {
 	query := getFioNamesRequest{
 		FioPublicKey: pubKey,
@@ -474,6 +500,7 @@ func (api *API) GetFioNames(pubKey string) (names FioNames, found bool, err erro
 	return
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) getFioDomainsOrNames(endpoint string, pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
 	_, err = ActorFromPub(pubKey)
 	if err != nil {
@@ -507,6 +534,8 @@ func (api *API) getFioDomainsOrNames(endpoint string, pubKey string, offset uint
 // GetFioDomains queries for the domains owned by a Public Key. It offers paging which makes it preferable to GetFioNames
 // which may not provide the full set of results because of (silent, without error) database query timeout issues.
 // offset and limit must both be positive numbers. The returned uint32 specifies how many more results are available.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFioDomains(pubKey string, offset uint32, limit uint32) (domains *FioNames, err error) {
 	return api.getFioDomainsOrNames("get_fio_domains", pubKey, offset, limit)
 }
@@ -514,6 +543,8 @@ func (api *API) GetFioDomains(pubKey string, offset uint32, limit uint32) (domai
 // GetFioAddresses queries for the FIO Addresses owned by a Public Key. It offers paging which makes it preferable to GetFioNames
 // which may not provide the full set of results because of (silent, without error) database query timeout issues.
 // offset and limit must both be positive numbers. The returned uint32 specifies how many more results are available.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFioAddresses(pubKey string, offset uint32, limit uint32) (addresses *FioNames, err error) {
 	return api.getFioDomainsOrNames("get_fio_addresses", pubKey, offset, limit)
 }
@@ -524,6 +555,8 @@ type accountMap struct {
 
 // GetFioNamesForActor searches the accountmap table to get a public key, then searches for fio names or domains belonging
 // to the associated public key
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, err error) {
 	name, err := eos.StringToName(actor)
 	if err != nil {
@@ -556,6 +589,8 @@ func (api *API) GetFioNamesForActor(actor string) (names FioNames, found bool, e
 
 // I128Hash hashes a string to an i128 database value, often used as an index for a string in a table.
 // It is the most-significant 16 bytes in big-endian of a sha1 hash of the provided string, returned as a hex-string
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func I128Hash(s string) string {
 	sha := sha1.New() // #nosec
 	_, err := sha.Write([]byte(s))
@@ -578,6 +613,8 @@ func I128Hash(s string) string {
 //      "index_position": "4",
 //      "json": true
 //    }
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func DomainNameHash(s string) string {
 	return I128Hash(s)
 }
@@ -594,6 +631,8 @@ func DomainNameHash(s string) string {
 //      "index_position": "5",
 //      "json": true
 //    }
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func AddressHash(s string) string {
 	return I128Hash(s)
 }
@@ -615,6 +654,8 @@ type DomainResp struct {
 }
 
 // GetDomainOwner finds the account that is the owner of a domain
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetDomainOwner(domain string) (actor *eos.AccountName, err error) {
 	dnh := DomainNameHash(domain)
 	resp, err := api.GetTableRows(eos.GetTableRowsRequest{
@@ -654,6 +695,8 @@ type AvailCheckResp struct {
 }
 
 // AvailCheck responds with true if a domain or FIO address is available to be registered
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) AvailCheck(addressOrDomain string) (available bool, err error) {
 	req := &AvailCheckReq{FioName: addressOrDomain}
 	j, _ := json.Marshal(req)
@@ -686,6 +729,8 @@ type RemoveAddrReq struct {
 }
 
 // NewRemoveAddrReq allows removal of public token/chain addresses
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor eos.AccountName) (remove *Action, err error) {
 	if !fioAddress.Valid() {
 		return nil, errors.New("invalid address")
@@ -714,6 +759,8 @@ type RemoveAllAddrReq struct {
 }
 
 // NewRemoveAllAddrReq allows removal of ALL public token/chain addresses
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRemoveAllAddrReq(fioAddress Address, actor eos.AccountName) (remove *Action, err error) {
 	if !fioAddress.Valid() {
 		return nil, errors.New("invalid address")
@@ -734,6 +781,8 @@ type bundleRemaining struct {
 }
 
 // GetBundleRemaining reports on how many free bundled tx remain for an Address
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetBundleRemaining(a Address) (remaining int, err error) {
 	if !a.Valid() {
 		return 0, errors.New("invalid FIO address")

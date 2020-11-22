@@ -8,6 +8,8 @@ const FioSymbol = "ᵮ"
 
 // Tokens is a convenience function for converting from a float for human readability.
 // Example 1 FIO Token: Tokens(1.0) == uint64(1000000000)
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func Tokens(tokens float64) uint64 {
 	return uint64(tokens * 1000000000.0)
 }
@@ -22,6 +24,8 @@ type TransferTokensPubKey struct {
 }
 
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewTransferTokensPubKey(actor eos.AccountName, recipientPubKey string, amount uint64) *Action {
 	return NewAction(
 		"fio.token", "trnsfiopubky", actor,
@@ -64,6 +68,8 @@ func NewTransfer(actor eos.AccountName, recipient eos.AccountName, amount uint64
 }
 
 // GetBalance gets an account's balance
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetBalance(account eos.AccountName) (float64, error) {
 	a, err := api.GetCurrencyBalance(account, "FIO", eos.AccountName("fio.token"))
 	if err != nil {

@@ -146,6 +146,8 @@ func UpdateMaxFees(api *API) bool {
 
 // RefreshFees refreshes the maxFees map from the on-chain table. This is automatically called
 // by NewConnection if fees are not already up-to-date.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) RefreshFees() bool {
 	fees, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:  "fio.fee",
@@ -173,6 +175,8 @@ func (api *API) RefreshFees() bool {
 
 // GetMaxFee looks up a fee from the map, this is based on the values in the fiofees table, and does not take into
 // account any bundled transactions for the user, use GetFee() for that.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func GetMaxFee(name string) (fioTokens float64) {
 	maxFeeMutex.RLock()
 	fioTokens = maxFees[name]
@@ -181,6 +185,8 @@ func GetMaxFee(name string) (fioTokens float64) {
 }
 
 // GetMaxFeeByAction allows getting a fee given the contract action name instead of the API endpoint name.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func GetMaxFeeByAction(name string) (fioTokens float64) {
 	maxFeeMutex.RLock()
 	maxFeeActionMutex.RLock()
@@ -202,6 +208,8 @@ type GetFeeResponse struct {
 // GetFee calls the API endpoint to calculate a fee for a FIO address, taking bundled transactions into account.
 // It is an API member function because it is neither tied to the current user, and is not a signed tx.
 // To get the actual fee schedule for an transaction use GetMaxFee() or GetMaxFeeByAction()
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFee(fioAddress string, endPoint string) (fee uint64, err error) {
 	j, err := json.Marshal(&GetFeeRequest{FioAddress: fioAddress, EndPoint: endPoint})
 	if err != nil {
@@ -225,11 +233,15 @@ func (api *API) GetFee(fioAddress string, endPoint string) (fee uint64, err erro
 }
 
 // MaxFeesUpdated checks if the fee map has been updated, or if using the default (possibly wrong) values
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func MaxFeesUpdated() bool {
 	return maxFeesUpdated
 }
 
 // MaxFeesJson provides a JSON representation of the current fee map
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func MaxFeesJson() []byte {
 	maxFeeMutex.RLock()
 	j, _ := json.MarshalIndent(maxFees, "", "  ")
@@ -251,6 +263,8 @@ type FeeValue struct {
 }
 
 // GetMaxFees gets the current max fees as a slice of FeeValue
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func GetMaxFees() []FeeValue {
 	fees := make([]FeeValue, len(maxFees))
 	maxFeeMutex.Lock()
@@ -274,6 +288,7 @@ type SetFeeVote struct {
 	Actor     eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewSetFeeVote(ratios []*FeeValue, actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "setfeevote", actor,
 		SetFeeVote{
@@ -291,6 +306,7 @@ type BundleVote struct {
 	MaxFee              uint64 `json:"max_fee"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewBundleVote(transactions int64, actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "bundlevote", actor,
 		BundleVote{
@@ -308,6 +324,7 @@ type SetFeeMult struct {
 	Actor      eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "setfeemult", actor,
 		SetFeeMult{
@@ -322,6 +339,7 @@ func NewSetFeeMult(multiplier float64, actor eos.AccountName) *Action {
 // calling the fio.fee::computefees endpoint will return an error if there is no work.
 type ComputeFees struct{}
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewComputeFees(actor eos.AccountName) *Action {
 	return NewAction("fio.fee", "computefees", actor, ComputeFees{})
 }

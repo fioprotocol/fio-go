@@ -5,24 +5,12 @@ Library for interacting with the FIO network using the go language.
 
 ## Breaking Changes
 
-In 1.0.0 and later eos-go has been imported, this is to facilitate ECC changes needed for FIO and to ensure API stability.
-Updating existing code using eos-go dependencies should only require:
+The v2 release incorporates the latest eos-go library, and has removed the forked copy. This directory has v1 to
+ensure long-term compatibility, but it is highly recommended to update downstream programs to use v2.
 
-```
-import (
-	"github.com/eoscanada/eos-go"
-	"github.com/eoscanada/eos-go/ecc"
-)
-```
-
-becomes:
-
-```
-import (
-	"github.com/fioprotocol/fio-go/eos"
-	"github.com/fioprotocol/fio-go/eos/ecc"
-)
-```
+One major change in v2 is that most API calls require a `context.Context` to be supplied. And eos-go has added features
+allowing overrides of the compatibility prefix in the `ecc` package, eliminating the need for a fork of eos-go to
+remain in the repository.
 
 ## Example
 
@@ -32,9 +20,10 @@ This demonstrates using the library to send FIO tokens from one account to anoth
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fioprotocol/fio-go"
+	"github.com/fioprotocol/fio-go/v2"
 	"log"
 )
 
@@ -52,11 +41,11 @@ func main() {
 	}
 
 	// connect to the network, using credentials
-	account, api, _, err := fio.NewWifConnect(wif, url)
+	account, api, _, err := fio.NewWifConnect(context.Background(), wif, url)
 	fatal(err)
 
 	// send ᵮ1.00
-	resp, err := api.SignPushActions(fio.NewTransferTokensPubKey(account.Actor, to, fio.Tokens(1.0)))
+	resp, err := api.SignPushActions(context.Background(), fio.NewTransferTokensPubKey(account.Actor, to, fio.Tokens(1.0)))
 	fatal(err)
 
 	// print the result

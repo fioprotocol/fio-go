@@ -25,6 +25,8 @@ type VoteProducer struct {
 }
 
 // NewVoteProducer creates a VoteProducer action: note - fioAddress is optional as of FIP-009
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress string) *Action {
 	sort.Strings(producers)
 	return NewAction(
@@ -44,6 +46,7 @@ type BpClaim struct {
 	Actor      eos.AccountName `json:"actor"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewBpClaim(fioAddress string, actor eos.AccountName) *Action {
 	return NewAction(
 		eos.AccountName("fio.treasury"), "bpclaim", actor,
@@ -77,6 +80,7 @@ type RegProducer struct {
 	MaxFee     uint64           `json:"max_fee"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRegProducer(fioAddress string, fioPubKey string, url string, location ProducerLocation, actor eos.AccountName) (*Action, error) {
 	if !strings.HasPrefix(url, "http") {
 		return nil, errors.New("url must begin with http:// or https://")
@@ -95,6 +99,7 @@ func NewRegProducer(fioAddress string, fioPubKey string, url string, location Pr
 		}), nil
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func MustNewRegProducer(fioAddress string, fioPubKey string, url string, location ProducerLocation, actor eos.AccountName) *Action {
 	p, err := NewRegProducer(fioAddress, fioPubKey, url, location, actor)
 	if err != nil {
@@ -110,6 +115,7 @@ type UnRegProducer struct {
 	MaxFee     uint64           `json:"max_fee"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
 	return NewAction("eosio", "unregprod", actor, UnRegProducer{
 		FioAddress: fioAddress,
@@ -126,6 +132,8 @@ type VoteProxy struct {
 }
 
 // NewVoteProxy creates a VoteProxy action: note - fioAddress is optional as of FIP-009
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Action {
 	return NewAction("eosio", "voteproxy", actor,
 		VoteProxy{
@@ -143,6 +151,7 @@ type RegProxy struct {
 	MaxFee     uint64           `json:"max_fee"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
 	return NewAction("eosio", "regproxy", actor,
 		RegProxy{
@@ -169,6 +178,7 @@ type ProducerSchedule struct {
 	Proposed Schedule `json:"proposed"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetProducerSchedule() (*ProducerSchedule, error) {
 	res, err := api.HttpClient.Post(api.BaseURL+"/v1/chain/get_producer_schedule", "application/json", bytes.NewReader(nil))
 	if err != nil {
@@ -210,6 +220,8 @@ type Producer struct {
 // GetFioProducers retrieves the producer table.
 // The producers table is a little different on FIO, use this instead of the GetProducers call from eos-go
 // TODO: it defaults to a limit of 1,000 ... may want to rethink this as a default
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetFioProducers() (fioProducers *Producers, err error) {
 	req, err := http.NewRequest("POST", api.BaseURL+`/v1/chain/get_producers`, bytes.NewReader([]byte(`{"limit": 1000}`)))
 	if err != nil {
@@ -284,11 +296,15 @@ type BpJson struct {
 // GetBpJson attempts to retrieve the bp.json file for a producer based on the URL in the eosio.producers table.
 // It intentionally rejects URLs that are an IP address, or resolve to a private IP address to reduce the risk of
 // SSRF attacks, note however this check is not comprehensive, and is not risk free.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetBpJson(producer eos.AccountName) (*BpJson, error) {
 	return api.getBpJson(producer, false)
 }
 
 // allows override of private ip check for tests
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, error) {
 	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:       "eosio",
@@ -431,6 +447,8 @@ type prodRow struct {
 }
 
 // GetVotes returns a slice of an account's current votes
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetVotes(account string) (votedFor []string, err error) {
 	getVote, err := api.GetTableRows(eos.GetTableRowsRequest{
 		Code:  "eosio",

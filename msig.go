@@ -15,6 +15,7 @@ import (
 // PermissionLevel wraps eos-go's type to add member functions
 type PermissionLevel eos.PermissionLevel
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewPermissionLevel(account eos.AccountName) *PermissionLevel {
 	return &PermissionLevel{
 		Actor:      account,
@@ -23,6 +24,8 @@ func NewPermissionLevel(account eos.AccountName) *PermissionLevel {
 }
 
 // NewPermissionLevelSlice is a convenience function for quickly building a slice of active permissions
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewPermissionLevelSlice(accounts []string) []*PermissionLevel {
 	l := make([]*PermissionLevel, 0)
 	sort.Strings(accounts)
@@ -33,6 +36,8 @@ func NewPermissionLevelSlice(accounts []string) []*PermissionLevel {
 }
 
 // ToEos converts from fio.PermissionLevel to eos.PermissionLevel
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (pl PermissionLevel) ToEos() *eos.PermissionLevel {
 	return &eos.PermissionLevel{
 		Actor:      pl.Actor,
@@ -60,6 +65,8 @@ type MsigApprovalsInfo struct {
 }
 
 // GetApprovals returns a list of approvals for an account
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetApprovals(scope Name, limit int) (more bool, info []*MsigApprovalsInfo, err error) {
 	name, err := eos.StringToName(string(scope))
 	if err != nil {
@@ -82,6 +89,8 @@ func (api *API) GetApprovals(scope Name, limit int) (more bool, info []*MsigAppr
 }
 
 // HasRequested checks if an account is on the list of requested signatures
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (info MsigApprovalsInfo) HasRequested(actor eos.AccountName) bool {
 	for _, r := range info.RequestedApprovals {
 		if r.Level.Actor == actor {
@@ -92,6 +101,8 @@ func (info MsigApprovalsInfo) HasRequested(actor eos.AccountName) bool {
 }
 
 // HasApproved checks if an account has provided a signature
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (info MsigApprovalsInfo) HasApproved(actor eos.AccountName) bool {
 	for _, p := range info.ProvidedApprovals {
 		if p.Level.Actor == actor {
@@ -143,6 +154,7 @@ type MsigApprove struct {
 	ProposalHash eos.Checksum256 `json:"proposal_hash"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewMsigApprove(proposer eos.AccountName, proposal eos.Name, actor eos.AccountName, proposalHash eos.Checksum256) *Action {
 	return NewAction("eosio.msig", "approve", actor,
 		&MsigApprove{
@@ -166,6 +178,7 @@ type MsigCancel struct {
 	MaxFee       uint64           `json:"max_fee"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewMsigCancel(proposer eos.AccountName, proposal eos.Name, actor eos.AccountName) *Action {
 	return NewAction("eosio.msig", "cancel", actor,
 		&MsigCancel{
@@ -185,6 +198,7 @@ type MsigExec struct {
 	Executer     eos.AccountName `json:"executer"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewMsigExec(proposer eos.AccountName, proposal eos.Name, fee uint64, actor eos.AccountName) *Action {
 	return NewAction("eosio.msig", "exec", actor,
 		&MsigExec{
@@ -221,6 +235,8 @@ type MsigWrappedPropose struct {
 
 // NewMsigPropose is provided for consistency, but it will make more sense to use NewSignedMsigPropose to build *simple*
 // multisig proposals since it abstracts several steps.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*PermissionLevel, signedTx *eos.SignedTransaction) *Action {
 	var feeBytes uint64
 	packedTx, err := signedTx.Pack(CompressionNone)
@@ -241,6 +257,8 @@ func NewMsigPropose(proposer eos.AccountName, proposal eos.Name, signers []*Perm
 
 // NewSignedMsigPropose simplifies the process of building an MsigPropose by packing and signing the slice of Actions provided into a TX
 // and then wrapping that into a signed transaction ready to be submitted.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) NewSignedMsigPropose(proposalName Name, approvers []string, actions []*Action, expires time.Duration, signer *Account, txOpt *TxOptions) (*eos.PackedTransaction, error) {
 	if len(actions) == 0 {
 		return nil, errors.New("no actions provided")
@@ -287,6 +305,7 @@ type MsigUnapprove struct {
 	MaxFee       uint64           `json:"max_fee"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewMsigUnapprove(proposer eos.AccountName, proposal eos.Name, actor eos.AccountName) *Action {
 	return NewAction("eosio.msig", "unapprove", actor,
 		&MsigUnapprove{
@@ -310,6 +329,8 @@ type UpdateAuth struct {
 }
 
 // NewUpdateAuthSimple just takes a list of accounts and a threshold. Nothing fancy, most basic EOS msig account.
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewUpdateAuthSimple(account eos.AccountName, actors []string, threshold uint32) *Action {
 	acts := make([]eos.PermissionLevelWeight, 0)
 	sort.Strings(actors) // actors must be sorted in ascending alphabetic order, or will get an invalid {$auth} error.
@@ -343,6 +364,8 @@ type MsigProposal struct {
 }
 
 // GetProposalTransaction will lookup a specific proposal
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetProposalTransaction(proposalAuthor eos.AccountName, proposalName eos.Name) (*MsigProposal, error) {
 	name, err := eos.StringToName(string(proposalAuthor))
 	if err != nil {
@@ -392,6 +415,8 @@ type scopeResp struct {
 }
 
 // GetProposals fetches the proposal list from eosio.msig returning a map of scopes, with a count for each
+//
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func (api *API) GetProposals(offset int, limit int) (more bool, scopes map[string]int, err error) {
 	res, err := api.GetTableByScopeMore(eos.GetTableByScopeRequest{
 		Code:       "eosio.msig",
@@ -423,6 +448,7 @@ type WrapExecute struct {
 	Trx      *eos.Transaction `json:"trx"`
 }
 
+// Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
 func NewWrapExecute(actor eos.AccountName, executor eos.AccountName, trx *eos.Transaction) *Action {
 	trx.Expiration = eos.JSONTime{Time: time.Unix(0, 0)}
 	trx.RefBlockPrefix = 0

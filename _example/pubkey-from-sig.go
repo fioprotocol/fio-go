@@ -6,12 +6,14 @@ the important part here is using the sig digest to derive the public key.
 */
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/fioprotocol/fio-go"
-	"github.com/fioprotocol/fio-go/eos"
+	"github.com/blockpane/eos-go"
+	"github.com/fioprotocol/fio-go/v2"
 	"log"
+	"time"
 )
 
 // NOTE: this example relies upon a v1 history node, otherwise will result in the error:
@@ -21,11 +23,18 @@ func main() {
 
 	const nodeos = "https://testnet.fio.dev"
 
-	// just a helper to keep noise down in the example, bails on an error
+	// error helper
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	e := func(err error) {
 		if err != nil {
-			log.Fatal(err)
+			trace := log.Output(2, err.Error())
+			log.Fatal(trace)
 		}
+	}
+	// context helper
+	cx := func() context.Context {
+		ctx, _ := context.WithTimeout(context.Background(), 3 * time.Second)
+		return ctx
 	}
 
 	// chain id is used to derive the signer's key
@@ -57,9 +66,9 @@ func main() {
 		fmt.Println("Oh no, actor", unpacked.Actions[0].Authorization[0].Actor, "and signer", actor, "differ!")
 
 		// find what accounts the signer has been granted access to:
-		api, _, err := fio.NewConnection(nil, nodeos)
+		api, _, err := fio.NewConnection(cx(), nil, nodeos)
 		e(err)
-		resp, err := api.GetKeyAccounts(pk.String())
+		resp, err := api.GetKeyAccounts(cx(), pk.String())
 		e(err)
 
 		for _, controlled := range resp.AccountNames {
