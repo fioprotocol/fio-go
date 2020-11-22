@@ -3,6 +3,8 @@ EOS.IO API library for Go
 
 ## Forked for fio-go at release v0.8.16
 
+**This is retained for fio-go v1, but is not needed when using fio-go/v2 which is the recommended version**
+
 [点击查看中文版](./README-cn.md)
 
 
