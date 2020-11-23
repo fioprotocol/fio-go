@@ -305,8 +305,8 @@ type UpdateAuth struct {
 	Account    eos.AccountName `json:"account"`
 	Permission eos.Name        `json:"permission"`
 	Parent     eos.Name        `json:"parent"`
-	Auth       Authority        `json:"auth"`
-	MaxFee     uint64           `json:"max_fee"`
+	Auth       eos.Authority   `json:"auth"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 // NewUpdateAuthSimple just takes a list of accounts and a threshold. Nothing fancy, most basic EOS msig account.
