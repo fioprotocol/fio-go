@@ -66,23 +66,6 @@ const (
 	CompressionZlib
 )
 
-// NewTransaction wraps eos.NewTransaction
-func NewTransaction(actions []*Action, txOpts *TxOptions) *eos.Transaction {
-	eosActions := make([]*eos.Action, 0)
-	for _, a := range actions {
-		eosActions = append(
-			eosActions,
-			&eos.Action{
-				Account:       a.Account,
-				Name:          a.Name,
-				Authorization: a.Authorization,
-				ActionData:    a.ActionData,
-			},
-		)
-	}
-	return eos.NewTransaction(eosActions, txOpts.toEos())
-}
-
 // NewConnection sets up the API interface for interacting with the FIO API
 func NewConnection(ctx context.Context, keyBag *eos.KeyBag, url string) (*API, *TxOptions, error) {
 	var api = eos.New(url)
@@ -611,14 +594,57 @@ func enc(v interface{}) (io.Reader, error) {
 	return buffer, nil
 }
 
+// NewTransaction duplicates eos.NewTransaction allowing fio.Actions and converts them to *eos.Action
+func NewTransaction(actions []*Action, txOpts *TxOptions) *eos.Transaction {
+	eosActions := make([]*eos.Action, 0)
+	for _, a := range actions {
+		eosActions = append(
+			eosActions,
+			&eos.Action{
+				Account:       a.Account,
+				Name:          a.Name,
+				Authorization: a.Authorization,
+				ActionData:    a.ActionData,
+			},
+		)
+	}
+	return eos.NewTransaction(eosActions, txOpts.toEos())
+}
+
+// NewTransactionCheckFee checks each action to ensure there will be no integer overflows, some fees are
+// typed as unsigned and some signed. This is preferred over NewTransaction, but returns an error.
+func NewTransactionCheckFee(actions []*Action, txOpts *TxOptions) (*eos.Transaction, error) {
+	var e error
+	for i := range actions {
+		if e = checkFioFeeRange(actions[i]); e != nil {
+			return nil, e
+		}
+	}
+	return NewTransaction(actions, txOpts), nil
+}
+
 // SignPushActions will create a transaction, fill it with default
 // values, sign it and submit it to the chain.  It is the highest
 // level function on top of the `/v1/chain/push_transaction` endpoint.
-// Overridden from eos-go to make it unnecessary to use .ToEos() casting on actions.
+//
+// Duplicated from eos-go to make it unnecessary to use .ToEos() casting on actions.
 func (api *API) SignPushActions(ctx context.Context, a ...*Action) (out *eos.PushTransactionFullResp, err error) {
-	b := make([]*eos.Action, len(a))
-	for i, act := range a {
-		b[i] = act.ToEos()
+	return api.SignPushActionsWithOpts(ctx, a, nil)
+}
+
+// SignPushActionsWithOpts allows providing TxOptions, mostly useful for setting a custom expiration.
+//
+// Duplicated from eos-go to make it unnecessary to use .ToEos() casting on actions.
+func (api *API) SignPushActionsWithOpts(ctx context.Context, actions []*Action, opts *TxOptions) (out *eos.PushTransactionFullResp, err error) {
+	if opts == nil {
+		opts = &TxOptions{}
 	}
-	return api.SignPushActionsWithOpts(ctx, b, nil)
+
+	if err := opts.FillFromChain(ctx, api.API); err != nil {
+		return nil, err
+	}
+
+	tx := NewTransaction(actions, opts)
+
+	return api.SignPushTransaction(ctx, tx, opts.ChainID, opts.Compress)
 }

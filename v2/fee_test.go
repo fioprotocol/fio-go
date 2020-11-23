@@ -57,14 +57,14 @@ func Test_NewSetFeeVote(t *testing.T) {
 	}
 
 	opts.Compress = CompressionZlib
-	resp, err := api.SignPushActionsWithOpts(ctxTimeout(), []*eos.Action{
+	resp, err := api.SignPushActionsWithOpts(ctxTimeout(), []*Action{
 		NewSetFeeVote([]*FeeValue{
 			{
 				EndPoint: "register_fio_domain",
 				Value:    40000000000,
 			},
-		}, acc.Actor).ToEos(),
-	}, &opts.TxOptions)
+		}, acc.Actor),
+	}, opts)
 	if err != nil {
 		t.Error(err)
 		fmt.Println(resp)
@@ -102,7 +102,7 @@ func Test_FeeOverUnderflow(t *testing.T) {
 		Actor: account.Actor,
 		Tpid: "123@test",
 	})
-	_, _, err = api.SignTransaction(ctxTimeout(), NewTransaction([]*Action{underFlowFee}, opts), opts.ChainID, CompressionNone)
+	_, err = NewTransactionCheckFee([]*Action{underFlowFee}, opts)
 	if err == nil {
 		t.Error("potential uint underflow not blocked when signing transaction")
 	}
@@ -115,7 +115,7 @@ func Test_FeeOverUnderflow(t *testing.T) {
 		Actor: account.Actor,
 		Tpid: "123@test",
 	})
-	_, _, err = api.SignTransaction(ctxTimeout(), NewTransaction([]*Action{overFlowFee}, opts), opts.ChainID, CompressionNone)
+	_, err = NewTransactionCheckFee([]*Action{overFlowFee}, opts)
 	if err == nil {
 		t.Error("potential int overflow not blocked when signing transaction")
 	}
@@ -126,7 +126,7 @@ func Test_FeeOverUnderflow(t *testing.T) {
 		MaxFee int64 `json:"max_fee"`
 	}
 	underFlowAbi := NewAction("fake", "action", account.Actor, fakeAction{MaxFee: -1})
-	_, _, err = api.SignTransaction(ctxTimeout(), NewTransaction([]*Action{underFlowAbi}, opts), opts.ChainID, CompressionNone)
+	_, err = NewTransactionCheckFee([]*Action{underFlowAbi}, opts)
 	if err == nil {
 		t.Error("potential uint underflow not blocked when signing transaction")
 	}
