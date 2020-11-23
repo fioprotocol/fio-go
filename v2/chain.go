@@ -15,20 +15,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
-	"time"
 )
 
 const (
 	ChainIdMainnet = `21dcae42c0182200e93f954a074011f9048a7624c6fe81d3c9541a614a88bd1c`
 	ChainIdTestnet = `b20901380af44ef59c5918439a1f9a41d83669020319a80574b804a5f95cbd7e`
 )
-
-// mostly used for tests
-var defaultTimeout = 5
-func ctxTimeout() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), time.Duration(defaultTimeout) * time.Second)
-	return ctx
-}
 
 // API struct allows extending the eos.API with FIO-specific functions
 type API struct {
@@ -108,7 +100,7 @@ func NewConnection(ctx context.Context, keyBag *eos.KeyBag, url string) (*API, *
 	}
 	a := &API{api}
 	if !maxFeesUpdated {
-		_ = a.RefreshFees(ctxTimeout())
+		_ = a.RefreshFees(ctx)
 	}
 	return a, txOpts, nil
 }

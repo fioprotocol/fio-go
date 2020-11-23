@@ -1,13 +1,22 @@
 package fio
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/blockpane/eos-go"
 	"math"
 	"reflect"
 	"testing"
+	"time"
 )
+
+// used only for tests
+var defaultTimeout = 5
+func ctxTimeout() context.Context {
+	ctx, _ := context.WithTimeout(context.Background(), time.Duration(defaultTimeout) * time.Second)
+	return ctx
+}
 
 func TestAPI_GetCurrentBlock(t *testing.T) {
 	_, api, _, err := newApi()
