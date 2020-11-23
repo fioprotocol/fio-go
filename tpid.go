@@ -48,9 +48,9 @@ func NewPayTpidRewards(actor eos.AccountName) *Action {
 
 // UpdateTpid is a privileged call
 type UpdateTpid struct {
-	Tpid   string           `json:"tpid"`
+	Tpid   string          `json:"tpid"`
 	Owner  eos.AccountName `json:"owner"`
-	Amount uint64           `json:"amount"`
+	Amount uint64          `json:"amount"`
 }
 
 // Deprecated: use github.com/fioprotocol/fio-go/v2 module instead

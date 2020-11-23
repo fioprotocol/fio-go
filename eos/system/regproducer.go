@@ -26,7 +26,7 @@ func NewRegProducer(producer eos.AccountName, producerKey ecc.PublicKey, url str
 // RegProducer represents the `eosio.system::regproducer` action
 type RegProducer struct {
 	Producer    eos.AccountName `json:"producer"`
-	ProducerKey ecc.PublicKey  `json:"producer_key"`
+	ProducerKey ecc.PublicKey   `json:"producer_key"`
 	URL         string          `json:"url"`
 	Location    uint16          `json:"location"` // what,s the meaning of that anyway ?
 }

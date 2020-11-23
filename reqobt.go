@@ -598,14 +598,14 @@ type PendingFioRequestsResponse struct {
 }
 
 type RequestStatus struct {
-	FioRequestId      uint64        `json:"fio_request_id"`
-	PayerFioAddress   string        `json:"payer_fio_address"`
-	PayeeFioAddress   string        `json:"payee_fio_address"`
-	PayerFioPublicKey string        `json:"payer_fio_public_key"`
-	PayeeFioPublicKey string        `json:"payee_fio_public_key"`
-	Content           string        `json:"content"`
+	FioRequestId      uint64       `json:"fio_request_id"`
+	PayerFioAddress   string       `json:"payer_fio_address"`
+	PayeeFioAddress   string       `json:"payee_fio_address"`
+	PayerFioPublicKey string       `json:"payer_fio_public_key"`
+	PayeeFioPublicKey string       `json:"payee_fio_public_key"`
+	Content           string       `json:"content"`
 	TimeStamp         eos.JSONTime `json:"time_stamp"`
-	Status            string        `json:"status"`
+	Status            string       `json:"status"`
 }
 
 // GetPendingFioRequests looks for pending requests

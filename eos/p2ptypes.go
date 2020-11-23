@@ -18,21 +18,21 @@ type P2PMessage interface {
 
 type HandshakeMessage struct {
 	// net_plugin/protocol.hpp handshake_message
-	NetworkVersion           uint16         `json:"network_version"`
-	ChainID                  Checksum256    `json:"chain_id"`
-	NodeID                   Checksum256    `json:"node_id"` // sha256
+	NetworkVersion           uint16        `json:"network_version"`
+	ChainID                  Checksum256   `json:"chain_id"`
+	NodeID                   Checksum256   `json:"node_id"` // sha256
 	Key                      ecc.PublicKey `json:"key"`     // can be empty, producer key, or peer key
-	Time                     Tstamp         `json:"time"`    // time?!
-	Token                    Checksum256    `json:"token"`   // digest of time to prove we own the private `key`
+	Time                     Tstamp        `json:"time"`    // time?!
+	Token                    Checksum256   `json:"token"`   // digest of time to prove we own the private `key`
 	Signature                ecc.Signature `json:"sig"`     // can be empty if no key, signature of the digest above
-	P2PAddress               string         `json:"p2p_address"`
-	LastIrreversibleBlockNum uint32         `json:"last_irreversible_block_num"`
-	LastIrreversibleBlockID  Checksum256    `json:"last_irreversible_block_id"`
-	HeadNum                  uint32         `json:"head_num"`
-	HeadID                   Checksum256    `json:"head_id"`
-	OS                       string         `json:"os"`
-	Agent                    string         `json:"agent"`
-	Generation               int16          `json:"generation"`
+	P2PAddress               string        `json:"p2p_address"`
+	LastIrreversibleBlockNum uint32        `json:"last_irreversible_block_num"`
+	LastIrreversibleBlockID  Checksum256   `json:"last_irreversible_block_id"`
+	HeadNum                  uint32        `json:"head_num"`
+	HeadID                   Checksum256   `json:"head_id"`
+	OS                       string        `json:"os"`
+	Agent                    string        `json:"agent"`
+	Generation               int16         `json:"generation"`
 }
 
 func (m *HandshakeMessage) GetType() P2PMessageType {
@@ -203,7 +203,7 @@ func (s TransactionStatus) String() string {
 //type TransactionID Checksum256
 
 type ProducerKey struct {
-	AccountName     AccountName    `json:"producer_name"`
+	AccountName     AccountName   `json:"producer_name"`
 	BlockSigningKey ecc.PublicKey `json:"block_signing_key"`
 }
 
@@ -440,7 +440,7 @@ func (m *RequestMessage) GetType() P2PMessageType {
 
 type SignedTransactionMessage struct {
 	Signatures      []ecc.Signature `json:"signatures"`
-	ContextFreeData []byte           `json:"context_free_data"`
+	ContextFreeData []byte          `json:"context_free_data"`
 }
 
 type PackedTransactionMessage struct {

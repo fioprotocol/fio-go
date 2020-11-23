@@ -138,7 +138,7 @@ type SignedTransaction struct {
 	*Transaction
 
 	Signatures      []ecc.Signature `json:"signatures"`
-	ContextFreeData []HexBytes       `json:"context_free_data"`
+	ContextFreeData []HexBytes      `json:"context_free_data"`
 
 	packed *PackedTransaction
 }
@@ -242,9 +242,9 @@ func (s *SignedTransaction) Pack(compression CompressionType) (*PackedTransactio
 // that's how they are stored.
 type PackedTransaction struct {
 	Signatures            []ecc.Signature `json:"signatures"`
-	Compression           CompressionType  `json:"compression"` // in C++, it's an enum, not sure how it Binary-marshals..
-	PackedContextFreeData HexBytes         `json:"packed_context_free_data"`
-	PackedTransaction     HexBytes         `json:"packed_trx"`
+	Compression           CompressionType `json:"compression"` // in C++, it's an enum, not sure how it Binary-marshals..
+	PackedContextFreeData HexBytes        `json:"packed_context_free_data"`
+	PackedTransaction     HexBytes        `json:"packed_trx"`
 
 	wasPackedLocally bool
 }

@@ -286,7 +286,7 @@ func TestAddress(t *testing.T) {
 	}
 
 	// check we got bundled transactions
-	rem, err := apiA.GetBundleRemaining(Address(names[2]+"@"+domain))
+	rem, err := apiA.GetBundleRemaining(Address(names[2] + "@" + domain))
 	if err != nil {
 		t.Error("set get bundle: " + err.Error())
 	}
@@ -357,7 +357,7 @@ func TestAddress(t *testing.T) {
 	}
 
 	// get all of the addresses
-	addrs, err := api.GetAllPublic(Address(names[2]+"@"+domain))
+	addrs, err := api.GetAllPublic(Address(names[2] + "@" + domain))
 	if err != nil {
 		t.Error("get all public:" + err.Error())
 	}

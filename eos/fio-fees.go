@@ -10,7 +10,7 @@ import (
 
 /*
 These are FIO-specific modifications to eos-go
- */
+*/
 
 // CheckFioFeeRange is a safety mechanism to check if an action has a fee and prevents under/over flows.
 // Not all fees are consistently one type, some are uint64 and some are int64.
@@ -68,4 +68,3 @@ func CheckUnderOver(v interface{}) error {
 	}
 	return errors.New("checkUnderOver: not an int64 or uint64")
 }
-

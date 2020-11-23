@@ -42,7 +42,7 @@ func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress strin
 
 // BpClaim requests payout for a block producer
 type BpClaim struct {
-	FioAddress string           `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
 }
 
@@ -72,12 +72,12 @@ const (
 )
 
 type RegProducer struct {
-	FioAddress string           `json:"fio_address"`
-	FioPubKey  string           `json:"fio_pub_key"`
-	Url        string           `json:"url"`
-	Location   uint16           `json:"location"`
+	FioAddress string          `json:"fio_address"`
+	FioPubKey  string          `json:"fio_pub_key"`
+	Url        string          `json:"url"`
+	Location   uint16          `json:"location"`
 	Actor      eos.AccountName `json:"actor"`
-	MaxFee     uint64           `json:"max_fee"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 // Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
@@ -110,9 +110,9 @@ func MustNewRegProducer(fioAddress string, fioPubKey string, url string, locatio
 }
 
 type UnRegProducer struct {
-	FioAddress string           `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
-	MaxFee     uint64           `json:"max_fee"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 // Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
@@ -125,10 +125,10 @@ func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
 }
 
 type VoteProxy struct {
-	Proxy      string           `json:"proxy"`
-	FioAddress string           `json:"fio_address,omitempty"`
+	Proxy      string          `json:"proxy"`
+	FioAddress string          `json:"fio_address,omitempty"`
 	Actor      eos.AccountName `json:"actor"`
-	MaxFee     uint64           `json:"max_fee"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 // NewVoteProxy creates a VoteProxy action: note - fioAddress is optional as of FIP-009
@@ -146,9 +146,9 @@ func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Actio
 }
 
 type RegProxy struct {
-	FioAddress string           `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
-	MaxFee     uint64           `json:"max_fee"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 // Deprecated: use github.com/fioprotocol/fio-go/v2 module instead
@@ -207,14 +207,14 @@ type Producers struct {
 // Producer is a modification of the corresponding eos-go structure
 type Producer struct {
 	Owner             eos.AccountName `json:"owner"`
-	FioAddress        Address          `json:"fio_address"`
-	TotalVotes        string           `json:"total_votes"`
-	ProducerPublicKey string           `json:"producer_public_key"`
-	IsActive          uint8            `json:"is_active"`
-	Url               string           `json:"url"`
-	UnpaidBlocks      uint64           `json:"unpaid_blocks"`
-	LastClaimTime     string           `json:"last_claim_time"`
-	Location          uint8            `json:"location"`
+	FioAddress        Address         `json:"fio_address"`
+	TotalVotes        string          `json:"total_votes"`
+	ProducerPublicKey string          `json:"producer_public_key"`
+	IsActive          uint8           `json:"is_active"`
+	Url               string          `json:"url"`
+	UnpaidBlocks      uint64          `json:"unpaid_blocks"`
+	LastClaimTime     string          `json:"last_claim_time"`
+	Location          uint8           `json:"location"`
 }
 
 // GetFioProducers retrieves the producer table.

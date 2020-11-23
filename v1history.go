@@ -14,7 +14,7 @@ import (
 // BlockTxidsResp contains a list of transactions in a block.
 type BlockTxidsResp struct {
 	Ids                   []eos.Checksum256 `json:"ids"`
-	LastIrreversibleBlock uint32             `json:"last_irreversible_block"`
+	LastIrreversibleBlock uint32            `json:"last_irreversible_block"`
 }
 
 // HistGetBlockTxids retrieves the txid for all transactions that occurred in a block from the v1 history plugin.

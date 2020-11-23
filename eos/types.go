@@ -576,7 +576,7 @@ type Authority struct {
 
 type KeyWeight struct {
 	PublicKey ecc.PublicKey `json:"key"`
-	Weight    uint16         `json:"weight"` // weight_type
+	Weight    uint16        `json:"weight"` // weight_type
 }
 
 type WaitWeight struct {

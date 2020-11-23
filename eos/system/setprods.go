@@ -30,5 +30,5 @@ type SetProds struct {
 
 type ProducerKey struct {
 	ProducerName    eos.AccountName `json:"producer_name"`
-	BlockSigningKey ecc.PublicKey  `json:"block_signing_key"`
+	BlockSigningKey ecc.PublicKey   `json:"block_signing_key"`
 }

@@ -360,28 +360,28 @@ type Global struct {
 	ContextFreeDiscountNetUsageNum int     `json:"context_free_discount_net_usage_num"`
 	ContextFreeDiscountNetUsageDen int     `json:"context_free_discount_net_usage_den"`
 	MaxBlockCPUUsage               int     `json:"max_block_cpu_usage"`
-	TargetBlockCPUUsagePct      int     `json:"target_block_cpu_usage_pct"`
-	MaxTransactionCPUUsage      int     `json:"max_transaction_cpu_usage"`
-	MinTransactionCPUUsage      int     `json:"min_transaction_cpu_usage"`
-	MaxTransactionLifetime      int     `json:"max_transaction_lifetime"`
-	DeferredTrxExpirationWindow int     `json:"deferred_trx_expiration_window"`
-	MaxTransactionDelay         int     `json:"max_transaction_delay"`
-	MaxInlineActionSize         int     `json:"max_inline_action_size"`
-	MaxInlineActionDepth        int     `json:"max_inline_action_depth"`
-	MaxAuthorityDepth           int     `json:"max_authority_depth"`
-	MaxRAMSize                  string  `json:"max_ram_size"`
-	TotalRAMBytesReserved       Int64   `json:"total_ram_bytes_reserved"`
-	TotalRAMStake               Int64   `json:"total_ram_stake"`
-	LastProducerScheduleUpdate  string  `json:"last_producer_schedule_update"`
-	LastPervoteBucketFill       int64   `json:"last_pervote_bucket_fill,string"`
-	PervoteBucket               int     `json:"pervote_bucket"`
-	PerblockBucket              int     `json:"perblock_bucket"`
-	TotalUnpaidBlocks           int     `json:"total_unpaid_blocks"`
-	TotalActivatedStake         float64 `json:"total_activated_stake,string"`
-	ThreshActivatedStakeTime    int64   `json:"thresh_activated_stake_time,string"`
-	LastProducerScheduleSize    int     `json:"last_producer_schedule_size"`
-	TotalProducerVoteWeight     float64 `json:"total_producer_vote_weight,string"`
-	LastNameClose               string  `json:"last_name_close"`
+	TargetBlockCPUUsagePct         int     `json:"target_block_cpu_usage_pct"`
+	MaxTransactionCPUUsage         int     `json:"max_transaction_cpu_usage"`
+	MinTransactionCPUUsage         int     `json:"min_transaction_cpu_usage"`
+	MaxTransactionLifetime         int     `json:"max_transaction_lifetime"`
+	DeferredTrxExpirationWindow    int     `json:"deferred_trx_expiration_window"`
+	MaxTransactionDelay            int     `json:"max_transaction_delay"`
+	MaxInlineActionSize            int     `json:"max_inline_action_size"`
+	MaxInlineActionDepth           int     `json:"max_inline_action_depth"`
+	MaxAuthorityDepth              int     `json:"max_authority_depth"`
+	MaxRAMSize                     string  `json:"max_ram_size"`
+	TotalRAMBytesReserved          Int64   `json:"total_ram_bytes_reserved"`
+	TotalRAMStake                  Int64   `json:"total_ram_stake"`
+	LastProducerScheduleUpdate     string  `json:"last_producer_schedule_update"`
+	LastPervoteBucketFill          int64   `json:"last_pervote_bucket_fill,string"`
+	PervoteBucket                  int     `json:"pervote_bucket"`
+	PerblockBucket                 int     `json:"perblock_bucket"`
+	TotalUnpaidBlocks              int     `json:"total_unpaid_blocks"`
+	TotalActivatedStake            float64 `json:"total_activated_stake,string"`
+	ThreshActivatedStakeTime       int64   `json:"thresh_activated_stake_time,string"`
+	LastProducerScheduleSize       int     `json:"last_producer_schedule_size"`
+	TotalProducerVoteWeight        float64 `json:"total_producer_vote_weight,string"`
+	LastNameClose                  string  `json:"last_name_close"`
 }
 
 type Producer struct {

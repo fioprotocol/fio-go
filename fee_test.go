@@ -80,9 +80,9 @@ func Test_FeeOverUnderflow(t *testing.T) {
 	// Baseline
 	goodFee := NewAction("fio.address", "rmalladdr", account.Actor, RemoveAllAddrReq{
 		FioAddress: "test@123",
-		MaxFee: uint64(math.MaxInt64),
-		Actor: account.Actor,
-		Tpid: "123@test",
+		MaxFee:     uint64(math.MaxInt64),
+		Actor:      account.Actor,
+		Tpid:       "123@test",
 	})
 	_, _, err = api.SignTransaction(NewTransaction([]*Action{goodFee}, opts), opts.ChainID, CompressionNone)
 	if err != nil {
@@ -97,8 +97,8 @@ func Test_FeeOverUnderflow(t *testing.T) {
 		FioAddress: "test@123",
 		// use reflection to forcefully cast, results in MaxFee:18446744073709551615
 		MaxFee: uint64(temp.(int64)), // #nosec
-		Actor: account.Actor,
-		Tpid: "123@test",
+		Actor:  account.Actor,
+		Tpid:   "123@test",
 	})
 	_, _, err = api.SignTransaction(NewTransaction([]*Action{underFlowFee}, opts), opts.ChainID, CompressionNone)
 	if err == nil {
@@ -109,9 +109,9 @@ func Test_FeeOverUnderflow(t *testing.T) {
 	// this, however, could happen easily.
 	overFlowFee := NewAction("fio.address", "rmalladdr", account.Actor, RemoveAllAddrReq{
 		FioAddress: "test@123",
-		MaxFee: uint64(math.MaxInt64 + 1), // #nosec
-		Actor: account.Actor,
-		Tpid: "123@test",
+		MaxFee:     uint64(math.MaxInt64 + 1), // #nosec
+		Actor:      account.Actor,
+		Tpid:       "123@test",
 	})
 	_, _, err = api.SignTransaction(NewTransaction([]*Action{overFlowFee}, opts), opts.ChainID, CompressionNone)
 	if err == nil {

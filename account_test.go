@@ -75,9 +75,9 @@ func TestAccount_GetNames(t *testing.T) {
 
 func TestActorFromPub(t *testing.T) {
 	type testAccounts struct {
-		Pubkey string
+		Pubkey  string
 		Account string
-		Valid bool
+		Valid   bool
 	}
 	tests := []testAccounts{
 		{"FIO586ZYe3CA2D3cpuYJk565Ny7RhgWxCwnX7kojZSaun2RbTocAf", "y5x3sk44d43p", true},

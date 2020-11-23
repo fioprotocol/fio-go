@@ -16,11 +16,11 @@ func Tokens(tokens float64) uint64 {
 
 // TransferTokensPubKey is used to send FIO tokens to a public key
 type TransferTokensPubKey struct {
-	PayeePublicKey string           `json:"payee_public_key"`
-	Amount         uint64           `json:"amount"`
-	MaxFee         uint64           `json:"max_fee"`
+	PayeePublicKey string          `json:"payee_public_key"`
+	Amount         uint64          `json:"amount"`
+	MaxFee         uint64          `json:"max_fee"`
 	Actor          eos.AccountName `json:"actor"`
-	Tpid           string           `json:"tpid"`
+	Tpid           string          `json:"tpid"`
 }
 
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
@@ -44,7 +44,7 @@ type Transfer struct {
 	From     eos.AccountName `json:"from"`
 	To       eos.AccountName `json:"to"`
 	Quantity eos.Asset       `json:"quantity"`
-	Memo     string           `json:"memo"`
+	Memo     string          `json:"memo"`
 }
 
 // NewTransfer is unlikely to be called, this is a privileged action

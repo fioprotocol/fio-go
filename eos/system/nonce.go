@@ -10,8 +10,8 @@ import (
 // `eosio.system` contract.
 func NewNonce(nonce string) *eos.Action {
 	a := &eos.Action{
-		Account: AN("eosio"),
-		Name:    ActN("nonce"),
+		Account:       AN("eosio"),
+		Name:          ActN("nonce"),
 		Authorization: []eos.PermissionLevel{
 			//{Actor: AN("eosio"), Permission: PN("active")},
 		},
