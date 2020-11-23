@@ -102,7 +102,6 @@ func (info MsigApprovalsInfo) HasApproved(actor eos.AccountName) bool {
 	return false
 }
 
-// TODO: not sure if this is needed
 type MsigExtension struct {
 	Type uint16 `json:"type"`
 	Data []byte `json:"data"`
@@ -323,7 +322,7 @@ func NewUpdateAuthSimple(account eos.AccountName, actors []string, threshold uin
 		Account:    account,
 		Permission: "active",
 		Parent:     "owner",
-		Auth: Authority{
+		Auth: eos.Authority{
 			Threshold: threshold,
 			Accounts:  acts,
 		},
@@ -404,7 +403,9 @@ func (api *API) GetProposals(ctx context.Context, offset int, limit int) (more b
 	if err != nil {
 		return false, nil, err
 	}
-	// more = res.More // FIXME type in struct changed!
+	if res.More != "false" && res.More != "" {
+		more = true
+	}
 	resScopes := make([]scopeResp, 0)
 	err = json.Unmarshal(res.Rows, &resScopes)
 	if err != nil {
@@ -417,21 +418,3 @@ func (api *API) GetProposals(ctx context.Context, offset int, limit int) (more b
 	return
 }
 
-// WrapExecute wraps a transaction to be executed with specific permissions via eosio.wrap
-// NOTE: this is not working as expected, use caution.
-type WrapExecute struct {
-	Executor eos.AccountName  `json:"executor"`
-	Trx      *eos.Transaction `json:"trx"`
-}
-
-func NewWrapExecute(actor eos.AccountName, executor eos.AccountName, trx *eos.Transaction) *Action {
-	trx.Expiration = eos.JSONTime{Time: time.Unix(0, 0)}
-	trx.RefBlockPrefix = 0
-	trx.RefBlockNum = 0
-	return NewAction("eosio.wrap", "execute", actor,
-		&WrapExecute{
-			Executor: executor,
-			Trx:      trx,
-		},
-	)
-}
