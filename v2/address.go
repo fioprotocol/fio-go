@@ -280,27 +280,6 @@ func NewTransferAddress(actor eos.AccountName, address Address, newOwnerPubKey s
 	)
 }
 
-// ExpDomain is used by a test contract and not available on mainnet
-//
-// Deprecated: only used in development environments
-type ExpDomain struct {
-	Actor  eos.AccountName `json:"actor"`
-	Domain string          `json:"domain"`
-}
-
-// NewExpDomain is used by a test contract and not available on mainnet
-//
-// Deprecated: only used in development environments
-func NewExpDomain(actor eos.AccountName, domain string) *Action {
-	return NewAction(
-		"fio.address", "expdomain", actor,
-		ExpDomain{
-			Actor:  actor,
-			Domain: domain,
-		},
-	)
-}
-
 // BurnExpired is intended to be called by block producers to remove expired domains or addresses from RAM
 type BurnExpired struct{}
 
