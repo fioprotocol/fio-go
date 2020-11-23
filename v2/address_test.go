@@ -462,7 +462,7 @@ func TestRemoveAddr(t *testing.T) {
 	}
 
 	// ensure it's gone
-	if _, _, err := api.PubAddressLookup(ctxTimeout(), Address(account.Addresses[0].FioAddress), junk, junk); err != nil {
+	if _, _, err := api.PubAddressLookup(ctxTimeout(), Address(account.Addresses[0].FioAddress), junk, junk); err == nil {
 		t.Error("could not confirm address was removed")
 	}
 
@@ -503,7 +503,7 @@ func TestRemoveAddr(t *testing.T) {
 		return
 	}
 	for _, junk = range allTheJunk {
-		if _, _, err := api.PubAddressLookup(ctxTimeout(), Address(account.Addresses[0].FioAddress), junk, junk); err != nil {
+		if _, _, err := api.PubAddressLookup(ctxTimeout(), Address(account.Addresses[0].FioAddress), junk, junk); err == nil {
 			t.Error("could not confirm address was removed ", junk)
 		}
 	}
