@@ -194,8 +194,8 @@ type GetFeeResponse struct {
 // It is an API member function because it is neither tied to the current user, and is not a signed tx.
 // To get the actual fee schedule for an transaction use GetMaxFee() or GetMaxFeeByAction()
 func (api *API) GetFee(ctx context.Context, fioAddress string, endPoint string) (fee uint64, err error) {
-	feeResp := &GetFeeResponse{}
-	err = api.call(ctx, "chain", "get_fee", &GetFeeRequest{FioAddress: fioAddress, EndPoint: endPoint}, feeResp)
+	feeResp := GetFeeResponse{}
+	err = api.call(ctx, "chain", "get_fee", &GetFeeRequest{FioAddress: fioAddress, EndPoint: endPoint}, &feeResp)
 	if err != nil {
 		return 0, err
 	}

@@ -305,13 +305,12 @@ type getCancelledRequests struct {
 	Offset uint32 `json:"offset"`
 }
 
-func (api *API) GetCancelledRequests(ctx context.Context, pubkey string, limit uint32, offset uint32) (*CancelledRequests, error) {
-	cancelled := &CancelledRequests{}
-	err := api.call(ctx, "chain", "get_cancelled_fio_requests", &getCancelledRequests{
+func (api *API) GetCancelledRequests(ctx context.Context, pubkey string, limit uint32, offset uint32) (cancelled *CancelledRequests, err error) {
+	err = api.call(ctx, "chain", "get_cancelled_fio_requests", &getCancelledRequests{
 		FioPublicKey: pubkey,
 		Limit:        limit,
 		Offset:       offset,
-	}, cancelled)
+	}, &cancelled)
 	return cancelled, err
 }
 

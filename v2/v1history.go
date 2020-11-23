@@ -24,9 +24,8 @@ type blockTxidsReq struct {
 
 // HistGetBlockTxids retrieves the txid for all transactions that occurred in a block from the v1 history plugin.
 // this is specific to the Greymass light v1 history plugin in FIO
-func (api *API) HistGetBlockTxids(ctx context.Context, blockNum uint32) (*BlockTxidsResp, error) {
-	blocks := &BlockTxidsResp{}
-	err := api.call(ctx, "history", "get_block_txids", &blockTxidsReq{BlockNum: blockNum}, blocks)
+func (api *API) HistGetBlockTxids(ctx context.Context, blockNum uint32) (blocks *BlockTxidsResp, err error) {
+	err = api.call(ctx, "history", "get_block_txids", &blockTxidsReq{BlockNum: blockNum}, &blocks)
 	return blocks, err
 }
 

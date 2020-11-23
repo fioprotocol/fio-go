@@ -121,9 +121,8 @@ func ActorFromPub(pubKey string) (eos.AccountName, error) {
 
 // GetFioAccount gets information about an account, it should be used instead of GetAccount due to differences in
 // public key formatting in eos vs fio packages.
-func (api *API) GetFioAccount(ctx context.Context, actor string) (*eos.AccountResp, error) {
-	accResp := &eos.AccountResp{}
-	err := api.call(ctx, "chain", "get_account", json.RawMessage(`{"account_name": "` + actor + `"}`), accResp)
+func (api *API) GetFioAccount(ctx context.Context, actor string) (accResp *eos.AccountResp, err error) {
+	err = api.call(ctx, "chain", "get_account", json.RawMessage(`{"account_name": "` + actor + `"}`), &accResp)
 	return accResp, err
 }
 

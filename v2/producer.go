@@ -169,9 +169,8 @@ type ProducerSchedule struct {
 	Proposed Schedule `json:"proposed"`
 }
 
-func (api *API) GetProducerSchedule(ctx context.Context) (*ProducerSchedule, error) {
-	sched := &ProducerSchedule{}
-	err := api.call(ctx, "chain", "get_producer_schedule", "", sched)
+func (api *API) GetProducerSchedule(ctx context.Context) (sched *ProducerSchedule, err error) {
+	err = api.call(ctx, "chain", "get_producer_schedule", "", &sched)
 	return sched, err
 }
 
@@ -197,9 +196,8 @@ type Producer struct {
 
 // GetFioProducers retrieves the producer table.
 // The producers table is a little different on FIO, use this instead of the GetProducers call from eos-go
-func (api *API) GetFioProducers(ctx context.Context) (*Producers, error) {
-	prods := &Producers{}
-	err := api.call(ctx, "chain", "get_producers", "", prods)
+func (api *API) GetFioProducers(ctx context.Context) (prods *Producers, err error) {
+	err = api.call(ctx, "chain", "get_producers", "", &prods)
 	return prods, err
 }
 

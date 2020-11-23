@@ -287,9 +287,8 @@ type GetTableRowsOrderRequest struct {
 }
 
 // GetTableRowsOrder duplicates eos.GetTableRows but adds a Reverse flag
-func (api *API) GetTableRowsOrder(ctx context.Context, gtro GetTableRowsOrderRequest) (*eos.GetTableRowsResp, error) {
-	tableRows := &eos.GetTableRowsResp{}
-	err := api.call(ctx, "chain", "get_table_rows", &gtro, tableRows)
+func (api *API) GetTableRowsOrder(ctx context.Context, gtro GetTableRowsOrderRequest) (tableRows *eos.GetTableRowsResp, err error) {
+	err = api.call(ctx, "chain", "get_table_rows", &gtro, &tableRows)
 	return tableRows, err
 }
 
@@ -326,9 +325,8 @@ type protocolFeatures struct {
 	ProtocolFeatures []interface{} `json:"protocol_features"` // not sure what goes here, leaving private
 }
 
-func (api *API) GetBlockByNum(ctx context.Context, num uint32) (*eos.BlockResp, error) {
-	out := &eos.BlockResp{}
-	err := api.call(ctx, "chain", "get_block", eos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
+func (api *API) GetBlockByNum(ctx context.Context, num uint32) (out *eos.BlockResp, err error) {
+	err = api.call(ctx, "chain", "get_block", eos.M{"block_num_or_id": fmt.Sprintf("%d", num)}, &out)
 	return out, err
 }
 
@@ -389,9 +387,8 @@ type allowedActionsReq struct {
 }
 
 // GetAllowedActions fetches the list of allowed actions from get_actions
-func (api *API) GetAllowedActions(ctx context.Context, offset uint32, limit uint32) (*AllowedActionsResp, error) {
-	allowed := &AllowedActionsResp{}
-	err := api.call(ctx, "chain", "get_actions", allowedActionsReq{Limit: limit, Offset: offset}, allowed)
+func (api *API) GetAllowedActions(ctx context.Context, offset uint32, limit uint32) (allowed *AllowedActionsResp, err error) {
+	err = api.call(ctx, "chain", "get_actions", allowedActionsReq{Limit: limit, Offset: offset}, &allowed)
 	return allowed, err
 }
 
@@ -423,9 +420,8 @@ type BlockHeaderStateReq struct {
 }
 
 // GetBlockHeaderState returns the details for a reversible block. If the block is irreversible the api will return an error.
-func (api *API) GetBlockHeaderState(ctx context.Context, numOrId interface{}) (*BlockHeaderState, error) {
-	bhs := &BlockHeaderState{}
-	err := api.call(ctx, "chain", "get_block_header_state", &BlockHeaderStateReq{BlockNumOrId: numOrId}, bhs)
+func (api *API) GetBlockHeaderState(ctx context.Context, numOrId interface{}) (bhs *BlockHeaderState, err error) {
+	err = api.call(ctx, "chain", "get_block_header_state", &BlockHeaderStateReq{BlockNumOrId: numOrId}, &bhs)
 	return bhs, err
 }
 
