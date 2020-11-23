@@ -204,7 +204,7 @@ func (api *API) GetFee(ctx context.Context, fioAddress string, endPoint string) 
 	if err != nil {
 		return 0, err
 	}
-	return feeResp.Fee, nil
+	return feeResp.Fee, checkUnderOver(feeResp.Fee)
 }
 
 // MaxFeesUpdated checks if the fee map has been updated, or if using the default (possibly wrong) values
