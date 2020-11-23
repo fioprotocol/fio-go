@@ -19,7 +19,7 @@ func ctxTimeout() context.Context {
 }
 
 func TestAPI_GetCurrentBlock(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -31,7 +31,7 @@ func TestAPI_GetCurrentBlock(t *testing.T) {
 }
 
 func TestAPI_AllABIs(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -52,7 +52,7 @@ func TestAPI_AllABIs(t *testing.T) {
 }
 
 func TestAPI_GetTableRowsOrder(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -125,7 +125,7 @@ func TestAPI_GetRefBlockFor(t *testing.T) {
 }
 
 func TestAPI_GetBlockHeaderState(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -167,7 +167,7 @@ func TestAPI_GetBlockHeaderState(t *testing.T) {
 }
 
 func TestAPI_PushEndpointRaw(t *testing.T) {
-	account, api, opts, err := newApi()
+	account, api, opts, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -188,7 +188,7 @@ func TestAPI_PushEndpointRaw(t *testing.T) {
 }
 
 func TestAction_ToEos(t *testing.T) {
-	account, _, _, err := newApi()
+	account, _, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -219,7 +219,7 @@ func TestNewAction(t *testing.T) {
 }
 
 func TestAPI_GetRefBlock(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -231,7 +231,7 @@ func TestAPI_GetRefBlock(t *testing.T) {
 }
 
 func TestAPI_GetTableByScopeMore(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return

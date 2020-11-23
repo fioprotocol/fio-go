@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewVoteProducer(t *testing.T) {
-	account, api, _, err := newApi()
+	account, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -127,7 +127,7 @@ func TestNewVoteProducer(t *testing.T) {
 }
 
 func TestAPI_GetProducerSchedule(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -143,7 +143,7 @@ func TestAPI_GetProducerSchedule(t *testing.T) {
 }
 
 func TestAPI_Register_GetBpJson(t *testing.T) {
-	account, api, _, err := newApi()
+	account, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return

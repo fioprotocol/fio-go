@@ -33,7 +33,7 @@ func TestAPI_HistGetBlockTxids(t *testing.T) {
 }
 
 func TestApi_getMaxActions(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -53,7 +53,7 @@ func TestApi_getMaxActions(t *testing.T) {
 }
 
 func TestAPI_GetActionsUniq(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return

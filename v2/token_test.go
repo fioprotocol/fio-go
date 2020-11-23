@@ -3,7 +3,7 @@ package fio
 import "testing"
 
 func TestFioToken(t *testing.T) {
-	account, api, opts, err := newApi()
+	account, api, opts, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return

@@ -11,7 +11,7 @@ import (
 )
 
 func TestUpdateMaxFees(t *testing.T) {
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -27,7 +27,7 @@ func TestUpdateMaxFees(t *testing.T) {
 }
 
 func TestAPI_GetFee(t *testing.T) {
-	account, api, _, err := newApi()
+	account, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -50,7 +50,7 @@ func TestAPI_GetFee(t *testing.T) {
 }
 
 func Test_NewSetFeeVote(t *testing.T) {
-	acc, api, opts, err := newApi()
+	acc, api, opts, err := newApi("5KQ6f9ZgUtagD3LZ4wcMKhhvK9qy4BuwL3L1pkm6E2v62HCne2R")
 	if err != nil {
 		t.Error(err)
 		return
@@ -73,7 +73,7 @@ func Test_NewSetFeeVote(t *testing.T) {
 
 func Test_FeeOverUnderflow(t *testing.T) {
 	ecc.PublicKeyPrefixCompat = "FIO"
-	account, api, opts, err := newApi()
+	account, api, opts, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -135,7 +135,7 @@ func Test_FeeOverUnderflow(t *testing.T) {
 
 func Test_NewSubmitMultiplier(t *testing.T) {
 	var multiplier float64
-	acc, api, _, err := newApi()
+	acc, api, _, err := newApi("5KQ6f9ZgUtagD3LZ4wcMKhhvK9qy4BuwL3L1pkm6E2v62HCne2R")
 	if err != nil {
 		t.Error(err)
 		return

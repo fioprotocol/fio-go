@@ -10,7 +10,7 @@ import (
 )
 
 func TestOBT(t *testing.T) {
-	alice, api, _, err := newApi()
+	alice, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return

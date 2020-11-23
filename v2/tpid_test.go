@@ -20,7 +20,7 @@ func TestTpid(t *testing.T) {
 		t.Error("tpid did not change")
 	}
 
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -37,7 +37,7 @@ func TestTpid(t *testing.T) {
 		return
 	}
 	// this might fail since there aren't likely any rewards, so first try to generate some:
-	faucet, fApi, fOpts, err := newApi()
+	faucet, fApi, fOpts, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return

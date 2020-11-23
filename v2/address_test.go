@@ -86,7 +86,7 @@ func TestAPI_GetFioNames(t *testing.T) {
 		address = `ada@dapixdev`
 	)
 
-	_, api, _, err := newApi()
+	_, api, _, err := newApi("")
 	if err != nil {
 		t.Error("cannot connect to run FIO names test: " + err.Error())
 		return
@@ -164,7 +164,7 @@ func word() string {
 
 func TestAddress(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
-	account, api, opts, err := newApi()
+	account, api, opts, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
@@ -417,7 +417,7 @@ func TestAddress(t *testing.T) {
 }
 
 func TestRemoveAddr(t *testing.T) {
-	account, api, _, err := newApi()
+	account, api, _, err := newApi("")
 	if err != nil {
 		t.Error(err)
 		return
