@@ -14,11 +14,11 @@ func Tokens(tokens float64) uint64 {
 
 // TransferTokensPubKey is used to send FIO tokens to a public key
 type TransferTokensPubKey struct {
-	PayeePublicKey string           `json:"payee_public_key"`
-	Amount         uint64           `json:"amount"`
-	MaxFee         uint64           `json:"max_fee"`
+	PayeePublicKey string          `json:"payee_public_key"`
+	Amount         uint64          `json:"amount"`
+	MaxFee         uint64          `json:"max_fee"`
 	Actor          eos.AccountName `json:"actor"`
-	Tpid           string           `json:"tpid"`
+	Tpid           string          `json:"tpid"`
 }
 
 // NewTransferTokensPubKey builds an eos.Action for sending FIO tokens
@@ -40,7 +40,7 @@ type Transfer struct {
 	From     eos.AccountName `json:"from"`
 	To       eos.AccountName `json:"to"`
 	Quantity eos.Asset       `json:"quantity"`
-	Memo     string           `json:"memo"`
+	Memo     string          `json:"memo"`
 }
 
 // NewTransfer is unlikely to be called, this is a privileged action
@@ -75,4 +75,20 @@ func (api *API) GetBalance(account eos.AccountName) (float64, error) {
 		}
 	}
 	return 0.0, nil
+}
+
+type GetFioBalanceResp struct {
+	Balance   uint64 `json:"balance"`
+	Available uint64 `json:"available"`
+}
+
+type getFioBalanceReq struct {
+	FioPublicKey string `json:"fio_public_key"`
+}
+
+// GetFioBalance is the preferred way to get an account's balance, it will include the number of available
+// tokens in the case that an account holds locked/staked tokens.
+func (api *API) GetFioBalance(pubkey string) (fiobalance *GetFioBalanceResp, err error) {
+	err = api.call("chain", "get_fio_balance", &getFioBalanceReq{FioPublicKey: pubkey}, &fiobalance)
+	return fiobalance, err
 }
