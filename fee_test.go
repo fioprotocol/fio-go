@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fioprotocol/fio-go/eos"
 	"math"
+	"os"
 	"strconv"
 	"testing"
 )
@@ -49,11 +50,11 @@ func TestAPI_GetFee(t *testing.T) {
 }
 
 func Test_NewSetFeeVote(t *testing.T) {
-	acc, api, opts, err := newApi()
-	if err != nil {
-		t.Error(err)
-		return
+	nodeos := "http://dev:8889"
+	if os.Getenv("NODEOS") != "" {
+		nodeos = os.Getenv("NODEOS")
 	}
+	acc, api, opts, err :=  NewWifConnect("5KQ6f9ZgUtagD3LZ4wcMKhhvK9qy4BuwL3L1pkm6E2v62HCne2R", nodeos)
 
 	opts.Compress = CompressionZlib
 	resp, err := api.SignPushActionsWithOpts([]*eos.Action{
@@ -133,11 +134,11 @@ func Test_FeeOverUnderflow(t *testing.T) {
 
 func Test_NewSubmitMultiplier(t *testing.T) {
 	var multiplier float64
-	acc, api, _, err := newApi()
-	if err != nil {
-		t.Error(err)
-		return
+	nodeos := "http://dev:8889"
+	if os.Getenv("NODEOS") != "" {
+		nodeos = os.Getenv("NODEOS")
 	}
+	acc, api, _, err :=  NewWifConnect("5KQ6f9ZgUtagD3LZ4wcMKhhvK9qy4BuwL3L1pkm6E2v62HCne2R", nodeos)
 
 	// grab current multiplier, don't want to guess...
 	gtr, err := api.GetTableRows(eos.GetTableRowsRequest{

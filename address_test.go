@@ -374,27 +374,28 @@ func TestAddress(t *testing.T) {
 		t.Error("set public: " + err.Error())
 	}
 
-	// transfer it
-	_, err = apiA.SignPushTransaction(NewTransaction(
-		[]*Action{NewTransferAddress(accountA.Actor, Address(names[2]+"@"+domain), accountB.PubKey)}, optsA),
-		optsA.ChainID, CompressionNone,
-	)
-	if err != nil {
-		t.Error("transfer address: " + err.Error())
-	}
-	time.Sleep(500 * time.Millisecond)
+	// disable until implemented in fio master branch.
+	// // transfer it
+	// _, err = apiA.SignPushTransaction(NewTransaction(
+	// 	[]*Action{NewTransferAddress(accountA.Actor, Address(names[2]+"@"+domain), accountB.PubKey)}, optsA),
+	// 	optsA.ChainID, CompressionNone,
+	// )
+	// if err != nil {
+	// 	t.Error("transfer address: " + err.Error())
+	// }
+	// time.Sleep(500 * time.Millisecond)
 
-	// verify it transferred
-	pubAddress, ok, err = api.PubAddressLookup(Address(names[2]+"@"+domain), "FIO", "FIO")
-	if err != nil {
-		t.Error(err)
-	}
-	if !ok {
-		t.Error("did not find address from pub address lookup")
-	}
-	if pubAddress.PublicAddress != accountB.PubKey {
-		t.Error("got incorrect public address after transfer")
-	}
+	// // verify it transferred
+	// pubAddress, ok, err = api.PubAddressLookup(Address(names[2]+"@"+domain), "FIO", "FIO")
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+	// if !ok {
+	// 	t.Error("did not find address from pub address lookup")
+	// }
+	// if pubAddress.PublicAddress != accountB.PubKey {
+	// 	t.Error("got incorrect public address after transfer")
+	// }
 
 	// transfer the domain
 	_, err = apiA.SignPushTransaction(NewTransaction(
