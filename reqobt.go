@@ -584,16 +584,16 @@ type RequestStatus struct {
 }
 
 // GetPendingFioRequests looks for pending requests
-func (api API) GetPendingFioRequests(pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
+func (api *API) GetPendingFioRequests(pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
 	return api.getFioRequests("pending", pubKey, limit, offset)
 }
 
 // GetSentFioRequests looks for sent requests
-func (api API) GetSentFioRequests(pubKey string, limit int, offset int) (sentRequests PendingFioRequestsResponse, hasSent bool, err error) {
+func (api *API) GetSentFioRequests(pubKey string, limit int, offset int) (sentRequests PendingFioRequestsResponse, hasSent bool, err error) {
 	return api.getFioRequests("sent", pubKey, limit, offset)
 }
 
-func (api API) getFioRequests(requestType string, pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
+func (api *API) getFioRequests(requestType string, pubKey string, limit int, offset int) (pendingRequests PendingFioRequestsResponse, hasPending bool, err error) {
 	query := getPendingFioNamesRequest{
 		FioPublicKey: pubKey,
 		Limit:        limit,

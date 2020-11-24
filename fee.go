@@ -10,12 +10,11 @@ import (
 
 const (
 	FeeAddPubAddress        = "add_pub_address"
-	FeeAddToWhitelist       = "add_to_whitelist"
 	FeeAuthDelete           = "auth_delete"
 	FeeAuthLink             = "auth_link"
 	FeeAuthUpdate           = "auth_update"
 	FeeBundleVote           = "submit_bundled_transaction"
-	FeeBurnExpired          = "burnexpired"
+	FeeBurnAddress          = "burn_fio_address"
 	FeeCancelFundsRequest   = "cancel_funds_request"
 	FeeMsigApprove          = "msig_approve"
 	FeeMsigCancel           = "msig_cancel"
@@ -31,7 +30,6 @@ const (
 	FeeRegisterProducer     = "register_producer"
 	FeeRegisterProxy        = "register_proxy"
 	FeeRejectFundsRequest   = "reject_funds_request"
-	FeeRemoveFromWhitelist  = "remove_from_whitelist"
 	FeeRemoveAllAddresses   = "remove_pub_addresses"
 	FeeRemovePubAddress     = "remove_pub_address"
 	FeeRenewFioAddress      = "renew_fio_address"
@@ -41,6 +39,7 @@ const (
 	FeeSubmitFeeVote        = "submit_fee_ratios"
 	FeeTransferAddress      = "transfer_fio_address"
 	FeeTransferDom          = "transfer_fio_domain"
+	FeeTransferLockedTokens = "transfer_locked_tokens"
 	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
 	FeeUnregisterProducer   = "unregister_producer"
 	FeeUnregisterProxy      = "unregister_proxy"
@@ -59,6 +58,7 @@ var (
 		"auth_delete":                 0.4,
 		"auth_link":                   0.4,
 		"auth_update":                 0.4,
+		"burn_fio_address":            0.4,
 		"burnexpired":                 0.1,
 		"cancel_funds_request":        0.6,
 		"msig_approve":                0.4,
@@ -88,6 +88,7 @@ var (
 		"transfer_fio_address":        1.0,
 		"transfer_fio_domain":         1.0,
 		"transfer_tokens_fio_address": 0.1,
+		"transfer_locked_tokens":      2.0,
 		"transfer_tokens_pub_key":     2.0,
 		"unregister_proxy":            0.4,
 		"vote_producer":               0.4,
@@ -100,6 +101,7 @@ var (
 		"addaddress":   FeeAddPubAddress,
 		"approve":      FeeMsigApprove,
 		"bundlevote":   FeeBundleVote,
+		"burnaddress":  FeeBurnAddress,
 		"cancel":       FeeMsigCancel,
 		"cancelfndreq": FeeCancelFundsRequest,
 		"deleteauth":   FeeAuthDelete,
@@ -122,6 +124,7 @@ var (
 		"setfeemult":   FeeSubmitFeeMult,
 		"setfeevote":   FeeSubmitFeeVote,
 		"trnsfiopubky": FeeTransferTokensPubKey,
+		"trnsloctoks":  FeeTransferLockedTokens,
 		"unapprove":    FeeMsigUnapprove,
 		"unregprod":    FeeUnregisterProducer,
 		"unregproxy":   FeeUnregisterProxy,
