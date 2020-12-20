@@ -39,6 +39,7 @@ const (
 	FeeSubmitFeeVote        = "submit_fee_ratios"
 	FeeTransferAddress      = "transfer_fio_address"
 	FeeTransferDom          = "transfer_fio_domain"
+	FeeTransferLockedTokens = "transfer_locked_tokens"
 	FeeTransferTokensPubKey = "transfer_tokens_pub_key"
 	FeeUnregisterProducer   = "unregister_producer"
 	FeeUnregisterProxy      = "unregister_proxy"
@@ -87,6 +88,7 @@ var (
 		"transfer_fio_address":        1.0,
 		"transfer_fio_domain":         1.0,
 		"transfer_tokens_fio_address": 0.1,
+		"transfer_locked_tokens":      2.0,
 		"transfer_tokens_pub_key":     2.0,
 		"unregister_proxy":            0.4,
 		"vote_producer":               0.4,
@@ -122,6 +124,7 @@ var (
 		"setfeemult":   FeeSubmitFeeMult,
 		"setfeevote":   FeeSubmitFeeVote,
 		"trnsfiopubky": FeeTransferTokensPubKey,
+		"trnsloctoks":  FeeTransferLockedTokens,
 		"unapprove":    FeeMsigUnapprove,
 		"unregprod":    FeeUnregisterProducer,
 		"unregproxy":   FeeUnregisterProxy,
