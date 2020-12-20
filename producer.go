@@ -244,7 +244,7 @@ type BpJsonOrg struct {
 		LogoSvg  string `json:"logo_svg"`
 	} `json:"branding"`
 	Location BpJsonLocation `json:"location"`
-	Social BpJsonSocial `json:"social"`
+	Social   BpJsonSocial   `json:"social"`
 }
 
 type BpJsonSocial struct {
@@ -268,7 +268,7 @@ type BpJsonLocation struct {
 
 type BpJsonNode struct {
 	Location     BpJsonLocation `json:"location"`
-	NodeType     string         `json:"node_type,omitempty"`
+	NodeType     interface{}    `json:"node_type,omitempty"`
 	P2pEndpoint  string         `json:"p2p_endpoint,omitempty"`
 	BnetEndpoint string         `json:"bnet_endpoint,omitempty"`
 	ApiEndpoint  string         `json:"api_endpoint,omitempty"`
@@ -364,7 +364,7 @@ func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, erro
 				return
 			}
 			if chains.Chains != nil && chains.Chains[info.ChainID.String()] != "" {
-				thisChainJson = server + strings.ReplaceAll("/" + chains.Chains[info.ChainID.String()], "//", "/")
+				thisChainJson = server + strings.ReplaceAll("/"+chains.Chains[info.ChainID.String()], "//", "/")
 			}
 		}
 	}()
