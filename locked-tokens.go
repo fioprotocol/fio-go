@@ -104,14 +104,14 @@ func (g *GenesisLockedTokens) ActualRemaining() (tokens uint64, err error) {
 	case LockedFounder, LockedPresale:
 		days := int(time.Now().Sub(lockStart).Hours()) / 24
 		// have not passed first period
-		if days <= LockedInitial {
+		if days < LockedInitial {
 			return g.RemainingLockedAmount, nil
 		}
 		// first unlock passed
 		pct := LockedInitialPct
 		// add percentage for each additional
 		for i := 1; i <= LockedPeriods; i++ {
-			if days > (i*LockedIncrement)+LockedInitial {
+			if days >= (i*LockedIncrement)+LockedInitial {
 				pct += LockedIncrementPct
 			} else {
 				break
