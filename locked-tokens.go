@@ -17,9 +17,9 @@ import (
 
 // set as variables to allow override on development nets
 var (
-	LockedInitial              = 90    // initial days before first unlock period
+	LockedInitial              = 90 * 24 * 60    // initial minutes before first unlock period
 	LockedInitialPct   float64 = 0.06  // percentage unlocked after first period
-	LockedIncrement            = 180   // each additional unlock period, 2nd unlock = LockedInitial + LockedIncrement, 3rd = LockedInitial + (2 * LockedIncrement), etc
+	LockedIncrement            = 180 * 24 * 60   // each additional unlock period, 2nd unlock = LockedInitial + LockedIncrement, 3rd = LockedInitial + (2 * LockedIncrement), etc
 	LockedIncrementPct float64 = 0.188 // percent unlocked each additional period: 1st = 6%, 2nd = 24.8% etc.
 	LockedPeriods              = 6     // number of unlock periods
 )
@@ -102,16 +102,16 @@ func (g *GenesisLockedTokens) ActualRemaining() (tokens uint64, err error) {
 		fallthrough
 
 	case LockedFounder, LockedPresale:
-		days := int(time.Now().Sub(lockStart).Hours()) / 24
+		minutes := int(time.Now().Sub(lockStart).Minutes())
 		// have not passed first period
-		if days < LockedInitial {
+		if minutes < LockedInitial {
 			return g.RemainingLockedAmount, nil
 		}
 		// first unlock passed
 		pct := LockedInitialPct
 		// add percentage for each additional
 		for i := 1; i <= LockedPeriods; i++ {
-			if days >= (i*LockedIncrement)+LockedInitial {
+			if minutes >= (i*LockedIncrement)+LockedInitial {
 				pct += LockedIncrementPct
 			} else {
 				break
