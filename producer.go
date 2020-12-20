@@ -40,7 +40,7 @@ func NewVoteProducer(producers []string, actor eos.AccountName, fioAddress strin
 
 // BpClaim requests payout for a block producer
 type BpClaim struct {
-	FioAddress string           `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
 }
 
@@ -69,12 +69,12 @@ const (
 )
 
 type RegProducer struct {
-	FioAddress string           `json:"fio_address"`
-	FioPubKey  string           `json:"fio_pub_key"`
-	Url        string           `json:"url"`
-	Location   uint16           `json:"location"`
+	FioAddress string          `json:"fio_address"`
+	FioPubKey  string          `json:"fio_pub_key"`
+	Url        string          `json:"url"`
+	Location   uint16          `json:"location"`
 	Actor      eos.AccountName `json:"actor"`
-	MaxFee     uint64           `json:"max_fee"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 func NewRegProducer(fioAddress string, fioPubKey string, url string, location ProducerLocation, actor eos.AccountName) (*Action, error) {
@@ -105,9 +105,9 @@ func MustNewRegProducer(fioAddress string, fioPubKey string, url string, locatio
 }
 
 type UnRegProducer struct {
-	FioAddress string           `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
-	MaxFee     uint64           `json:"max_fee"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
@@ -119,10 +119,10 @@ func NewUnRegProducer(fioAddress string, actor eos.AccountName) *Action {
 }
 
 type VoteProxy struct {
-	Proxy      string           `json:"proxy"`
-	FioAddress string           `json:"fio_address,omitempty"`
+	Proxy      string          `json:"proxy"`
+	FioAddress string          `json:"fio_address,omitempty"`
 	Actor      eos.AccountName `json:"actor"`
-	MaxFee     uint64           `json:"max_fee"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 // NewVoteProxy creates a VoteProxy action: note - fioAddress is optional as of FIP-009
@@ -138,9 +138,9 @@ func NewVoteProxy(proxy string, fioAddress string, actor eos.AccountName) *Actio
 }
 
 type RegProxy struct {
-	FioAddress string           `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
-	MaxFee     uint64           `json:"max_fee"`
+	MaxFee     uint64          `json:"max_fee"`
 }
 
 func NewRegProxy(fioAddress string, actor eos.AccountName) *Action {
@@ -197,14 +197,14 @@ type Producers struct {
 // Producer is a modification of the corresponding eos-go structure
 type Producer struct {
 	Owner             eos.AccountName `json:"owner"`
-	FioAddress        Address          `json:"fio_address"`
-	TotalVotes        string           `json:"total_votes"`
-	ProducerPublicKey string           `json:"producer_public_key"`
-	IsActive          uint8            `json:"is_active"`
-	Url               string           `json:"url"`
-	UnpaidBlocks      uint64           `json:"unpaid_blocks"`
-	LastClaimTime     string           `json:"last_claim_time"`
-	Location          uint8            `json:"location"`
+	FioAddress        Address         `json:"fio_address"`
+	TotalVotes        string          `json:"total_votes"`
+	ProducerPublicKey string          `json:"producer_public_key"`
+	IsActive          uint8           `json:"is_active"`
+	Url               string          `json:"url"`
+	UnpaidBlocks      uint64          `json:"unpaid_blocks"`
+	LastClaimTime     string          `json:"last_claim_time"`
+	Location          uint8           `json:"location"`
 }
 
 // GetFioProducers retrieves the producer table.
@@ -244,6 +244,7 @@ type BpJsonOrg struct {
 		LogoSvg  string `json:"logo_svg"`
 	} `json:"branding"`
 	Location BpJsonLocation `json:"location"`
+	Social   BpJsonSocial   `json:"social"`
 }
 
 type BpJsonSocial struct {
@@ -267,11 +268,11 @@ type BpJsonLocation struct {
 
 type BpJsonNode struct {
 	Location     BpJsonLocation `json:"location"`
-	NodeType     string         `json:"node_type"`
-	P2pEndpoint  string         `json:"p2p_endpoint"`
-	BnetEndpoint string         `json:"bnet_endpoint"`
-	ApiEndpoint  string         `json:"api_endpoint"`
-	SslEndpoint  string         `json:"ssl_endpoint"`
+	NodeType     interface{}    `json:"node_type,omitempty"`
+	P2pEndpoint  string         `json:"p2p_endpoint,omitempty"`
+	BnetEndpoint string         `json:"bnet_endpoint,omitempty"`
+	ApiEndpoint  string         `json:"api_endpoint,omitempty"`
+	SslEndpoint  string         `json:"ssl_endpoint,omitempty"`
 }
 
 type BpJson struct {
@@ -279,6 +280,10 @@ type BpJson struct {
 	Org                 BpJsonOrg    `json:"org"`
 	Nodes               []BpJsonNode `json:"nodes"`
 	BpJsonUrl           string       `json:"bp_json_url"`
+}
+
+type ChainsJson struct {
+	Chains map[string]string `json:"chains"`
 }
 
 // GetBpJson attempts to retrieve the bp.json file for a producer based on the URL in the eosio.producers table.
@@ -335,27 +340,48 @@ func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, erro
 		}
 	}
 
-	var regJson, chainJson string
+	var regJson, chainsJson, thisChainJson string
 	info, _ := api.GetInfo()
-	if strings.HasSuffix(u.String(), "/") {
-		chainJson = u.String() + "bp." + info.ChainID.String() + ".json"
-		regJson = u.String() + "bp.json"
-	} else {
-		chainJson = u.String() + "/" + "bp." + info.ChainID.String() + ".json"
-		regJson = u.String() + "/bp.json"
-	}
 
-	// try chainId first, ignore error
-	resp, err := api.HttpClient.Get(chainJson)
+	server := strings.TrimRight(u.String(), "/")
+	thisChainJson = server + "/bp." + info.ChainID.String() + ".json"
+	regJson = server + "/bp.json"
+	chainsJson = server + "/chains.json"
+
+	// try to grab the chains.json file first, if that works override the thisChainJson value, don't complain on error
+	func() {
+		resp, err := api.HttpClient.Get(chainsJson)
+		if err == nil && resp != nil && resp.StatusCode == http.StatusOK {
+			chains := &ChainsJson{}
+			chains.Chains = make(map[string]string)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return
+			}
+			_ = resp.Body.Close()
+			err = json.Unmarshal(body, chains)
+			if err != nil {
+				return
+			}
+			if chains.Chains != nil && chains.Chains[info.ChainID.String()] != "" {
+				thisChainJson = server + strings.ReplaceAll("/"+chains.Chains[info.ChainID.String()], "//", "/")
+			}
+		}
+	}()
+
+	// try chainId, ignore error fallback to bp.json
+	resp, err := api.HttpClient.Get(thisChainJson)
 	if err == nil && resp != nil {
 		if resp.StatusCode == http.StatusOK {
-			body, _ := ioutil.ReadAll(resp.Body)
-			_ = resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err == nil {
+				_ = resp.Body.Close()
+			}
 			if len(body) != 0 {
 				bpj := &BpJson{}
 				err = json.Unmarshal(body, bpj)
 				if err == nil && bpj.ProducerAccountName != "" {
-					bpj.BpJsonUrl = chainJson
+					bpj.BpJsonUrl = thisChainJson
 					return bpj, nil
 				}
 			}
