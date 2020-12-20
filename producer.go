@@ -342,9 +342,9 @@ func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, erro
 	var regJson, chainsJson, thisChainJson string
 	info, _ := api.GetInfo()
 
-	thisChainJson = strings.ReplaceAll(u.String() + "bp." + info.ChainID.String() + ".json", "//", "/")
-	regJson = strings.ReplaceAll(u.String() + "bp.json", "//", "/")
-	chainsJson = strings.ReplaceAll(u.String() + "chains.json", "//", "/")
+	thisChainJson = strings.ReplaceAll(u.String() + "/bp." + info.ChainID.String() + ".json", "//", "/")
+	regJson = strings.ReplaceAll(u.String() + "/bp.json", "//", "/")
+	chainsJson = strings.ReplaceAll(u.String() + "/chains.json", "//", "/")
 
 	// try to grab the chains.json file first, if that works override the thisChainJson value, don't complain on error
 	func() {
@@ -359,7 +359,7 @@ func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, erro
 			_ = resp.Body.Close()
 			err = json.Unmarshal(body, chains)
 			if chains.Chains[info.ChainID.String()] != "" {
-				thisChainJson = strings.ReplaceAll(u.String() + chains.Chains[info.ChainID.String()], "//", "/")
+				thisChainJson = strings.ReplaceAll(u.String() + "/" + chains.Chains[info.ChainID.String()], "//", "/")
 			}
 		}
 	}()
