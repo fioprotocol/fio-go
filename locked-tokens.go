@@ -33,7 +33,7 @@ const (
 
 // GenesisLockedTokens holds information about tokens that were locked at chain genesis.
 type GenesisLockedTokens struct {
-	Name                  eos.AccountName `json:"name"`
+	Name                  eos.AccountName `json:"owner"`
 	TotalGrantAmount      uint64          `json:"total_grant_amount"`
 	UnlockedPeriodCount   uint32          `json:"unlocked_period_count"`
 	GrantType             uint32          `json:"grant_type"`
