@@ -341,7 +341,10 @@ func (api *API) getBpJson(producer eos.AccountName, allowIp bool) (*BpJson, erro
 	}
 
 	var regJson, chainsJson, thisChainJson string
-	info, _ := api.GetInfo()
+	info, err := api.GetInfo()
+	if err != nil {
+		return nil, err
+	}
 
 	server := strings.TrimRight(u.String(), "/")
 	thisChainJson = server + "/bp." + info.ChainID.String() + ".json"
