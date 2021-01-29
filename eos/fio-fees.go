@@ -25,7 +25,7 @@ func CheckFioFeeRange(action *Action) error {
 	case action.Data == nil:
 		return errors.New("CheckFioFeeRange: invalid, Data is nil")
 	case reflect.TypeOf(action.ActionData.Data).Kind() != reflect.Struct:
-		return errors.New("CheckFioFeeRange: invalid, Data is not a struct")
+		return nil
 	}
 
 	maxFee := reflect.ValueOf(action.ActionData.Data).FieldByName("MaxFee")

@@ -17,9 +17,9 @@ import (
 
 // set as variables to allow override on development nets
 var (
-	LockedInitial              = 90    // initial days before first unlock period
+	LockedInitial              = 90 * 24 * 60    // initial minutes before first unlock period
 	LockedInitialPct   float64 = 0.06  // percentage unlocked after first period
-	LockedIncrement            = 180   // each additional unlock period, 2nd unlock = LockedInitial + LockedIncrement, 3rd = LockedInitial + (2 * LockedIncrement), etc
+	LockedIncrement            = 180 * 24 * 60   // each additional unlock period, 2nd unlock = LockedInitial + LockedIncrement, 3rd = LockedInitial + (2 * LockedIncrement), etc
 	LockedIncrementPct float64 = 0.188 // percent unlocked each additional period: 1st = 6%, 2nd = 24.8% etc.
 	LockedPeriods              = 6     // number of unlock periods
 )
@@ -33,7 +33,7 @@ const (
 
 // GenesisLockedTokens holds information about tokens that were locked at chain genesis.
 type GenesisLockedTokens struct {
-	Name                  eos.AccountName `json:"name"`
+	Name                  eos.AccountName `json:"owner"`
 	TotalGrantAmount      uint64          `json:"total_grant_amount"`
 	UnlockedPeriodCount   uint32          `json:"unlocked_period_count"`
 	GrantType             uint32          `json:"grant_type"`
@@ -102,16 +102,16 @@ func (g *GenesisLockedTokens) ActualRemaining() (tokens uint64, err error) {
 		fallthrough
 
 	case LockedFounder, LockedPresale:
-		days := int(time.Now().Sub(lockStart).Hours()) / 24
+		minutes := int(time.Now().Sub(lockStart).Minutes())
 		// have not passed first period
-		if days < LockedInitial {
+		if minutes < LockedInitial {
 			return g.RemainingLockedAmount, nil
 		}
 		// first unlock passed
 		pct := LockedInitialPct
 		// add percentage for each additional
 		for i := 1; i <= LockedPeriods; i++ {
-			if days > (i*LockedIncrement)+LockedInitial {
+			if minutes >= (i*LockedIncrement)+LockedInitial {
 				pct += LockedIncrementPct
 			} else {
 				break
@@ -141,6 +141,7 @@ func (api *API) GetTotalGenesisLockTokens() (total uint64, founder uint64, membe
 			KeyType:    "name",
 			Index:      "1",
 			JSON:       true,
+			Limit:      math.MaxUint32,
 		})
 		if err != nil {
 			return 0, 0, 0, 0, 0, err
@@ -322,16 +323,17 @@ type LockTokensResp struct {
 // GetTotalLockTokens provides the total number of (FIP6) locked tokens by iterating through the locktokens table.
 func (api *API) GetTotalLockTokens() (uint64, error) {
 	var total uint64
-	var more bool
-	const iter int64 = 100
+	const iter int64 = math.MaxInt64
 	now := time.Now().UTC().Unix()
-	for i := int64(0); !more; i += iter {
+	lower := "0"
+	more := true
+	for more {
 		gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
 			Code:       "eosio",
 			Scope:      "eosio",
 			Table:      "locktokens",
-			LowerBound: strconv.FormatInt(i, 10),
-			Limit:      uint32(iter - 1),
+			LowerBound: lower,
+			Limit:      5000,
 			KeyType:    "i64",
 			Index:      "1",
 			JSON:       true,
@@ -356,9 +358,10 @@ func (api *API) GetTotalLockTokens() (uint64, error) {
 				}
 			}
 		}
-		if !gtr.More {
-			more = false
+		if gtr.More {
+			lower = strconv.FormatUint(uint64(ltr[len(ltr) - 1].Id), 10)
 		}
+		more = gtr.More
 	}
 	return total, nil
 }
