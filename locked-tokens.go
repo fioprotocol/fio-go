@@ -141,6 +141,7 @@ func (api *API) GetTotalGenesisLockTokens() (total uint64, founder uint64, membe
 			KeyType:    "name",
 			Index:      "1",
 			JSON:       true,
+			Limit:      math.MaxUint32,
 		})
 		if err != nil {
 			return 0, 0, 0, 0, 0, err
@@ -322,16 +323,17 @@ type LockTokensResp struct {
 // GetTotalLockTokens provides the total number of (FIP6) locked tokens by iterating through the locktokens table.
 func (api *API) GetTotalLockTokens() (uint64, error) {
 	var total uint64
-	var more bool
-	const iter int64 = 100
+	const iter int64 = math.MaxInt64
 	now := time.Now().UTC().Unix()
-	for i := int64(0); !more; i += iter {
+	lower := "0"
+	more := true
+	for more {
 		gtr, err := api.GetTableRows(eos.GetTableRowsRequest{
 			Code:       "eosio",
 			Scope:      "eosio",
 			Table:      "locktokens",
-			LowerBound: strconv.FormatInt(i, 10),
-			Limit:      uint32(iter - 1),
+			LowerBound: lower,
+			Limit:      5000,
 			KeyType:    "i64",
 			Index:      "1",
 			JSON:       true,
@@ -356,9 +358,10 @@ func (api *API) GetTotalLockTokens() (uint64, error) {
 				}
 			}
 		}
-		if !gtr.More {
-			more = false
+		if gtr.More {
+			lower = strconv.FormatUint(uint64(ltr[len(ltr) - 1].Id), 10)
 		}
+		more = gtr.More
 	}
 	return total, nil
 }
