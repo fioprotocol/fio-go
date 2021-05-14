@@ -369,7 +369,7 @@ type FeeValueTs struct {
 type FeeVote2 struct {
 	Id                uint64          `json:"id"`
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
-	FeeVotes          []FeeValueTs    `json:"fee_votes"`
+	FeeVotes          []FeeValueTs    `json:"feevotes"`
 	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
 
