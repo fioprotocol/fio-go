@@ -360,15 +360,16 @@ type FeeVote struct {
 }
 
 type FeeValueTs struct {
-	FeeValue
-	TimeStame uint64 `json:"time_stame"`
+	EndPoint string `json:"end_point"`
+	Value    int64  `json:"value"`
+	TimeStamp uint64 `json:"timestamp"`
 }
 
 // FeeVote2 (query response) is the new voting table format
 type FeeVote2 struct {
 	Id                uint64          `json:"id"`
 	BlockProducerName eos.AccountName `json:"block_producer_name"`
-	FeeVotes          []FeeValueTs    `json:"fee_votes"`
+	FeeVotes          []FeeValueTs    `json:"feevotes"`
 	LastVoteTimestamp uint64          `json:"lastvotetimestamp"`
 }
 
