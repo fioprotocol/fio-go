@@ -360,7 +360,8 @@ type FeeVote struct {
 }
 
 type FeeValueTs struct {
-	FeeValue
+	EndPoint string `json:"end_point"`
+	Value    int64  `json:"value"`
 	TimeStamp uint64 `json:"timestamp"`
 }
 
