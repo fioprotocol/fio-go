@@ -361,7 +361,7 @@ type FeeVote struct {
 
 type FeeValueTs struct {
 	FeeValue
-	TimeStame uint64 `json:"time_stame"`
+	TimeStamp uint64 `json:"timestamp"`
 }
 
 // FeeVote2 (query response) is the new voting table format
