@@ -390,15 +390,7 @@ func (api *API) GetCirculatingSupply() (circulating uint64, minted uint64, locke
 	if err != nil {
 		return
 	}
-	userLock, err = api.GetTotalLockTokens()
-	if err != nil {
-		return
-	}
-	rewLock, err = api.GetLockedBpRewards()
-	if err != nil {
-		return
-	}
-	return supply - genesis - userLock - rewLock, supply, genesis + userLock + rewLock, nil
+	return supply - genesis, supply, genesis, nil
 }
 
 // GetLockedBpRewards gets the unpaid rewards for block producers: Fees collected for FIO Address/Domain
