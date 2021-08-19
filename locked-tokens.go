@@ -374,7 +374,7 @@ func (api *API) GetTotalLockTokens() (uint64, error) {
 // this is a very busy call, requiring multiple requests to calculate the result, and it is recommended to cache the
 // output if needed frequently.
 func (api *API) GetCirculatingSupply() (circulating uint64, minted uint64, locked uint64, err error) {
-	var supply, genesis, userLock, rewLock uint64
+	var supply, genesis uint64
 	gcr := &eos.GetCurrencyStatsResp{}
 	gcr, err = api.GetCurrencyStats("fio.token", "FIO")
 	if err != nil {
