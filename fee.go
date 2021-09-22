@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	FeeAddNft               = "add_nft"
 	FeeAddPubAddress        = "add_pub_address"
 	FeeAuthDelete           = "auth_delete"
 	FeeAuthLink             = "auth_link"
@@ -31,7 +32,9 @@ const (
 	FeeRegisterProxy        = "register_proxy"
 	FeeRejectFundsRequest   = "reject_funds_request"
 	FeeRemoveAllAddresses   = "remove_pub_addresses"
+	FeeRemoveAllNfts        = "remove_all_nfts"
 	FeeRemovePubAddress     = "remove_pub_address"
+	FeeRemoveNft            = "remove_nft"
 	FeeRenewFioAddress      = "renew_fio_address"
 	FeeRenewFioDomain       = "renew_fio_domain"
 	FeeSetDomainPub         = "set_fio_domain_public"
@@ -54,6 +57,7 @@ var (
 	//  maxFees are _default_ values: fees are automatically updated on first connect on a best-effort basis.
 	maxFees = map[string]float64{
 		"add_pub_address":             0.4,
+		"add_nft":                     0.4,
 		"add_to_whitelist":            0.0,
 		"auth_delete":                 0.4,
 		"auth_link":                   0.4,
@@ -75,7 +79,9 @@ var (
 		"register_producer":           200.0,
 		"register_proxy":              0.4,
 		"reject_funds_request":        0.4,
+		"remove_all_nfts":             0.6,
 		"remove_from_whitelist":       0.0,
+		"remove_nft":                  0.6,
 		"remove_pub_address":          0.6,
 		"remove_pub_addresses":        0.6,
 		"renew_fio_address":           40.0,
@@ -98,6 +104,7 @@ var (
 	// slight chance fee will be wrong if there are two actions with identical name, but don't think there are any cases
 	// where that will happen right now.
 	maxFeesByAction = map[string]string{
+		"addnft":       FeeAddNft,
 		"addaddress":   FeeAddPubAddress,
 		"approve":      FeeMsigApprove,
 		"bundlevote":   FeeBundleVote,
@@ -117,6 +124,8 @@ var (
 		"regproxy":     FeeRegisterProxy,
 		"rejectfndreq": FeeRejectFundsRequest,
 		"remaddress":   FeeRemovePubAddress,
+		"remnft":       FeeRemoveNft,
+		"remallnfts":   FeeRemoveAllNfts,
 		"remalladdr":   FeeRemoveAllAddresses,
 		"renewaddress": FeeRenewFioAddress,
 		"renewdomain":  FeeRenewFioDomain,
