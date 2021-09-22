@@ -17,11 +17,11 @@ import (
 
 // set as variables to allow override on development nets
 var (
-	LockedInitial              = 90 * 24 * 60    // initial minutes before first unlock period
-	LockedInitialPct   float64 = 0.06  // percentage unlocked after first period
-	LockedIncrement            = 180 * 24 * 60   // each additional unlock period, 2nd unlock = LockedInitial + LockedIncrement, 3rd = LockedInitial + (2 * LockedIncrement), etc
-	LockedIncrementPct float64 = 0.188 // percent unlocked each additional period: 1st = 6%, 2nd = 24.8% etc.
-	LockedPeriods              = 6     // number of unlock periods
+	LockedInitial              = 90 * 24 * 60  // initial minutes before first unlock period
+	LockedInitialPct   float64 = 0.06          // percentage unlocked after first period
+	LockedIncrement            = 180 * 24 * 60 // each additional unlock period, 2nd unlock = LockedInitial + LockedIncrement, 3rd = LockedInitial + (2 * LockedIncrement), etc
+	LockedIncrementPct float64 = 0.188         // percent unlocked each additional period: 1st = 6%, 2nd = 24.8% etc.
+	LockedPeriods              = 6             // number of unlock periods
 )
 
 const (
@@ -359,7 +359,7 @@ func (api *API) GetTotalLockTokens() (uint64, error) {
 			}
 		}
 		if gtr.More {
-			lower = strconv.FormatUint(uint64(ltr[len(ltr) - 1].Id), 10)
+			lower = strconv.FormatUint(uint64(ltr[len(ltr)-1].Id), 10)
 		}
 		more = gtr.More
 	}
@@ -374,7 +374,7 @@ func (api *API) GetTotalLockTokens() (uint64, error) {
 // this is a very busy call, requiring multiple requests to calculate the result, and it is recommended to cache the
 // output if needed frequently.
 func (api *API) GetCirculatingSupply() (circulating uint64, minted uint64, locked uint64, err error) {
-	var supply, genesis, userLock, rewLock uint64
+	var supply, genesis uint64
 	gcr := &eos.GetCurrencyStatsResp{}
 	gcr, err = api.GetCurrencyStats("fio.token", "FIO")
 	if err != nil {
@@ -390,15 +390,7 @@ func (api *API) GetCirculatingSupply() (circulating uint64, minted uint64, locke
 	if err != nil {
 		return
 	}
-	userLock, err = api.GetTotalLockTokens()
-	if err != nil {
-		return
-	}
-	rewLock, err = api.GetLockedBpRewards()
-	if err != nil {
-		return
-	}
-	return supply - genesis - userLock - rewLock, supply, genesis + userLock + rewLock, nil
+	return supply - genesis, supply, genesis, nil
 }
 
 // GetLockedBpRewards gets the unpaid rewards for block producers: Fees collected for FIO Address/Domain
