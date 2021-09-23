@@ -212,3 +212,52 @@ func NewRemAllNft(fioAddress Address, actor eos.AccountName) *Action {
 		Actor:      actor,
 	})
 }
+
+type Nft struct {
+	ChainCode       string `json:"chain_code,omitempty"`
+	ContractAddress string `json:"contract_address,omitempty"`
+	TokenId         string `json:"token_id,omitempty"`
+	Url             string `json:"url,omitempty"`
+	Hash            string `json:"hash,omitempty"`
+	Metadata        string `json:"metadata,omitempty"`
+}
+
+type NftResponse struct {
+	Nfts []Nft  `json:"nfts"`
+	More uint32 `json:"more"`
+}
+
+type getNftsReq struct {
+	FioAddress      Address `json:"fio_address,omitempty"`
+	ContractAddress string  `json:"contract_address,omitempty"`
+	Hash            string  `json:"hash,omitempty"`
+	Limit           uint32  `json:"limit"`
+	Offset          uint32  `json:"offset"`
+}
+
+// GetNftsFioAddress fetches the list of NFTs for a FIO address
+func (api *API) GetNftsFioAddress(fioAddress Address, offset uint32, limit uint32) (nfts *NftResponse, err error) {
+	nfts = &NftResponse{
+		Nfts: make([]Nft, 0),
+	}
+	err = api.call("chain", "get_nfts_fio_address", getNftsReq{FioAddress: fioAddress, Limit: limit, Offset: offset}, nfts)
+	return
+}
+
+// GetNftsContract fetches the list of NFTs for a contract address
+func (api *API) GetNftsContract(contractAddress string, offset uint32, limit uint32) (nfts *NftResponse, err error) {
+	nfts = &NftResponse{
+		Nfts: make([]Nft, 0),
+	}
+	err = api.call("chain", "get_nfts_contract", getNftsReq{ContractAddress: contractAddress, Limit: limit, Offset: offset}, nfts)
+	return
+}
+
+// GetNftsHash fetches the list of NFTs for a specific NFT Hash
+func (api *API) GetNftsHash(hash string, offset uint32, limit uint32) (nfts *NftResponse, err error) {
+	nfts = &NftResponse{
+		Nfts: make([]Nft, 0),
+	}
+	err = api.call("chain", "get_nfts_hash", getNftsReq{Hash: hash, Limit: limit, Offset: offset}, nfts)
+	return
+}
