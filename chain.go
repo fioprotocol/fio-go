@@ -418,7 +418,7 @@ type AllowedAction struct {
 	BlockTimeStamp eos.BlockTimestamp `json:"block_time_stamp"` // unixtime value
 }
 
-// AllowedActionResp holds the response from a get_actions API call, adds 'Allowed' prefix to avoid a conflict with
+// AllowedActionsResp holds the response from a get_actions API call, adds 'Allowed' prefix to avoid a conflict with
 // eos libraries caused by an unfortunate choice in endpoint naming
 type AllowedActionsResp struct {
 	Actions []AllowedAction `json:"actions"`
