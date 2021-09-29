@@ -38,8 +38,8 @@ func (nft *NftToAdd) encodeMeta() nftEncoded {
 	var md string
 	if nft.Metadata != nil {
 		j, e := json.Marshal(nft.Metadata)
-		if e == nil {
-			md = fmt.Sprintf("%q", string(j))
+		if e == nil && string(j) != `""` {
+			md = fmt.Sprintf("%s", string(j))
 		}
 	}
 	return nftEncoded{
@@ -80,24 +80,24 @@ func (nfte nftEncoded) valid() error {
 
 // AddNft is used to add an array of NFTs (max 3 per tx).
 type AddNft struct {
-	FioAddress Address         `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Nfts       []NftToAdd      `json:"nfts"`
 	MaxFee     uint64          `json:"max_fee"`
-	Tpid       string          `json:"tpid"`
 	Actor      eos.AccountName `json:"actor"`
+	Tpid       string          `json:"tpid"`
 }
 
 // addNft is used to facilitate using an interface for metadata in NftToAdd
 type addNft struct {
-	FioAddress Address         `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Nfts       []nftEncoded    `json:"nfts"`
 	MaxFee     uint64          `json:"max_fee"`
-	Tpid       string          `json:"tpid"`
 	Actor      eos.AccountName `json:"actor"`
+	Tpid       string          `json:"tpid"`
 }
 
 // NewAddNft creates an AddNft fio.Action
-func NewAddNft(fioAddress Address, nfts []NftToAdd, actor eos.AccountName) (*Action, error) {
+func NewAddNft(fioAddress string, nfts []NftToAdd, actor eos.AccountName) (*Action, error) {
 	n := make([]nftEncoded, len(nfts))
 	for i := range nfts {
 		n[i] = nfts[i].encodeMeta()
@@ -112,11 +112,11 @@ func NewAddNft(fioAddress Address, nfts []NftToAdd, actor eos.AccountName) (*Act
 	if e := add.valid(); e != nil {
 		return nil, e
 	}
-	return NewAction("fio.address", "newnft", actor, add), nil
+	return NewAction("fio.address", "addnft", actor, add), nil
 }
 
 // MustNewAddNft panics on error
-func MustNewAddNft(fioAddress Address, nfts []NftToAdd, actor eos.AccountName) *Action {
+func MustNewAddNft(fioAddress string, nfts []NftToAdd, actor eos.AccountName) *Action {
 	a, e := NewAddNft(fioAddress, nfts, actor)
 	if e != nil {
 		panic(e)
@@ -126,7 +126,7 @@ func MustNewAddNft(fioAddress Address, nfts []NftToAdd, actor eos.AccountName) *
 
 // valid checks for various constraints.
 func (anft *addNft) valid() error {
-	if !anft.FioAddress.Valid() {
+	if !Address(anft.FioAddress).Valid() {
 		return fmt.Errorf("fio address (%q) is invalid", anft.FioAddress)
 	}
 	if anft.Nfts == nil || len(anft.Nfts) > 3 || len(anft.Nfts) == 0 {
@@ -152,19 +152,19 @@ type NftToDelete struct {
 
 // RemNft is used to remove NFTs from an address
 type RemNft struct {
-	FioAddress Address         `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Nfts       []NftToDelete   `json:"nfts"`
 	MaxFee     uint64          `json:"max_fee"`
-	Tpid       string          `json:"tpid"`
 	Actor      eos.AccountName `json:"actor"`
+	Tpid       string          `json:"tpid"`
 }
 
 // NewRemNft creates an action for removing NFT mappings
-func NewRemNft(fioAddress Address, nfts []NftToDelete, actor eos.AccountName) (*Action, error) {
+func NewRemNft(fioAddress string, nfts []NftToDelete, actor eos.AccountName) (*Action, error) {
 	if nfts == nil || len(nfts) == 0 {
 		return nil, fmt.Errorf("nfts cannot be empty")
 	}
-	if !fioAddress.Valid() {
+	if !Address(fioAddress).Valid() {
 		return nil, fmt.Errorf("invalid fio address")
 	}
 	for i := range nfts {
@@ -181,13 +181,13 @@ func NewRemNft(fioAddress Address, nfts []NftToDelete, actor eos.AccountName) (*
 		FioAddress: fioAddress,
 		Nfts:       nfts,
 		MaxFee:     Tokens(GetMaxFee(FeeRemoveNft)),
-		Tpid:       CurrentTpid(),
 		Actor:      actor,
+		Tpid:       CurrentTpid(),
 	}), nil
 }
 
 // MustNewRemNft creates an action or panics
-func MustNewRemNft(fioAddress Address, nfts []NftToDelete, actor eos.AccountName) *Action {
+func MustNewRemNft(fioAddress string, nfts []NftToDelete, actor eos.AccountName) *Action {
 	a, e := NewRemNft(fioAddress, nfts, actor)
 	if e != nil {
 		panic(e)
@@ -197,19 +197,19 @@ func MustNewRemNft(fioAddress Address, nfts []NftToDelete, actor eos.AccountName
 
 // RemAllNft removes all NFTs for a FIO Address
 type RemAllNft struct {
-	FioAddress Address         `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	MaxFee     uint64          `json:"max_fee"`
-	Tpid       string          `json:"tpid"`
 	Actor      eos.AccountName `json:"actor"`
+	Tpid       string          `json:"tpid"`
 }
 
 // NewRemAllNft builds an action for RemAllNft
-func NewRemAllNft(fioAddress Address, actor eos.AccountName) *Action {
+func NewRemAllNft(fioAddress string, actor eos.AccountName) *Action {
 	return NewAction("fio.address", "remallnfts", actor, &RemAllNft{
 		FioAddress: fioAddress,
 		MaxFee:     Tokens(GetMaxFee(FeeRemoveAllNfts)),
-		Tpid:       CurrentTpid(),
 		Actor:      actor,
+		Tpid:       CurrentTpid(),
 	})
 }
 
@@ -228,15 +228,15 @@ type NftResponse struct {
 }
 
 type getNftsReq struct {
-	FioAddress      Address `json:"fio_address,omitempty"`
-	ContractAddress string  `json:"contract_address,omitempty"`
-	Hash            string  `json:"hash,omitempty"`
-	Limit           uint32  `json:"limit"`
-	Offset          uint32  `json:"offset"`
+	FioAddress      string `json:"fio_address,omitempty"`
+	ContractAddress string `json:"contract_address,omitempty"`
+	Hash            string `json:"hash,omitempty"`
+	Limit           uint32 `json:"limit"`
+	Offset          uint32 `json:"offset"`
 }
 
 // GetNftsFioAddress fetches the list of NFTs for a FIO address
-func (api *API) GetNftsFioAddress(fioAddress Address, offset uint32, limit uint32) (nfts *NftResponse, err error) {
+func (api *API) GetNftsFioAddress(fioAddress string, offset uint32, limit uint32) (nfts *NftResponse, err error) {
 	nfts = &NftResponse{
 		Nfts: make([]Nft, 0),
 	}
