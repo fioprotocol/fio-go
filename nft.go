@@ -8,12 +8,14 @@ import (
 )
 
 // BurnNfts is intended to be called by block producers to remove expired NFT mappings from RAM
-type BurnNfts struct{}
+type BurnNfts struct{
+	Actor eos.AccountName `json:"actor"`
+}
 
 func NewBurnNfts(actor eos.AccountName) *Action {
 	return NewAction(
 		"fio.address", "burnnfts", actor,
-		BurnNfts{},
+		BurnNfts{Actor: actor},
 	)
 }
 

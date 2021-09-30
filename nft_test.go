@@ -5,11 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
 
 func TestNft(t *testing.T) {
+	var remallnfts *NftResponse
 	acc, api, _, err := newApi()
 	if err != nil {
 		t.Error(err)
@@ -144,15 +146,34 @@ func TestNft(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	time.Sleep(time.Second)
 
-	remallnfts, err := api.GetNftsFioAddress(addr, 0, 100)
+	// a block producer has to perform a burn, this takes at least one block to complete....
+	pAcc, pApi, _, err := NewWifConnect(`5KQ6f9ZgUtagD3LZ4wcMKhhvK9qy4BuwL3L1pkm6E2v62HCne2R`, api.BaseURL)
 	if err != nil {
 		t.Error(err)
-		return
+	}
+	_, err = pApi.SignPushActions(NewBurnNfts(pAcc.Actor))
+	if err != nil {
+		t.Error(err)
 	}
 
-	if len(remallnfts.Nfts) != 0 {
+	time.Sleep(time.Second)
+
+	// it can take a while, so don't get too anxious to declare it's failed:
+	burned := false
+	for i := 30; i > 0; i-- {
+		remallnfts, err = api.GetNftsFioAddress(addr, 0, 100)
+		if err != nil && !strings.HasPrefix(err.Error(), `No NFTS are mapped`) {
+			t.Error(err)
+			return
+		}
+		if len(remallnfts.Nfts) != 0 {
+			continue
+		}
+		burned = true
+	}
+
+	if !burned {
 		j, _ := json.MarshalIndent(remallnfts, "", "  ")
 		fmt.Println(string(j))
 		t.Error("failed to RemAllNft, still has NFTs mapped")
