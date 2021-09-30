@@ -169,12 +169,12 @@ func NewRemNft(fioAddress string, nfts []NftToDelete, actor eos.AccountName) (*A
 	}
 	for i := range nfts {
 		switch true {
-		case len(nfts[i].ChainCode) < 1 || len(nfts[i].ChainCode) > 10:
+		case nfts[i].ChainCode == "" || len(nfts[i].ChainCode) > 10:
 			return nil, fmt.Errorf("chain code (%q) must be > 1 and < 128 characters", nfts[i].ChainCode)
-		case len(nfts[i].ContractAddress) < 1 || len(nfts[i].ContractAddress) > 128:
+		case nfts[i].ContractAddress == "" || len(nfts[i].ContractAddress) > 128:
 			return nil, fmt.Errorf("contract address (%q) must be > 1 and < 128 characters", nfts[i].ContractAddress)
 		case len(nfts[i].TokenId) > 64:
-			return nil, fmt.Errorf("token code (%q) < 64 characters", nfts[i].TokenId)
+			return nil, fmt.Errorf("token code must be (%q) < 64 characters", nfts[i].TokenId)
 		}
 	}
 	return NewAction("fio.address", "remnft", actor, &RemNft{
@@ -229,10 +229,12 @@ type NftResponse struct {
 
 type getNftsReq struct {
 	FioAddress      string `json:"fio_address,omitempty"`
+	ChainCode       string `json:"chain_code,omitempty"`
 	ContractAddress string `json:"contract_address,omitempty"`
+	TokenId         string `json:"token_id,omitempty"`
 	Hash            string `json:"hash,omitempty"`
-	Limit           uint32 `json:"limit"`
-	Offset          uint32 `json:"offset"`
+	Limit           uint32 `json:"limit,omitempty"`
+	Offset          uint32 `json:"offset,omitempty"`
 }
 
 // GetNftsFioAddress fetches the list of NFTs for a FIO address
@@ -245,11 +247,17 @@ func (api *API) GetNftsFioAddress(fioAddress string, offset uint32, limit uint32
 }
 
 // GetNftsContract fetches the list of NFTs for a contract address
-func (api *API) GetNftsContract(contractAddress string, offset uint32, limit uint32) (nfts *NftResponse, err error) {
+func (api *API) GetNftsContract(chaincode, contractAddress, tokenid string, offset uint32, limit uint32) (nfts *NftResponse, err error) {
 	nfts = &NftResponse{
 		Nfts: make([]Nft, 0),
 	}
-	err = api.call("chain", "get_nfts_contract", getNftsReq{ContractAddress: contractAddress, Limit: limit, Offset: offset}, nfts)
+	err = api.call("chain", "get_nfts_contract", getNftsReq{
+		ChainCode:       chaincode,
+		ContractAddress: contractAddress,
+		TokenId:         tokenid,
+		Limit:           limit,
+		Offset:          offset,
+	}, nfts)
 	return
 }
 
