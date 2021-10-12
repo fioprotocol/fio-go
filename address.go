@@ -355,7 +355,7 @@ func (api *API) GetExpiredOffset(descending bool) (int64, error) {
 		Scope:      "fio.address",
 		Table:      "domains",
 		LowerBound: "0",
-		UpperBound: strconv.Itoa(int(time.Now().UTC().Unix()) - 1),
+		UpperBound: strconv.Itoa(int(time.Now().Add(-90*24*time.Hour).UTC().Unix())),
 		Limit:      1,
 		KeyType:    "i64",
 		Index:      "3",
@@ -370,7 +370,7 @@ func (api *API) GetExpiredOffset(descending bool) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	if len(ids) == 0 {
+	if len(ids) == 0 || ids[0].Id == 0 {
 		return 0, errors.New("no results for GetExpiredOffset")
 	}
 	return ids[0].Id, nil
