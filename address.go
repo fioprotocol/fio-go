@@ -304,13 +304,30 @@ func NewExpDomain(actor eos.AccountName, domain string) *Action {
 }
 
 // BurnExpired is intended to be called by block producers to remove expired domains or addresses from RAM
+// Deprecated: as of the 2.5.x contracts release this will not work, use BurnExpiredRange instead
 type BurnExpired struct{}
 
+// NewBurnExpired will return a burnexpired action. It has been updated to return a BurnExpiredRange action
+// as of the 3.1.x release. It didn't work before, and this prevents a breaking change in existing clients.
 func NewBurnExpired(actor eos.AccountName) *Action {
+	return NewBurnExpiredRange(0, 15, actor)
+}
+
+// NewBurnExpiredRange will return a burnexpired action.
+func NewBurnExpiredRange(offset int64, limit int32, actor eos.AccountName) *Action {
 	return NewAction(
 		"fio.address", "burnexpired", actor,
-		BurnExpired{},
+		BurnExpiredRange{
+			Offset: offset,
+			Limit: limit,
+		},
 	)
+}
+
+// BurnExpiredRange is intended to be called by block producers to remove expired domains or addresses from RAM
+type BurnExpiredRange struct {
+	Offset int64 `json:"offset"`
+	Limit int32 `json:"limit"`
 }
 
 // SetDomainPub changes the permissions for a domain, allowing (or not) anyone to register an address
