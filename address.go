@@ -316,7 +316,16 @@ func NewBurnExpired(actor eos.AccountName) *Action {
 	return NewBurnExpiredRange(0, 15, actor)
 }
 
-// NewBurnExpiredRange will return a burnexpired action.
+// NewBurnExpiredRange will return a burnexpired action. The offset should be the first ID in the domains
+// table that is expired. The GetExpiredOffset helper makes this easier.
+//	offset, err := api.GetExpiredOffset(false)
+//	if err != nil {
+//	    ...
+//	}
+//	_, err = api.SignPushActions(fio.NewBurnExpiredRange(offset, 15, acc.Actor)
+//	if err != nil {
+//	    ...
+//	}
 func NewBurnExpiredRange(offset int64, limit int32, actor eos.AccountName) *Action {
 	return NewAction(
 		"fio.address", "burnexpired", actor,
