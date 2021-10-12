@@ -306,11 +306,13 @@ func NewExpDomain(actor eos.AccountName, domain string) *Action {
 }
 
 // BurnExpired is intended to be called by block producers to remove expired domains or addresses from RAM
+//
 // Deprecated: as of the 2.5.x contracts release this will not work, use BurnExpiredRange instead
 type BurnExpired struct{}
 
 // NewBurnExpired will return a burnexpired action. It has been updated to return a BurnExpiredRange action
 // as of the 3.1.x release. It didn't work before, and this prevents a breaking change in existing clients but will not work.
+//
 // Deprecated: this is essentially a noop, use GetExpiredOffset to find the offset, and provide it to NewBurnExpiredRange
 func NewBurnExpired(actor eos.AccountName) *Action {
 	return NewBurnExpiredRange(0, 15, actor)
@@ -322,7 +324,7 @@ func NewBurnExpired(actor eos.AccountName) *Action {
 //	if err != nil {
 //	    ...
 //	}
-//	_, err = api.SignPushActions(fio.NewBurnExpiredRange(offset, 15, acc.Actor)
+//	_, err = api.SignPushActions(fio.NewBurnExpiredRange(offset, 15, acc.Actor))
 //	if err != nil {
 //	    ...
 //	}
