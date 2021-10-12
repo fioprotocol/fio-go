@@ -11,6 +11,8 @@ import (
 	"math"
 	"net/http"
 	"regexp"
+	"strconv"
+	"time"
 
 	"crypto/sha1" // #nosec
 )
@@ -308,7 +310,8 @@ func NewExpDomain(actor eos.AccountName, domain string) *Action {
 type BurnExpired struct{}
 
 // NewBurnExpired will return a burnexpired action. It has been updated to return a BurnExpiredRange action
-// as of the 3.1.x release. It didn't work before, and this prevents a breaking change in existing clients.
+// as of the 3.1.x release. It didn't work before, and this prevents a breaking change in existing clients but will not work.
+// Deprecated: this is essentially a noop, use GetExpiredOffset to find the offset, and provide it to NewBurnExpiredRange
 func NewBurnExpired(actor eos.AccountName) *Action {
 	return NewBurnExpiredRange(0, 15, actor)
 }
@@ -319,7 +322,7 @@ func NewBurnExpiredRange(offset int64, limit int32, actor eos.AccountName) *Acti
 		"fio.address", "burnexpired", actor,
 		BurnExpiredRange{
 			Offset: offset,
-			Limit: limit,
+			Limit:  limit,
 		},
 	)
 }
@@ -327,7 +330,39 @@ func NewBurnExpiredRange(offset int64, limit int32, actor eos.AccountName) *Acti
 // BurnExpiredRange is intended to be called by block producers to remove expired domains or addresses from RAM
 type BurnExpiredRange struct {
 	Offset int64 `json:"offset"`
-	Limit int32 `json:"limit"`
+	Limit  int32 `json:"limit"`
+}
+
+type expiredIdOnly struct {
+	Id int64 `json:"id"`
+}
+
+// GetExpiredOffset finds the first FIO domain in the fio.address::domains table, and returns the index for that domain.
+func (api *API) GetExpiredOffset(descending bool) (int64, error) {
+	gtro, err := api.GetTableRowsOrder(GetTableRowsOrderRequest{
+		Code:       "fio.address",
+		Scope:      "fio.address",
+		Table:      "domains",
+		LowerBound: strconv.Itoa(int(time.Now().UTC().Unix()) - 1),
+		UpperBound: "9999999999",
+		Limit:      1,
+		KeyType:    "i64",
+		Index:      "3",
+		JSON:       true,
+		Reverse:    descending,
+	})
+	if err != nil {
+		return 0, err
+	}
+	ids := make([]expiredIdOnly, 0)
+	err = json.Unmarshal(gtro.Rows, &ids)
+	if err != nil {
+		return 0, err
+	}
+	if len(ids) == 0 {
+		return 0, errors.New("no results for GetExpiredOffset")
+	}
+	return ids[0].Id, nil
 }
 
 // SetDomainPub changes the permissions for a domain, allowing (or not) anyone to register an address
