@@ -225,8 +225,8 @@ type TransferDom struct {
 	FioDomain            string          `json:"fio_domain"`
 	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
 	MaxFee               uint64          `json:"max_fee"`
-	Tpid                 string          `json:"tpid"`
 	Actor                eos.AccountName `json:"actor"`
+	Tpid                 string          `json:"tpid"`
 }
 
 func NewTransferDom(actor eos.AccountName, domain string, newOwnerPubKey string) *Action {
