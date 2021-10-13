@@ -11,6 +11,8 @@ import (
 	"math"
 	"net/http"
 	"regexp"
+	"strconv"
+	"time"
 
 	"crypto/sha1" // #nosec
 )
@@ -223,8 +225,8 @@ type TransferDom struct {
 	FioDomain            string          `json:"fio_domain"`
 	NewOwnerFioPublicKey string          `json:"new_owner_fio_public_key"`
 	MaxFee               uint64          `json:"max_fee"`
-	Tpid                 string          `json:"tpid"`
 	Actor                eos.AccountName `json:"actor"`
+	Tpid                 string          `json:"tpid"`
 }
 
 func NewTransferDom(actor eos.AccountName, domain string, newOwnerPubKey string) *Action {
@@ -304,13 +306,74 @@ func NewExpDomain(actor eos.AccountName, domain string) *Action {
 }
 
 // BurnExpired is intended to be called by block producers to remove expired domains or addresses from RAM
+//
+// Deprecated: as of the 2.5.x contracts release this will not work, use BurnExpiredRange instead
 type BurnExpired struct{}
 
+// NewBurnExpired will return a burnexpired action. It has been updated to return a BurnExpiredRange action
+// as of the 3.1.x release. It didn't work before, and this prevents a breaking change in existing clients but will not work.
+//
+// Deprecated: this is essentially a noop, use GetExpiredOffset to find the offset, and provide it to NewBurnExpiredRange
 func NewBurnExpired(actor eos.AccountName) *Action {
+	return NewBurnExpiredRange(0, 15, actor)
+}
+
+// NewBurnExpiredRange will return a burnexpired action. The offset should be the first ID in the domains
+// table that is expired. The GetExpiredOffset helper makes this easier.
+//	offset, err := api.GetExpiredOffset(false)
+//	if err != nil {
+//	    ...
+//	}
+//	_, err = api.SignPushActions(fio.NewBurnExpiredRange(offset, 15, acc.Actor))
+//	if err != nil {
+//	    ...
+//	}
+func NewBurnExpiredRange(offset int64, limit int32, actor eos.AccountName) *Action {
 	return NewAction(
 		"fio.address", "burnexpired", actor,
-		BurnExpired{},
+		BurnExpiredRange{
+			Offset: offset,
+			Limit:  limit,
+		},
 	)
+}
+
+// BurnExpiredRange is intended to be called by block producers to remove expired domains or addresses from RAM
+type BurnExpiredRange struct {
+	Offset int64 `json:"offset"`
+	Limit  int32 `json:"limit"`
+}
+
+type expiredIdOnly struct {
+	Id int64 `json:"id"`
+}
+
+// GetExpiredOffset finds the first FIO domain in the fio.address::domains table, and returns the index for that domain.
+func (api *API) GetExpiredOffset(descending bool) (int64, error) {
+	gtro, err := api.GetTableRowsOrder(GetTableRowsOrderRequest{
+		Code:       "fio.address",
+		Scope:      "fio.address",
+		Table:      "domains",
+		LowerBound: "0",
+		UpperBound: strconv.Itoa(int(time.Now().Add(-90*24*time.Hour).UTC().Unix())),
+		Limit:      1,
+		KeyType:    "i64",
+		Index:      "3",
+		JSON:       true,
+		Reverse:    descending,
+	})
+	if err != nil {
+		return 0, err
+	}
+	ids := make([]expiredIdOnly, 0)
+	err = json.Unmarshal(gtro.Rows, &ids)
+	if err != nil {
+		return 0, err
+	}
+	if len(ids) == 0 || ids[0].Id == 0 {
+		return 0, errors.New("no results for GetExpiredOffset")
+	}
+	return ids[0].Id, nil
 }
 
 // SetDomainPub changes the permissions for a domain, allowing (or not) anyone to register an address

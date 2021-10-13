@@ -2,6 +2,7 @@ package fio
 
 import (
 	"encoding/json"
+	"github.com/fioprotocol/fio-go/eos"
 	"math/rand"
 	"testing"
 	"time"
@@ -164,7 +165,7 @@ func word() string {
 
 func TestAddress(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
-	account, api, opts, err := newApi()
+	account, api, _, err := newApi()
 	if err != nil {
 		t.Error(err)
 		return
@@ -183,21 +184,7 @@ func TestAddress(t *testing.T) {
 		return
 	}
 
-	_, err = api.SignPushTransaction(NewTransaction(
-		[]*Action{NewTransferTokensPubKey(
-			account.Actor,
-			accountA.PubKey,
-			Tokens(
-				GetMaxFee(FeeRegisterFioDomain)+
-					GetMaxFee(FeeRenewFioDomain)+
-					(3*GetMaxFee(FeeRegisterFioAddress))+
-					GetMaxFee(FeeRenewFioAddress)+
-					GetMaxFee(FeeTransferDom)+
-					GetMaxFee(FeeTransferAddress)+
-					GetMaxFee(FeeSetDomainPub)),
-		)}, opts),
-		opts.ChainID, CompressionNone,
-	)
+	_, err = api.SignPushActions(NewTransferTokensPubKey(account.Actor, accountA.PubKey, Tokens(10000)))
 	if err != nil {
 		t.Error(err)
 		return
@@ -374,6 +361,12 @@ func TestAddress(t *testing.T) {
 		t.Error("set public: " + err.Error())
 	}
 
+	_, err = apiA.SignPushActions(NewTransferTokensPubKey(accountA.Actor, accountB.PubKey, Tokens(1)))
+	if err != nil {
+		t.Error(err)
+	}
+	time.Sleep(time.Second)
+
 	// disable until implemented in fio master branch.
 	// // transfer it
 	// _, err = apiA.SignPushTransaction(NewTransaction(
@@ -398,13 +391,11 @@ func TestAddress(t *testing.T) {
 	// }
 
 	// transfer the domain
-	_, err = apiA.SignPushTransaction(NewTransaction(
-		[]*Action{NewTransferDom(accountA.Actor, domain, accountB.PubKey)}, optsA),
-		optsA.ChainID, CompressionNone,
-	)
+	_, err = apiA.SignPushActions(NewTransferDom(accountA.Actor, domain, accountB.PubKey))
 	if err != nil {
-		t.Error("transfer domain: " + err.Error())
+		t.Errorf("transfer domain: %v - %+v", err, err.(eos.APIError).ErrorStruct)
 	}
+	time.Sleep(time.Second)
 
 	// verify
 	newOwner, err := api.GetDomainOwner(domain)
@@ -412,7 +403,7 @@ func TestAddress(t *testing.T) {
 		t.Error(err)
 	}
 	if accountB.Actor != *newOwner {
-		t.Error("domain transfer failed")
+		t.Error("domain transfer failed for", domain, accountA.PubKey, accountB.PubKey)
 	}
 
 }
