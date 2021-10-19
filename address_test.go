@@ -2,6 +2,7 @@ package fio
 
 import (
 	"encoding/json"
+	"github.com/fioprotocol/fio-go/eos"
 	"math/rand"
 	"testing"
 	"time"
@@ -392,7 +393,7 @@ func TestAddress(t *testing.T) {
 	// transfer the domain
 	_, err = apiA.SignPushActions(NewTransferDom(accountA.Actor, domain, accountB.PubKey))
 	if err != nil {
-		t.Error("transfer domain: " + err.Error())
+		t.Errorf("transfer domain: %v - %+v", err, err.(eos.APIError).ErrorStruct)
 	}
 	time.Sleep(time.Second)
 
