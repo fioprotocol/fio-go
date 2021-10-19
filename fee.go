@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	FeeAddBundles           = "add_bundled_transactions"
 	FeeAddNft               = "add_nft"
 	FeeAddPubAddress        = "add_pub_address"
 	FeeAuthDelete           = "auth_delete"
@@ -56,6 +57,7 @@ var (
 	// *IMPORTANT:* After performing fee updates call `api.RefreshFees` to refresh values from the on-chain tables.
 	//  maxFees are _default_ values: fees are automatically updated on first connect on a best-effort basis.
 	maxFees = map[string]float64{
+		"add_bundled_transactions":    40.0,
 		"add_pub_address":             0.4,
 		"add_nft":                     0.4,
 		"add_to_whitelist":            0.0,
@@ -104,6 +106,7 @@ var (
 	// slight chance fee will be wrong if there are two actions with identical name, but don't think there are any cases
 	// where that will happen right now.
 	maxFeesByAction = map[string]string{
+		"addbundles":   FeeAddBundles,
 		"addnft":       FeeAddNft,
 		"addaddress":   FeeAddPubAddress,
 		"approve":      FeeMsigApprove,

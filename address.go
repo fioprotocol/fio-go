@@ -826,3 +826,29 @@ func (api *API) GetBundleRemaining(a Address) (remaining int, err error) {
 	}
 	return br[0].Bundle, nil
 }
+
+type AddBundles struct {
+	FioAddress string `json:"fio_address"`
+	BundleSets int64 `json:"bundle_sets"`
+	MaxFee uint64 `json:"max_fee"`
+	Tpid string `json:"tpid"`
+	Actor eos.AccountName
+}
+
+// NewAddBundles is used to purchase new bundled transactions for an account, 1 bundle set
+// is 100 transactions.
+func NewAddBundles(fioAddress Address, bundleSets uint64, actor eos.AccountName) (bundles *Action, err error) {
+	if !fioAddress.Valid() {
+		return nil, errors.New("invalid address")
+	}
+	return NewAction(
+		"fio.address", "addbundles", actor,
+		AddBundles{
+			FioAddress: string(fioAddress),
+			BundleSets: int64(bundleSets),
+			MaxFee:     Tokens(GetMaxFee(FeeAddBundles)) * bundleSets,
+			Tpid:       CurrentTpid(),
+			Actor:      actor,
+		},
+	), nil
+}
