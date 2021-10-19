@@ -352,13 +352,19 @@ func TestAddress(t *testing.T) {
 		t.Errorf("get all public: only got %d of 5 addresses", len(addrs))
 	}
 
-	// renew it
+	// renew it: deprecated!
 	_, err = apiA.SignPushTransaction(NewTransaction(
 		[]*Action{NewRenewAddress(accountA.Actor, names[2]+"@"+domain)}, optsA),
 		optsA.ChainID, CompressionNone,
 	)
 	if err != nil {
 		t.Error("set public: " + err.Error())
+	}
+
+	add, err := NewAddBundles(Address(names[2]+"@"+domain), 1, accountA.Actor)
+	_, err = apiA.SignPushActions(add)
+	if err != nil {
+		t.Error(err)
 	}
 
 	_, err = apiA.SignPushActions(NewTransferTokensPubKey(accountA.Actor, accountB.PubKey, Tokens(1)))
