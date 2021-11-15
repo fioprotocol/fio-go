@@ -7,6 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pkg/errors v0.9.1
+	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/gjson v1.6.5
 	github.com/tidwall/sjson v1.1.1
