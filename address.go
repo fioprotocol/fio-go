@@ -78,28 +78,28 @@ func MustNewRegAddress(actor eos.AccountName, address Address, ownerPubKey strin
 
 // BurnAddress will destroy an address owned by an account
 type BurnAddress struct {
-	FioAddress Address         `json:"fio_address"`
+	FioAddress string         `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
 	Tpid       string          `json:"tpid"`
 	MaxFee     uint64          `json:"max_fee"`
 }
 
-func NewBurnAddress(actor eos.AccountName, address Address, tpid string) (action *Action, ok bool) {
+func NewBurnAddress(actor eos.AccountName, address Address) (action *Action, ok bool) {
 	if ok := address.Valid(); !ok {
 		return nil, false
 	}
 	return NewAction("fio.address", "burnaddress", actor,
 		BurnAddress{
-			FioAddress: address,
+			FioAddress: string(address),
 			Actor:      actor,
-			Tpid:       tpid,
+			Tpid:       CurrentTpid(),
 			MaxFee:     Tokens(GetMaxFee(FeeBurnAddress)),
 		},
 	), true
 }
 
-func MustNewBurnAddress(actor eos.AccountName, address Address, tpid string) (action *Action) {
-	a, ok := NewBurnAddress(actor, address, tpid)
+func MustNewBurnAddress(actor eos.AccountName, address Address) (action *Action) {
+	a, ok := NewBurnAddress(actor, address)
 	if !ok {
 		panic("invalid fio address in call to MustBurnNewAddress")
 	}
