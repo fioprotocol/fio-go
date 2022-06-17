@@ -78,7 +78,7 @@ func MustNewRegAddress(actor eos.AccountName, address Address, ownerPubKey strin
 
 // BurnAddress will destroy an address owned by an account
 type BurnAddress struct {
-	FioAddress string         `json:"fio_address"`
+	FioAddress string          `json:"fio_address"`
 	Actor      eos.AccountName `json:"actor"`
 	Tpid       string          `json:"tpid"`
 	MaxFee     uint64          `json:"max_fee"`
