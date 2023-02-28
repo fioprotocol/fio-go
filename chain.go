@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fioprotocol/fio-go/eos"
-	"github.com/fioprotocol/fio-go/eos/ecc"
 	"io"
 	"io/ioutil"
 	"math"
@@ -16,6 +14,9 @@ import (
 	"net/http/httputil"
 	"strconv"
 	"strings"
+
+	"github.com/fioprotocol/fio-go/eos"
+	"github.com/fioprotocol/fio-go/eos/ecc"
 )
 
 const (
@@ -131,18 +132,33 @@ func NewAction(contract eos.AccountName, name eos.ActionName, actor eos.AccountN
 	}
 }
 
-// NewActionWithPermission allows building an action and specifying the permission
-func NewActionWithPermission(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, permission string, actionData interface{}) *Action {
-	return &Action{
-		Account: contract,
-		Name:    name,
-		Authorization: []eos.PermissionLevel{
-			{
-				Actor:      actor,
-				Permission: eos.PermissionName(permission),
-			},
+// NewAction allows building an action and specifying the permission
+func NewActionWithPerm(contract eos.AccountName, name eos.ActionName, actor eos.AccountName, permission string, actionData interface{}) *Action {
+	// If no permission specified make the default one (actor@active)
+	if permission == "" {
+		permission = fmt.Sprintf("%s@%s", actor, "active")
+	}
+
+	// Create a new permission level from permission string
+	a, err := eos.NewPermissionLevel(permission)
+	if err != nil {
+		return nil
+	}
+
+	// Now make an authorization out of that permission
+	auth := []eos.PermissionLevel{
+		{
+			Actor:      a.Actor,
+			Permission: a.Permission,
 		},
-		ActionData: eos.NewActionData(actionData),
+	}
+
+	// Now put it all together into an action
+	return &Action{
+		Account:       contract,
+		Name:          name,
+		Authorization: auth,
+		ActionData:    eos.NewActionData(actionData),
 	}
 }
 

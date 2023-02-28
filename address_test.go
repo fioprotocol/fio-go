@@ -2,10 +2,11 @@ package fio
 
 import (
 	"encoding/json"
-	"github.com/fioprotocol/fio-go/eos"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/fioprotocol/fio-go/eos"
 )
 
 func TestAddress_Valid(t *testing.T) {
@@ -273,7 +274,7 @@ func TestAddress(t *testing.T) {
 	}
 
 	// check we got bundled transactions
-	rem, err := apiA.GetBundleRemaining(Address(names[2]+"@"+domain))
+	rem, err := apiA.GetBundleRemaining(Address(names[2] + "@" + domain))
 	if err != nil {
 		t.Error("set get bundle: " + err.Error())
 	}
@@ -344,7 +345,7 @@ func TestAddress(t *testing.T) {
 	}
 
 	// get all of the addresses
-	addrs, err := api.GetAllPublic(Address(names[2]+"@"+domain))
+	addrs, err := api.GetAllPublic(Address(names[2] + "@" + domain))
 	if err != nil {
 		t.Error("get all public:" + err.Error())
 	}
@@ -363,6 +364,12 @@ func TestAddress(t *testing.T) {
 
 	add, err := NewAddBundles(Address(names[2]+"@"+domain), 1, accountA.Actor)
 	_, err = apiA.SignPushActions(add)
+	if err != nil {
+		t.Error(err)
+	}
+
+	add2, err := NewAddBundlesWithPerm(Address(names[2]+"@"+domain), 1, accountA.Actor, "actor@active")
+	_, err = apiA.SignPushActions(add2)
 	if err != nil {
 		t.Error(err)
 	}
