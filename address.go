@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fioprotocol/fio-go/eos"
 	"io/ioutil"
 	"math"
 	"net/http"
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/fioprotocol/fio-go/eos"
 
 	"crypto/sha1" // #nosec
 )
@@ -355,7 +356,7 @@ func (api *API) GetExpiredOffset(descending bool) (int64, error) {
 		Scope:      "fio.address",
 		Table:      "domains",
 		LowerBound: "0",
-		UpperBound: strconv.Itoa(int(time.Now().Add(-90*24*time.Hour).UTC().Unix())),
+		UpperBound: strconv.Itoa(int(time.Now().Add(-90 * 24 * time.Hour).UTC().Unix())),
 		Limit:      1,
 		KeyType:    "i64",
 		Index:      "3",
@@ -439,7 +440,7 @@ func (api *API) GetAllPublic(fioAddress Address) ([]TokenPubAddr, error) {
 		return nil, err
 	}
 	result := make([]getAllPublicResp, 0)
-	err = json.Unmarshal(gtr.Rows, &result)
+	json.Unmarshal(gtr.Rows, &result)
 	if len(result) == 0 {
 		return nil, errors.New("empty result")
 	}
@@ -560,7 +561,7 @@ func (api *API) getFioDomainsOrNames(endpoint string, pubKey string, offset uint
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("error %d: %s", resp.StatusCode, string(body)))
+		return nil, fmt.Errorf("error %d: %s", resp.StatusCode, string(body))
 	}
 	result := &FioNames{}
 	err = json.Unmarshal(body, result)
@@ -753,7 +754,7 @@ func NewRemoveAddrReq(fioAddress Address, toRemove []TokenPubAddr, actor eos.Acc
 	if !fioAddress.Valid() {
 		return nil, errors.New("invalid address")
 	}
-	if toRemove == nil || len(toRemove) == 0 {
+	if len(toRemove) == 0 {
 		return nil, errors.New("empty address list supplied")
 	}
 	return NewAction(
@@ -829,10 +830,10 @@ func (api *API) GetBundleRemaining(a Address) (remaining int, err error) {
 
 type AddBundles struct {
 	FioAddress string `json:"fio_address"`
-	BundleSets int64 `json:"bundle_sets"`
-	MaxFee uint64 `json:"max_fee"`
-	Tpid string `json:"tpid"`
-	Actor eos.AccountName
+	BundleSets int64  `json:"bundle_sets"`
+	MaxFee     uint64 `json:"max_fee"`
+	Tpid       string `json:"tpid"`
+	Actor      eos.AccountName
 }
 
 // NewAddBundles is used to purchase new bundled transactions for an account, 1 bundle set
@@ -841,8 +842,28 @@ func NewAddBundles(fioAddress Address, bundleSets uint64, actor eos.AccountName)
 	if !fioAddress.Valid() {
 		return nil, errors.New("invalid address")
 	}
+
 	return NewAction(
 		"fio.address", "addbundles", actor,
+		AddBundles{
+			FioAddress: string(fioAddress),
+			BundleSets: int64(bundleSets),
+			MaxFee:     Tokens(GetMaxFee(FeeAddBundles)) * bundleSets,
+			Tpid:       CurrentTpid(),
+			Actor:      actor,
+		},
+	), nil
+}
+
+// NewAddBundles is used to purchase new bundled transactions for an account, 1 bundle set
+// is 100 transactions.
+func NewAddBundlesWithPerm(fioAddress Address, bundleSets uint64, actor eos.AccountName, permission string) (bundles *Action, err error) {
+	if !fioAddress.Valid() {
+		return nil, errors.New("invalid address")
+	}
+
+	return NewActionWithPerm(
+		"fio.address", "addbundles", actor, permission,
 		AddBundles{
 			FioAddress: string(fioAddress),
 			BundleSets: int64(bundleSets),
