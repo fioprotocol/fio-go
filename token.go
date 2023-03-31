@@ -2,6 +2,7 @@ package fio
 
 import (
 	"github.com/fioprotocol/fio-go/eos"
+	"github.com/shopspring/decimal"
 )
 
 const FioSymbol = "ᵮ"
@@ -9,7 +10,7 @@ const FioSymbol = "ᵮ"
 // Tokens is a convenience function for converting from a float for human readability.
 // Example 1 FIO Token: Tokens(1.0) == uint64(1000000000)
 func Tokens(tokens float64) uint64 {
-	return uint64(tokens * 1000000000.0)
+	return uint64(decimal.NewFromFloat(tokens).Mul(decimal.NewFromInt(1000000000)).IntPart())
 }
 
 // TransferTokensPubKey is used to send FIO tokens to a public key
